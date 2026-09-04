@@ -37,13 +37,13 @@ export function generateAlphaDecay(n: number) {
 export function generatePnL(n: number) {
   let cumPnL = 0;
   return Array.from({ length: n }, (_, i) => {
-    const daily = (Math.random() - 0.47) * 2500;
+    const daily = Math.round((Math.random() - 0.47) * 2500);
     cumPnL += daily;
     const date = new Date(Date.now() - (n - i) * 24 * 60 * 60 * 1000);
     return {
       date: date.toISOString().slice(0, 10),
-      daily: parseFloat(daily.toFixed(0)),
-      cumulative: parseFloat(cumPnL.toFixed(0)),
+      daily,
+      cumulative: cumPnL,
     };
   });
 }
@@ -108,7 +108,19 @@ export function generateRiskMetrics() {
   };
 }
 
-export function generateAlphaCandidates() {
+export function generateAlphaCandidates(optimized: boolean = true) {
+  if (optimized) {
+    return [
+      { id: 'A001', name: 'Momentum Reversal 21D', ic: 0.092, sharpe: 1.51, decay: 18, status: 'pass', category: 'Price' },
+      { id: 'A002', name: 'EV/EBITDA Zscore', ic: 0.076, sharpe: 1.34, decay: 35, status: 'pass', category: 'Fundamental' },
+      { id: 'A003', name: 'Order Flow Imbalance', ic: 0.112, sharpe: 1.89, decay: 9, status: 'pass', category: 'Microstructure' },
+      { id: 'A004', name: 'Earnings Surprise Drift', ic: 0.084, sharpe: 1.48, decay: 24, status: 'pass', category: 'Event' },
+      { id: 'A005', name: 'Vol Surface Skew', ic: 0.081, sharpe: 1.42, decay: 14, status: 'pass', category: 'Options' },
+      { id: 'A006', name: 'Insider Net Buy', ic: 0.085, sharpe: 1.39, decay: 52, status: 'pass', category: 'Alternative' },
+      { id: 'A007', name: 'Short Interest Ratio', ic: 0.078, sharpe: 1.36, decay: 32, status: 'pass', category: 'Sentiment' },
+      { id: 'A008', name: 'Macro Beta Timing', ic: 0.068, sharpe: 1.28, decay: 65, status: 'pass', category: 'Macro' },
+    ];
+  }
   return [
     { id: 'A001', name: 'Momentum Reversal 21D', ic: 0.087, sharpe: 1.43, decay: 15, status: 'pass', category: 'Price' },
     { id: 'A002', name: 'EV/EBITDA Zscore', ic: 0.062, sharpe: 1.12, decay: 30, status: 'pass', category: 'Fundamental' },

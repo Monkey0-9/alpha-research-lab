@@ -71,8 +71,12 @@ def simulate_twap_vwap(
     """
     Simulate execution fills across intervals.
     """
-    # Simulate realistic volume profile (U-shaped intraday profile)
-    u_curve = np.array([1.5, 1.2, 0.9, 0.7, 0.6, 0.6, 0.7, 0.9, 1.2, 1.7])
+    # Simulate realistic volume profile (U-shaped intraday profile for arbitrary intervals)
+    base_u = np.array([1.5, 1.2, 0.9, 0.7, 0.6, 0.6, 0.7, 0.9, 1.2, 1.7])
+    if intervals == len(base_u):
+        u_curve = base_u
+    else:
+        u_curve = np.interp(np.linspace(0, 1, intervals), np.linspace(0, 1, len(base_u)), base_u)
     u_curve = u_curve / np.sum(u_curve)
     interval_adv = adv / intervals
 

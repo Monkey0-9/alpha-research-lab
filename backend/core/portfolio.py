@@ -98,6 +98,7 @@ def hierarchical_risk_parity(returns_matrix: np.ndarray, linkage_method: str = "
     corr = np.corrcoef(returns_matrix, rowvar=False)
     # Correlation distance: d_i,j = sqrt(0.5 * (1 - rho_i,j))
     dist = np.sqrt(np.clip(0.5 * (1.0 - corr), 0.0, 1.0))
+    dist = 0.5 * (dist + dist.T)
     np.fill_diagonal(dist, 0.0)
 
     condensed_dist = squareform(dist)

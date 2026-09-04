@@ -69,3 +69,16 @@ def get_universe():
         "count": len(SP500_TICKERS),
         "tickers": SP500_TICKERS
     }
+
+
+@router.get("/metadata")
+def get_data_metadata():
+    """Dataset metadata and coverage."""
+    return {
+        "universe": "sp500",
+        "universe_size": len(SP500_TICKERS),
+        "start_date": "2020-01-01",
+        "end_date": "2024-12-31",
+        "features_available": 50,
+        "format": "Parquet + PIT Memory Store"
+    }

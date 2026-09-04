@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
-import { BarChart3, CheckCircle2, AlertTriangle, XCircle, TrendingDown } from 'lucide-react';
+import { BarChart3, CheckCircle2 } from 'lucide-react';
 import { generateICTimeSeries, generateAlphaDecay } from '@/lib/data';
 
 const defenses = [
@@ -145,7 +145,7 @@ export default function StatisticalEnginePage() {
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={Array.from({ length: 20 }, (_, i) => ({
               lag: i + 1,
-              acf: parseFloat((0.35 * Math.pow(0.85, i) + (Math.random() - 0.5) * 0.08).toFixed(3)),
+              acf: parseFloat((0.35 * Math.pow(0.85, i) + Math.sin(i * 1.7) * 0.03).toFixed(3)),
             }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="lag" tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} />
