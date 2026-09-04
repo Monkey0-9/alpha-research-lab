@@ -72,9 +72,35 @@ export default function FeaturesPage() {
   const [icData, setIcData] = useState<any[]>([]);
   const [momentum, setMomentum] = useState(21);
   const [lookback, setLookback] = useState(60);
+  const [featuresList, setFeaturesList] = useState<any[]>([]);
 
   useEffect(() => {
-    setIcData(generateICTimeSeries(52));
+    fetch('/api/features/ic')
+      .then(r => r.json())
+      .then(json => {
+        if (json && json.results) {
+          setIcData(json.results.map((r: any, idx: number) => ({
+            date: `W-${idx + 1}`,
+            ic: r.ic,
+            value: r.ic,
+            ic_ir: r.ic_ir,
+          })));
+        } else {
+          setIcData(generateICTimeSeries(52));
+        }
+      })
+      .catch(() => {
+        setIcData(generateICTimeSeries(52));
+      });
+
+    fetch('/api/features/list')
+      .then(r => r.json())
+      .then(json => {
+        if (json && json.features) {
+          setFeaturesList(json.features);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const currentFactors = factors[activeTab as keyof typeof factors];

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { ShieldCheck, CheckCircle2, XCircle, AlertTriangle, TrendingUp } from 'lucide-react';
 import { generateAlphaCandidates } from '@/lib/data';
@@ -55,9 +55,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function QualityGatePage() {
   const [selectedAlpha, setSelectedAlpha] = useState('A001');
+  const [gateApiResult, setGateApiResult] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/quality-gate/run')
+      .then(r => r.json())
+      .then(data => {
+        setGateApiResult(data);
+      })
+      .catch(() => {});
+  }, []);
+
   const gates = alphaGateResults[selectedAlpha] || [];
   const score = gates.filter(Boolean).length;
-  const passed = score >= 7;
+  const passed = gateApiResult ? gateApiResult.overall_pass : (score >= 7);
 
   const scoreData = alphas.map(a => ({
     id: a.id,

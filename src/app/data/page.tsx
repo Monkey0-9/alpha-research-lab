@@ -58,9 +58,32 @@ export default function DataPage() {
   const [activeSource, setActiveSource] = useState(0);
 
   useEffect(() => {
-    const ts = generateTimeSeries(60, 180, 0.008);
-    setTickData(ts.slice(-40));
-    setVolumeData(ts.slice(-20).map(d => ({ ...d, volume: Math.floor(Math.random() * 2000000 + 500000) })));
+    fetch('/api/data/ohlcv?ticker=AAPL&start=2023-01-01&end=2023-12-31')
+      .then(r => r.json())
+      .then(json => {
+        if (json && json.data && json.data.length > 0) {
+          const transformed = json.data.map((d: any) => ({
+            date: d.date,
+            value: d.close,
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
+            volume: d.volume,
+          }));
+          setTickData(transformed.slice(-40));
+          setVolumeData(transformed.slice(-20));
+        } else {
+          const ts = generateTimeSeries(60, 180, 0.008);
+          setTickData(ts.slice(-40));
+          setVolumeData(ts.slice(-20).map(d => ({ ...d, volume: 1500000 })));
+        }
+      })
+      .catch(() => {
+        const ts = generateTimeSeries(60, 180, 0.008);
+        setTickData(ts.slice(-40));
+        setVolumeData(ts.slice(-20).map(d => ({ ...d, volume: 1500000 })));
+      });
   }, []);
 
   return (
