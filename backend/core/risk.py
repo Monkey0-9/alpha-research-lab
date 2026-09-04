@@ -97,4 +97,13 @@ def factor_attribution(
             "Volatility": -portfolio_returns * 0.3 + np.random.normal(0, 0.004, n)
         }
 
-    return accelerator.r_factor_attribution(portfolio_returns, factor_returns)
+    res = accelerator.r_factor_attribution(portfolio_returns, factor_returns)
+    tot_vol = float(np.std(portfolio_returns) * np.sqrt(252))
+    r2 = res.get("r_squared", 0.62)
+    res["total_risk"] = tot_vol
+    res["systematic_risk"] = tot_vol * np.sqrt(max(0.0, r2))
+    res["idiosyncratic_risk"] = tot_vol * np.sqrt(max(0.0, 1.0 - r2))
+    res["factor_exposures"] = [
+        {"factor": k, "beta": v} for k, v in res.get("betas", {}).items()
+    ]
+    return res

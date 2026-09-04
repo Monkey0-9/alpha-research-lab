@@ -15,9 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Compile native extensions
-RUN gcc -O3 -shared -fPIC native/c_engine/rolling_ops.c -o native/c_engine/c_engine.dll || true
-RUN g++ -O3 -shared -fPIC native/cpp_engine/execution_sim.cpp -o native/cpp_engine/cpp_engine.dll || true
+# Compile native extensions for Linux
+RUN gcc -O3 -shared -fPIC native/c_engine/rolling_ops.c -o native/c_engine/c_engine.so || true
+RUN g++ -O3 -shared -fPIC native/cpp_engine/execution_sim.cpp -o native/cpp_engine/cpp_engine.so || true
 
 EXPOSE 8000
 

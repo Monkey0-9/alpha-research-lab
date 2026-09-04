@@ -22,7 +22,7 @@ class BacktestRequest(BaseModel):
         description="Features list"
     )
     universe: str = Field("sp500", description="Universe")
-    rebalance_freq: str = Field("ME", description="Rebalance frequency (ME=monthly)")
+    rebalance_freq: str = Field("M", description="Rebalance frequency (M=monthly)")
     position_sizing: str = Field("vol_target", description="vol_target or equal_weight")
     target_vol: float = Field(0.10, description="Annualized target volatility")
 
@@ -32,6 +32,9 @@ def run_backtest(req: BacktestRequest):
     """
     Run temporal walk-forward backtest without lookahead bias.
     """
+    if hasattr(backtester_engine, "rebalance_freq"):
+        from core.backtester import _safe_freq
+        backtester_engine.rebalance_freq = _safe_freq(req.rebalance_freq)
     results = backtester_engine.run(
         start_date=req.start_date,
         end_date=req.end_date,
@@ -39,7 +42,7 @@ def run_backtest(req: BacktestRequest):
         position_sizing=req.position_sizing,
         target_vol=req.target_vol
     )
-    return results
+    return dict(results) if isinstance(results, dict) else results
 
 
 @router.get("/status")

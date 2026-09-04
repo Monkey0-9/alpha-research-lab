@@ -1,201 +1,167 @@
 'use client';
 
-import { useState } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Brain, TrendingUp, Layers, Cpu } from 'lucide-react';
-import { generateModelComparison } from '@/lib/data';
-
-const models = generateModelComparison();
-
-const trainingCurves: Record<string, any[]> = {
-  'LightGBM': Array.from({ length: 50 }, (_, i) => ({
-    epoch: i + 1,
-    train: parseFloat((0.42 - 0.32 * (1 - Math.exp(-i * 0.1)) + Math.random() * 0.01).toFixed(4)),
-    val: parseFloat((0.48 - 0.28 * (1 - Math.exp(-i * 0.09)) + Math.random() * 0.015).toFixed(4)),
-  })),
-  'LSTM': Array.from({ length: 100 }, (_, i) => ({
-    epoch: i + 1,
-    train: parseFloat((0.55 - 0.38 * (1 - Math.exp(-i * 0.05)) + Math.random() * 0.012).toFixed(4)),
-    val: parseFloat((0.62 - 0.31 * (1 - Math.exp(-i * 0.04)) + Math.random() * 0.02).toFixed(4)),
-  })),
-  'Transformer': Array.from({ length: 200 }, (_, i) => ({
-    epoch: i + 1,
-    train: parseFloat((0.61 - 0.44 * (1 - Math.exp(-i * 0.03)) + Math.random() * 0.01).toFixed(4)),
-    val: parseFloat((0.69 - 0.36 * (1 - Math.exp(-i * 0.025)) + Math.random() * 0.018).toFixed(4)),
-  })),
-};
-
-const ensembleWeights = [
-  { model: 'LightGBM', weight: 0.35 },
-  { model: 'XGBoost', weight: 0.25 },
-  { model: 'Transformer', weight: 0.20 },
-  { model: 'LSTM', weight: 0.12 },
-  { model: 'Ridge', weight: 0.08 },
-];
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0.6rem 0.9rem' }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
-        {payload.map((p: any, i: number) => (
-          <p key={i} style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: p.color || '#f59e0b' }}>
-            {p.name}: {typeof p.value === 'number' ? p.value.toFixed(4) : p.value}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
+import React, { useEffect, useState } from 'react';
+import TerminalHeader from '@/components/TerminalHeader';
+import MetricCard from '@/components/MetricCard';
+import ChartContainer from '@/components/ChartContainer';
+import ModelComparisonTable from '@/components/ModelComparisonTable';
+import TrainingCurve from '@/components/TrainingCurve';
+import EnsembleBuilder from '@/components/EnsembleBuilder';
+import Badge from '@/components/Badge';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import * as api from '@/lib/api';
+import * as types from '@/lib/types';
+import { Brain, Layers, Cpu, ShieldCheck } from 'lucide-react';
 
 export default function ModelLabPage() {
-  const [selectedModel, setSelectedModel] = useState('LightGBM');
-  const [weights, setWeights] = useState(ensembleWeights.map(e => e.weight));
+  const [loading, setLoading] = useState(true);
+  const [models, setModels] = useState<types.ModelComparisonItem[]>([]);
+  const [trainingCurves, setTrainingCurves] = useState<types.TrainingCurvePoint[]>([]);
 
-  const curveData = (trainingCurves[selectedModel] || trainingCurves['LightGBM']).slice(0, 50);
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await api.getModelComparison();
+        setModels(res.models);
+
+        // Synthetic training loss curve across 30 epochs
+        const curves = Array.from({ length: 30 }, (_, i) => ({
+          epoch: i + 1,
+          train_loss: parseFloat((0.25 * Math.exp(-i * 0.12) + 0.042 + (Math.random() - 0.5) * 0.004).toFixed(4)),
+          val_loss: parseFloat((0.27 * Math.exp(-i * 0.10) + 0.051 + (Math.random() - 0.5) * 0.006).toFixed(4)),
+          val_ic: parseFloat((0.03 + 0.06 * (1 - Math.exp(-i * 0.15))).toFixed(3))
+        }));
+        setTrainingCurves(curves);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div className="page-header-badge"><Brain size={10} /> 05 — Model Research Lab</div>
-        <h1>Model Research Lab</h1>
-        <p>Train, compare, and ensemble multiple model architectures from linear baselines to transformers.</p>
-      </div>
+    <ErrorBoundary fallbackTitle="Model Research Lab Interrupted">
+      <TerminalHeader title="MODULE 05 // MODEL RESEARCH & ML ENSEMBLE LAB" />
 
-      {/* Stats */}
-      <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-        {[
-          { label: 'Models Trained', value: '8', color: '#f59e0b' },
-          { label: 'Best Sharpe', value: '1.67', color: '#10b981' },
-          { label: 'Best OOS Acc', value: '78.4%', color: '#3b82f6' },
-          { label: 'Ensemble Lift', value: '+22%', color: '#8b5cf6' },
-        ].map(m => (
-          <div key={m.label} className="card" style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.4rem' }}>{m.label}</div>
-            <div className="metric-value" style={{ color: m.color, fontSize: '1.6rem' }}>{m.value}</div>
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* KPI Strip */}
+        {loading ? <LoadingSkeleton height="85px" count={1} /> : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.65rem' }}>
+            <MetricCard
+              label="Best Single Model"
+              value="1.94"
+              change="LightGBM OOS"
+              positive={true}
+              subtext="Out-of-Sample Sharpe"
+              status="pass"
+            />
+            <MetricCard
+              label="Ensemble Sharpe"
+              value="2.14"
+              change="+0.20 Lift"
+              positive={true}
+              subtext="Diversified Meta-Model"
+              status="live"
+            />
+            <MetricCard
+              label="Ensemble Mean IC"
+              value="0.104"
+              change="IR: 2.35"
+              positive={true}
+              subtext="Cross-Sectional Rank IC"
+              status="pass"
+            />
+            <MetricCard
+              label="Max DD (Ensemble)"
+              value="-6.8%"
+              change="Limit: -12.0%"
+              positive={false}
+              subtext="Controlled via Vol Scaling"
+              status="pass"
+            />
+            <MetricCard
+              label="Annual Turnover"
+              value="24%"
+              change="Low Friction"
+              positive={true}
+              subtext="Monthly Rebalanced"
+              status="pass"
+            />
+            <MetricCard
+              label="Meta-Label Precision"
+              value="68.4%"
+              change="Bet Sizing Filter"
+              positive={true}
+              subtext="Lopez de Prado Secondary Model"
+              status="pass"
+            />
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* Model Comparison Table */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div className="card-header">
-          <span className="card-title">Model Comparison — All Architectures</span>
-          <span className="badge badge-amber"><Layers size={10} /> 8 Models</span>
-        </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th>Sharpe</th>
-              <th>IC (60d)</th>
-              <th>OOS Score</th>
-              <th>Train Time</th>
-              <th>Params</th>
-              <th>Rank</th>
-            </tr>
-          </thead>
-          <tbody>
-            {models.map((m, i) => (
-              <tr key={m.model}
-                onClick={() => setSelectedModel(m.model)}
-                style={{ cursor: 'pointer', background: selectedModel === m.model ? 'rgba(245,158,11,0.05)' : undefined }}
-              >
-                <td style={{ color: 'var(--text-primary)', fontFamily: 'inherit', fontWeight: 500 }}>
-                  {m.model === 'Ensemble' && <span style={{ color: '#f59e0b', marginRight: '0.4rem' }}>★</span>}
-                  {m.model}
-                </td>
-                <td style={{ color: '#10b981' }}>{m.sharpe}</td>
-                <td style={{ color: '#3b82f6' }}>{m.ic}</td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div className="progress-bar" style={{ flex: 1 }}>
-                      <div className="progress-fill" style={{ width: `${m.oos * 100}%`, background: '#8b5cf6' }} />
-                    </div>
-                    <span>{(m.oos * 100).toFixed(0)}%</span>
-                  </div>
-                </td>
-                <td>{m.trainTime}</td>
-                <td style={{ fontFamily: 'JetBrains Mono', fontSize: '0.7rem' }}>{m.params}</td>
-                <td>
-                  <span className={`badge ${i === 0 ? 'badge-amber' : i === 1 ? 'badge-blue' : i === 2 ? 'badge-violet' : 'badge-muted'}`}>
-                    #{i + 1}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-        {/* Training Curves */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Training Curves — {selectedModel}</span>
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
-              {Object.keys(trainingCurves).map(m => (
-                <button key={m} className={`btn ${selectedModel === m ? 'btn-primary' : 'btn-ghost'}`}
-                  style={{ padding: '0.25rem 0.6rem', fontSize: '0.7rem' }}
-                  onClick={() => setSelectedModel(m)}>
-                  {m}
-                </button>
-              ))}
+        {/* Model Comparison Table */}
+        <div className="terminal-card">
+          <div className="terminal-card-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Brain size={14} color="#38bdf8" />
+              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                CROSS-ARCHITECTURE QUANTITATIVE MODEL LEADERBOARD
+              </span>
             </div>
+            <span className="badge-tag badge-live">OUT-OF-SAMPLE EVALUATED</span>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={curveData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="epoch" tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} label={{ value: 'Epoch', position: 'insideBottom', offset: -2, fontSize: 9, fill: '#475569' }} />
-              <YAxis tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="train" name="Train Loss" stroke="#3b82f6" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="val" name="Val Loss" stroke="#f43f5e" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="terminal-card-body">
+            {loading ? <LoadingSkeleton height="180px" /> : (
+              <ModelComparisonTable models={models} />
+            )}
+          </div>
         </div>
 
-        {/* Ensemble Builder */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Ensemble Weight Builder</span>
-            <span className="badge badge-amber">Meta Model</span>
-          </div>
-          {ensembleWeights.map((e, i) => (
-            <div key={e.model} style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{e.model}</span>
-                <span style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: '#f59e0b' }}>{(weights[i] * 100).toFixed(0)}%</span>
-              </div>
-              <input type="range" min={0} max={100} value={weights[i] * 100}
-                onChange={ev => {
-                  const newW = [...weights];
-                  newW[i] = +ev.target.value / 100;
-                  setWeights(newW);
-                }}
-              />
+        {/* Training Curves & Ensemble Allocator */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+          <ChartContainer
+            title="TRAINING & PURGED VALIDATION LOSS CONVERGENCE"
+            subtitle="Gradient boosting iteration progression (Early stopping at 35 trees)"
+            badge="EARLY STOPPING: BEST 28"
+            badgeType="pass"
+          >
+            {loading ? <LoadingSkeleton height="240px" /> : (
+              <TrainingCurve data={trainingCurves} height={240} />
+            )}
+          </ChartContainer>
+
+          <EnsembleBuilder />
+        </div>
+
+        {/* Meta-Labeling & Triple Barrier Architecture */}
+        <div className="terminal-card">
+          <div className="terminal-card-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <ShieldCheck size={14} color="#38bdf8" />
+              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                TRIPLE BARRIER METHOD & META-LABELING SYSTEM ARCHITECTURE
+              </span>
             </div>
-          ))}
-          <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'var(--bg-secondary)', borderRadius: 8 }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Ensemble Performance (Projected)</div>
-            <div style={{ display: 'flex', gap: '1.5rem' }}>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f59e0b', fontFamily: 'JetBrains Mono' }}>1.67</div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Sharpe</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981', fontFamily: 'JetBrains Mono' }}>0.108</div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>IC</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3b82f6', fontFamily: 'JetBrains Mono' }}>78%</div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>OOS</div>
-              </div>
+            <span className="badge-tag badge-live">DE PRADO META-SIZING</span>
+          </div>
+          <div className="terminal-card-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ background: '#0a0d14', padding: '0.65rem', borderRadius: '3px', border: '1px solid var(--border-terminal)' }}>
+              <div style={{ color: '#38bdf8', fontWeight: 600, marginBottom: '0.2rem' }}>BARRIER 1: TAKE-PROFIT</div>
+              <div style={{ color: '#94a3b8' }}>Dynamic volatility-adjusted upper horizontal barrier (+2.0σ trailing realized volatility).</div>
+            </div>
+            <div style={{ background: '#0a0d14', padding: '0.65rem', borderRadius: '3px', border: '1px solid var(--border-terminal)' }}>
+              <div style={{ color: '#fb7185', fontWeight: 600, marginBottom: '0.2rem' }}>BARRIER 2: STOP-LOSS</div>
+              <div style={{ color: '#94a3b8' }}>Lower horizontal risk barrier (-1.5σ) triggered automatically to truncate downside tail risk.</div>
+            </div>
+            <div style={{ background: '#0a0d14', padding: '0.65rem', borderRadius: '3px', border: '1px solid var(--border-terminal)' }}>
+              <div style={{ color: '#fbbf24', fontWeight: 600, marginBottom: '0.2rem' }}>BARRIER 3: TIME-EXPIRY</div>
+              <div style={{ color: '#94a3b8' }}>Vertical time horizon barrier (21 trading days). Positions unwound if neither price threshold hit.</div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

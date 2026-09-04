@@ -1,252 +1,220 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
-} from 'recharts';
-import {
-  Database, Cpu, FlaskConical, BarChart3, Brain, GitBranch,
-  ShieldCheck, PieChart, Zap, AlertTriangle, Activity, Monitor,
-  TrendingUp, TrendingDown, ArrowRight, CheckCircle2
-} from 'lucide-react';
-import { generatePnL, generateTimeSeries, generateDrawdown, generateMonitoringAlerts } from '@/lib/data';
+import React, { useEffect, useState } from 'react';
+import TerminalHeader from '@/components/TerminalHeader';
+import MetricCard from '@/components/MetricCard';
+import ChartContainer from '@/components/ChartContainer';
+import EquityCurve from '@/components/EquityCurve';
+import DrawdownChart from '@/components/DrawdownChart';
+import RegimeCard from '@/components/RegimeCard';
+import PositionTable from '@/components/PositionTable';
+import PipelineStatus from '@/components/PipelineStatus';
+import AlertFeed from '@/components/AlertFeed';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import * as api from '@/lib/api';
+import * as types from '@/lib/types';
+import { formatCurrency, formatPercent } from '@/lib/utils';
+import { generateTimeSeries, generateDrawdown } from '@/lib/data';
 
-const modules = [
-  { num: '01', href: '/data', label: 'Data Infrastructure', icon: Database, color: '#3b82f6', desc: 'Tick, OHLCV, Fundamentals, PIT Store', status: 'live' },
-  { num: '02', href: '/features', label: 'Feature Factory', icon: Cpu, color: '#10b981', desc: 'Price, Fundamental, Macro, Microstructure', status: 'live' },
-  { num: '03', href: '/alpha-discovery', label: 'Alpha Discovery', icon: FlaskConical, color: '#8b5cf6', desc: 'Hypothesis Engine, Genetic Programming', status: 'live' },
-  { num: '04', href: '/statistical-engine', label: 'Statistical Engine', icon: BarChart3, color: '#06b6d4', desc: 'IC, t-stat, FDR, Bias Detection', status: 'live' },
-  { num: '05', href: '/model-lab', label: 'Model Research Lab', icon: Brain, color: '#f59e0b', desc: 'Ensemble, Meta-Model, Transformers', status: 'live' },
-  { num: '06', href: '/validation', label: 'TS Validation', icon: GitBranch, color: '#f97316', desc: 'Walk-Forward, Purged CV, Embargo', status: 'live' },
-  { num: '07', href: '/quality-gate', label: 'Alpha Quality Gate', icon: ShieldCheck, color: '#10b981', desc: '9-Criteria Quality Filter', status: 'live' },
-  { num: '08', href: '/portfolio', label: 'Portfolio Engine', icon: PieChart, color: '#3b82f6', desc: 'MV, Risk Parity, CVaR Optimization', status: 'live' },
-  { num: '09', href: '/execution', label: 'Execution Research', icon: Zap, color: '#f43f5e', desc: 'Market Impact, Slippage, Fill Quality', status: 'live' },
-  { num: '10', href: '/risk', label: 'Risk Engine', icon: AlertTriangle, color: '#f59e0b', desc: 'VaR, CVaR, Factor Risk, Drawdown', status: 'live' },
-  { num: '11', href: '/live-research', label: 'Live Research', icon: Activity, color: '#8b5cf6', desc: 'Paper → Production Pipeline', status: 'live' },
-  { num: '12', href: '/monitoring', label: 'Production Monitor', icon: Monitor, color: '#06b6d4', desc: 'Drift, Decay, Risk Breaches', status: 'live' },
-];
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0.6rem 0.9rem' }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
-        {payload.map((p: any, i: number) => (
-          <p key={i} style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: p.color }}>
-            {p.name}: {typeof p.value === 'number' ? p.value.toLocaleString() : p.value}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
-export default function Dashboard() {
-  const [pnl, setPnl] = useState<any[]>(() => generateDrawdown(generatePnL(120)).slice(-60));
-  const [price, setPrice] = useState<any[]>(() => generateTimeSeries(90, 100, 0.012).slice(-60));
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [dashboardData, setDashboardData] = useState<any>(null);
+export default function ExecutiveDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<types.ExecutiveDashboardSummary | null>(null);
+  const [holdings, setHoldings] = useState<types.PortfolioHoldingItem[]>([]);
+  const [alerts, setAlerts] = useState<types.ProductionAlertItem[]>([]);
+  const [equityData, setEquityData] = useState<any[]>([]);
+  const [drawdownData, setDrawdownData] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/dashboard/summary')
-      .then(r => r.json())
-      .then(data => {
-        setDashboardData(data);
-        if (data && data.recent_alerts) {
-          setAlerts(data.recent_alerts.map((a: any, i: number) => ({
-            id: String(i + 1),
-            type: a.type.toLowerCase(),
-            msg: a.text,
-            time: a.timestamp
-          })));
-        } else {
-          setAlerts(generateMonitoringAlerts());
+    async function load() {
+      try {
+        const [sum, hld, tel] = await Promise.all([
+          api.getDashboardSummary(),
+          api.getPortfolioHoldings(),
+          api.getMonitoringTelemetry()
+        ]);
+        setSummary(sum);
+        setHoldings(hld.holdings);
+        setAlerts(tel.recent_alerts);
+
+        // Synthetic 252-day equity curve
+        const baseCurve = [];
+        let pNav = 1.0;
+        let bNav = 1.0;
+        let peak = 1.0;
+        const ddArr = [];
+        const now = new Date();
+
+        for (let i = 252; i >= 0; i--) {
+          const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+          const pRet = (Math.random() - 0.47) * 0.012 + 0.0007;
+          const bRet = (Math.random() - 0.48) * 0.014 + 0.0004;
+          pNav *= (1.0 + pRet);
+          bNav *= (1.0 + bRet);
+          peak = Math.max(peak, pNav);
+          const dd = (pNav - peak) / peak;
+
+          baseCurve.push({
+            date: d,
+            nav: parseFloat(pNav.toFixed(4)),
+            benchmark: parseFloat(bNav.toFixed(4))
+          });
+          ddArr.push({
+            date: d,
+            drawdown: parseFloat((dd * 100).toFixed(2))
+          });
         }
-      })
-      .catch(() => {
-        setAlerts(generateMonitoringAlerts());
-      });
+        setEquityData(baseCurve);
+        setDrawdownData(ddArr);
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
-  const p = dashboardData?.portfolio;
-  const metrics = [
-    { label: 'Portfolio Sharpe', value: p?.annualized_sharpe ? String(p.annualized_sharpe) : '1.67', change: '+0.14', positive: true, color: '#10b981' },
-    { label: 'Alpha IC (30d)', value: '0.089', change: '+0.012', positive: true, color: '#3b82f6' },
-    { label: 'Max Drawdown', value: p?.max_drawdown_pct ? `-${p.max_drawdown_pct}%` : '-8.2%', change: '+1.2%', positive: false, color: '#f43f5e' },
-    { label: 'Active Alphas', value: String(dashboardData?.active_models?.length || 5), change: 'Production verified', positive: true, color: '#8b5cf6' },
-    { label: 'Win Rate', value: p?.win_rate_pct ? `${p.win_rate_pct}%` : '56.4%', change: '+0.8%', positive: true, color: '#f59e0b' },
-    { label: 'Simulated AUM', value: p?.aum ? `$${(p.aum / 1e6).toFixed(0)}M` : '$50M', change: 'Capacity OK', positive: true, color: '#06b6d4' },
-  ];
-
   return (
-    <div className="page-container" style={{ paddingTop: '2rem' }}>
-      {/* Hero */}
-      <div style={{ marginBottom: '2rem', position: 'relative' }}>
-        <div className="hero-glow" style={{ width: 400, height: 400, background: '#3b82f6', top: -100, left: '20%' }} />
-        <div className="hero-glow" style={{ width: 300, height: 300, background: '#8b5cf6', top: -50, right: '10%' }} />
-        <div className="page-header-badge">
-          <span className="status-dot live" /> Research Mode Active · Sep 2026
-        </div>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: '0.5rem' }}>
-          <span className="text-gradient-blue">QuantAlpha</span> Research Platform
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: 600 }}>
-          End-to-end quantitative alpha research — from raw market data to live production monitoring. 12 integrated modules, one unified platform.
-        </p>
-      </div>
+    <ErrorBoundary fallbackTitle="Executive Dashboard Interrupted">
+      <TerminalHeader title="MODULE 00 // EXECUTIVE TRADING DASHBOARD" />
 
-      {/* Key Metrics */}
-      <div className="grid-6" style={{ marginBottom: '1.5rem' }}>
-        {metrics.map((m) => (
-          <div key={m.label} className="card" style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{m.label}</div>
-            <div className="metric-value" style={{ fontSize: '1.4rem', color: m.color }}>{m.value}</div>
-            <div className={`metric-change ${m.positive ? 'positive' : 'negative'}`} style={{ marginTop: '0.25rem' }}>
-              {m.positive ? <TrendingUp size={10} style={{ display: 'inline', marginRight: 3 }} /> : <TrendingDown size={10} style={{ display: 'inline', marginRight: 3 }} />}
-              {m.change}
-            </div>
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* KPI Strip */}
+        {loading ? (
+          <LoadingSkeleton height="85px" count={1} />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.65rem' }}>
+            <MetricCard
+              label="Portfolio NAV"
+              value={formatCurrency(summary?.portfolio_nav || 2485000, 0)}
+              change="+14.2% YTD"
+              positive={true}
+              subtext="Total Institutional AUM"
+              status="live"
+            />
+            <MetricCard
+              label="Daily P&L"
+              value={formatCurrency(summary?.daily_pnl_dollars || 18450, 0)}
+              change={formatPercent(summary?.daily_pnl_pct || 0.74, 2)}
+              deltaBps={74}
+              positive={true}
+              subtext="Alpha Contribution: +52bps"
+              status="pass"
+            />
+            <MetricCard
+              label="Annualized Sharpe"
+              value={(summary?.annualized_sharpe || 2.14).toFixed(2)}
+              change="vs 1.12 BMK"
+              positive={true}
+              benchmark="1.12"
+              benchmarkLabel="SPY"
+              status="pass"
+            />
+            <MetricCard
+              label="Calmar Ratio"
+              value={(summary?.calmar_ratio || 2.85).toFixed(2)}
+              change="OOS Robust"
+              positive={true}
+              subtext="CAGR / Max Drawdown"
+              status="pass"
+            />
+            <MetricCard
+              label="Max Drawdown"
+              value={`-${(summary?.max_drawdown_pct || 6.8).toFixed(1)}%`}
+              change="Limit: 12.0%"
+              positive={false}
+              subtext="Historical Peak: $2.51M"
+              status="pass"
+            />
+            <MetricCard
+              label="Daily VaR (95%)"
+              value={`-${(summary?.var_95_daily_pct || 1.45).toFixed(2)}%`}
+              change="CVaR: -2.15%"
+              positive={false}
+              subtext="1-Day Dollar VaR: $36.0K"
+              status="pass"
+            />
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* Charts Row */}
-      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Cumulative P&L</span>
-            <span className="badge badge-emerald">Live</span>
-          </div>
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={pnl}>
-              <defs>
-                <linearGradient id="pnlGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#475569' }} tickLine={false} axisLine={false} interval={19} />
-              <YAxis tick={{ fontSize: 10, fill: '#475569' }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="cumulative" name="P&L" stroke="#10b981" strokeWidth={2} fill="url(#pnlGrad)" />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* Macro Regime Strip */}
+        <RegimeCard
+          activeRegime="bull_low_vol"
+          transitionProb={0.58}
+        />
+
+        {/* Charts: Equity Curve & Drawdown */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.85rem' }}>
+          <ChartContainer
+            title="PORTFOLIO PERFORMANCE VS BENCHMARK"
+            subtitle="Walk-forward simulated and live execution NAV series (1-day frequency)"
+            badge="LIVE RUN"
+            badgeType="live"
+          >
+            {loading ? <LoadingSkeleton height="320px" /> : (
+              <EquityCurve data={equityData} height={320} benchmarkName="S&P 500 (SPY)" />
+            )}
+          </ChartContainer>
+
+          <ChartContainer
+            title="UNDERWATER DRAWDOWN DEPTH"
+            subtitle="High-water mark depletion curve with -12.0% risk limit"
+            badge="PEAK: $2.51M"
+            badgeType="neutral"
+          >
+            {loading ? <LoadingSkeleton height="320px" /> : (
+              <DrawdownChart data={drawdownData} height={320} />
+            )}
+          </ChartContainer>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Drawdown</span>
-            <span className="badge badge-rose">Risk</span>
-          </div>
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={pnl}>
-              <defs>
-                <linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#475569' }} tickLine={false} axisLine={false} interval={19} />
-              <YAxis tick={{ fontSize: 10, fill: '#475569' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v.toFixed(1)}%`} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="drawdown" name="Drawdown %" stroke="#f43f5e" strokeWidth={2} fill="url(#ddGrad)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Modules Grid */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Research Pipeline</h2>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>12 Modules · All Active</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-          {modules.map((m) => {
-            const Icon = m.icon;
-            return (
-              <Link
-                key={m.href}
-                href={m.href}
-                style={{ textDecoration: 'none' }}
-              >
-                <div className="card" style={{
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  borderColor: 'var(--border-subtle)',
-                  padding: '1rem',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{
-                        width: 30, height: 30, borderRadius: 8,
-                        background: `${m.color}18`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: `1px solid ${m.color}30`,
-                      }}>
-                        <Icon size={14} color={m.color} />
-                      </div>
-                      <span style={{ fontFamily: 'JetBrains Mono', fontSize: '0.65rem', color: 'var(--text-muted)' }}>{m.num}</span>
-                    </div>
-                    <ArrowRight size={12} color="var(--text-muted)" />
-                  </div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>{m.label}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{m.desc}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.5rem' }}>
-                    <span className="status-dot live" />
-                    <span style={{ fontSize: '0.65rem', color: 'var(--accent-emerald)' }}>Active</span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Alerts + Research Loop */}
-      <div className="grid-2">
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">System Alerts</span>
-            <span className="badge badge-rose">{alerts.filter(a => a.type === 'error').length} Critical</span>
-          </div>
-          {alerts.map((a, i) => (
-            <div key={i} className={`alert-strip ${a.type === 'error' ? 'danger' : a.type === 'warning' ? 'warning' : 'success'}`}>
-              {a.type === 'error' ? <AlertTriangle size={13} /> : a.type === 'warning' ? <AlertTriangle size={13} /> : <CheckCircle2 size={13} />}
-              <div style={{ flex: 1, fontSize: '0.78rem' }}>{a.message}</div>
-              <span style={{ fontSize: '0.65rem', opacity: 0.7, whiteSpace: 'nowrap' }}>{a.time}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Research Loop</span>
-            <span className="badge badge-violet">Continuous</span>
-          </div>
-          {[
-            { label: 'New Hypothesis Generated', status: 'done', detail: 'Vol surface skew decay in small-caps' },
-            { label: 'Experiment Running', status: 'active', detail: 'Walk-forward CV · 48 folds · LightGBM' },
-            { label: 'Statistical Validation', status: 'active', detail: 'IC t-stat = 3.7 · FDR q < 0.05' },
-            { label: 'Quality Gate Review', status: 'pending', detail: 'Awaiting OOS evidence (2 weeks)' },
-            { label: 'Alpha Library', status: 'pending', detail: '5 alphas live · 3 in review' },
-          ].map((s, i) => (
-            <div key={i} className={`pipeline-step ${s.status}`} style={{ marginBottom: '0.35rem' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>{s.label}</div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{s.detail}</div>
-              </div>
-              <span className={`badge ${s.status === 'done' ? 'badge-emerald' : s.status === 'active' ? 'badge-blue' : 'badge-muted'}`}>
-                {s.status}
+        {/* Positions & Holdings */}
+        <div className="terminal-card">
+          <div className="terminal-card-header">
+            <div>
+              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                ACTIVE PORTFOLIO CONSTITUENTS & RISK CONTRIBUTION
               </span>
+              <div style={{ fontSize: '0.68rem', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
+                Target vol-scaled long/short allocation · 24 active names
+              </div>
             </div>
-          ))}
+            <span className="badge-tag badge-live">24 ACTIVE HOLDINGS</span>
+          </div>
+          <div className="terminal-card-body">
+            {loading ? <LoadingSkeleton height="200px" /> : (
+              <PositionTable holdings={holdings} />
+            )}
+          </div>
+        </div>
+
+        {/* Automated Pipeline DAG */}
+        <div className="terminal-card">
+          <div className="terminal-card-header">
+            <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+              PRODUCTION RESEARCH PIPELINE DAG STATUS
+            </span>
+            <span className="badge-tag badge-pass">ALL 12 STAGES SYNCHRONIZED</span>
+          </div>
+          <div className="terminal-card-body">
+            <PipelineStatus />
+          </div>
+        </div>
+
+        {/* Real-time Alerts */}
+        <div className="terminal-card">
+          <div className="terminal-card-header">
+            <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+              REAL-TIME PRODUCTION EVENT & ANOMALY STREAM
+            </span>
+            <span className="badge-tag badge-live">STREAMING EVENT LOG</span>
+          </div>
+          <div className="terminal-card-body">
+            <AlertFeed alerts={alerts} />
+          </div>
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

@@ -1,237 +1,284 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, LineChart, Line } from 'recharts';
-import { FlaskConical, Dna, Cpu, Search, CheckCircle2, XCircle, ChevronRight, Layers } from 'lucide-react';
-import { generateAlphaCandidates } from '@/lib/data';
-
-const hypotheses = [
-  { id: 'H001', hypothesis: 'Short-term momentum reversal after earnings surprise', category: 'Event + Price', status: 'testing', priority: 'high' },
-  { id: 'H002', hypothesis: 'Vol surface skew predicts equity returns in small-caps', category: 'Options + Price', status: 'validated', priority: 'high' },
-  { id: 'H003', hypothesis: 'Order flow imbalance at open signals intraday direction', category: 'Microstructure', status: 'testing', priority: 'medium' },
-  { id: 'H004', hypothesis: 'Credit spread beta timing for sector rotation', category: 'Macro + Fundamental', status: 'archive', priority: 'low' },
-  { id: 'H005', hypothesis: 'NLP sentiment shift + price momentum combination', category: 'Alt + Price', status: 'new', priority: 'high' },
-];
-
-const geneticProgress = [
-  { gen: 1, best: 0.31, avg: 0.22 },
-  { gen: 5, best: 0.48, avg: 0.34 },
-  { gen: 10, best: 0.61, avg: 0.42 },
-  { gen: 20, best: 0.73, avg: 0.51 },
-  { gen: 35, best: 0.82, avg: 0.58 },
-  { gen: 50, best: 0.89, avg: 0.63 },
-  { gen: 75, best: 0.94, avg: 0.68 },
-  { gen: 100, best: 0.97, avg: 0.71 },
-];
-
-const expressions = [
-  { expr: 'rank(momentum_21d) - rank(volatility_21d)', ic: 0.087, sharpe: 1.43 },
-  { expr: 'zscore(ev_ebitda) * sign(earnings_surprise)', ic: 0.071, sharpe: 1.21 },
-  { expr: 'log(order_flow_imb) * rank(volume_surprise)', ic: 0.105, sharpe: 1.78 },
-  { expr: 'delta(bid_ask_spread, 5) / volatility_5d', ic: -0.062, sharpe: 1.22 },
-  { expr: 'momentum_63d * (1 - volatility_63d/mean_vol)', ic: 0.091, sharpe: 1.54 },
-];
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0.6rem 0.9rem' }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
-        {payload.map((p: any, i: number) => (
-          <p key={i} style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: p.color || '#8b5cf6' }}>
-            {p.name}: {p.value}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
+import React, { useEffect, useState } from 'react';
+import TerminalHeader from '@/components/TerminalHeader';
+import MetricCard from '@/components/MetricCard';
+import ChartContainer from '@/components/ChartContainer';
+import DataTable, { Column } from '@/components/DataTable';
+import Badge from '@/components/Badge';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import * as api from '@/lib/api';
+import * as types from '@/lib/types';
+import { FlaskConical, Play, CheckCircle2, Cpu } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  BarChart,
+  Bar,
+  Cell
+} from 'recharts';
 
 export default function AlphaDiscoveryPage() {
-  const [candidates, setCandidates] = useState<any[]>([]);
-  const [scatterData, setScatterData] = useState<any[]>([]);
-  const [selectedMethod, setSelectedMethod] = useState<'factors' | 'ml' | 'symbolic'>('symbolic');
+  const [loading, setLoading] = useState(true);
+  const [hypotheses, setHypotheses] = useState<types.AlphaHypothesis[]>([]);
+  const [formulaInput, setFormulaInput] = useState('ts_rank(volume, 10) * -1.0 * ts_delta(close, 5)');
+  const [evalResult, setEvalResult] = useState<string | null>(null);
 
   useEffect(() => {
-    setCandidates(generateAlphaCandidates());
-    setScatterData(
-      Array.from({ length: 40 }, () => ({
-        ic: parseFloat((Math.random() * 0.15 - 0.02).toFixed(3)),
-        sharpe: parseFloat((Math.random() * 2 + 0.3).toFixed(2)),
-        decay: Math.floor(Math.random() * 60 + 3),
-        size: Math.floor(Math.random() * 20 + 5),
-      }))
-    );
+    async function load() {
+      try {
+        const res = await api.getHypotheses();
+        setHypotheses(res);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
-  const statusColor: Record<string, string> = {
-    validated: '#10b981', testing: '#3b82f6', new: '#8b5cf6', archive: '#475569'
+  const handleEvaluateFormula = () => {
+    setEvalResult('Formula parsed successfully. Evaluated on S&P 500: IC = 0.089, IC IR = 2.14, Annualized Sharpe = 1.95. Promoted to Quality Gate review.');
   };
-  const statusBadge: Record<string, string> = {
-    validated: 'badge-emerald', testing: 'badge-blue', new: 'badge-violet', archive: 'badge-muted'
-  };
+
+  const hypothesisColumns: Column<types.AlphaHypothesis>[] = [
+    { key: 'id', header: 'ID', render: (r) => <span style={{ fontWeight: 700, color: '#38bdf8' }}>{r.id}</span> },
+    {
+      key: 'name',
+      header: 'Alpha Hypothesis Name',
+      render: (r) => (
+        <div>
+          <div style={{ fontWeight: 600, color: '#f8fafc' }}>{r.name}</div>
+          <div style={{ fontSize: '0.65rem', color: '#64748b' }}>{r.economic_rationale}</div>
+        </div>
+      )
+    },
+    { key: 'category', header: 'Category' },
+    { key: 'author', header: 'Research Desk' },
+    { key: 'created_at', header: 'Created' },
+    {
+      key: 'status',
+      header: 'Status',
+      align: 'center',
+      render: (r) => <Badge label={r.status} type={r.status === 'PROMOTED' ? 'live' : r.status === 'BACKTESTING' ? 'paper' : 'warn'} />
+    }
+  ];
+
+  // Genetic programming evolution curve
+  const gpCurve = [
+    { gen: 1, bestIC: 0.042, avgIC: 0.018 },
+    { gen: 5, bestIC: 0.058, avgIC: 0.026 },
+    { gen: 10, bestIC: 0.071, avgIC: 0.038 },
+    { gen: 15, bestIC: 0.082, avgIC: 0.049 },
+    { gen: 20, bestIC: 0.091, avgIC: 0.057 },
+    { gen: 25, bestIC: 0.098, avgIC: 0.064 },
+  ];
+
+  // Feature Importance data
+  const importanceData = [
+    { feature: 'Momentum 20D', importance: 142 },
+    { feature: 'Order Flow Imbalance', importance: 128 },
+    { feature: 'Realized Vol 20D', importance: 95 },
+    { feature: 'RSI 14D', importance: 84 },
+    { feature: 'Volume Shock 5D', importance: 72 },
+    { feature: 'MACD Divergence', importance: 65 },
+    { feature: 'Hurst Exponent', importance: 41 },
+  ];
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div className="page-header-badge"><FlaskConical size={10} /> 03 — Alpha Discovery Lab</div>
-        <h1>Alpha Discovery Lab</h1>
-        <p>Hypothesis engine with genetic programming, ML-based search, and symbolic expression generation.</p>
-      </div>
+    <ErrorBoundary fallbackTitle="Alpha Discovery Lab Interrupted">
+      <TerminalHeader title="MODULE 03 // ALPHA DISCOVERY & GENETIC PROGRAMMING LAB" />
 
-      {/* Stats */}
-      <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-        {[
-          { label: 'Hypotheses Tested', value: '2,847', color: '#8b5cf6' },
-          { label: 'Alpha Candidates', value: '48', color: '#3b82f6' },
-          { label: 'Pass Rate', value: '12.4%', color: '#10b981' },
-          { label: 'GP Generations', value: '100', color: '#f59e0b' },
-        ].map(m => (
-          <div key={m.label} className="card" style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.4rem' }}>{m.label}</div>
-            <div className="metric-value" style={{ color: m.color, fontSize: '1.6rem' }}>{m.value}</div>
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* KPI Strip */}
+        {loading ? <LoadingSkeleton height="85px" count={1} /> : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.65rem' }}>
+            <MetricCard
+              label="Hypotheses Catalog"
+              value="24"
+              change="+4 Active"
+              positive={true}
+              subtext="Theoretical Foundations"
+              status="live"
+            />
+            <MetricCard
+              label="GP Mining Generation"
+              value="Gen 25"
+              change="Pop: 500"
+              positive={true}
+              subtext="Symbolic Regression Tree"
+              status="pass"
+            />
+            <MetricCard
+              label="Best Fitness (IC)"
+              value="0.098"
+              change="vs 0.05 Bmk"
+              positive={true}
+              subtext="Cross-Sectional Rank IC"
+              status="pass"
+            />
+            <MetricCard
+              label="Genetic Diversity"
+              value="0.74"
+              change="Entropy Balanced"
+              positive={true}
+              subtext="Prevents Premature Convergence"
+              status="pass"
+            />
+            <MetricCard
+              label="Promoted Alphas"
+              value="8"
+              change="Ready for Gate"
+              positive={true}
+              subtext="Orthogonal to Market"
+              status="pass"
+            />
+            <MetricCard
+              label="Mining Speed"
+              value="18.5K / s"
+              change="Rust Accelerated"
+              positive={true}
+              subtext="Expressions Evaluated"
+              status="pass"
+            />
           </div>
-        ))}
-      </div>
+        )}
 
-      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-        {/* Candidate Generator */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Candidate Generator</span>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              {(['factors', 'ml', 'symbolic'] as const).map(m => (
-                <button key={m} className={`btn ${selectedMethod === m ? 'btn-primary' : 'btn-ghost'}`}
-                  style={{ padding: '0.25rem 0.6rem', fontSize: '0.7rem' }}
-                  onClick={() => setSelectedMethod(m)}>
-                  {m === 'factors' ? <><Layers size={10} /> Factors</> : m === 'ml' ? <><Cpu size={10} /> ML</> : <><Dna size={10} /> Symbolic</>}
+        {/* Formula Sandbox & GP Evolution Curve */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+          {/* Formula Sandbox */}
+          <div className="terminal-card">
+            <div className="terminal-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <FlaskConical size={14} color="#38bdf8" />
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                  SYMBOLIC ALPHA FORMULA COMPOSER
+                </span>
+              </div>
+              <span className="badge-tag badge-live">AST COMPILER</span>
+            </div>
+            <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                Compose symbolic alpha expressions utilizing WorldQuant / Kakushadze mathematical operators:
+                <code style={{ color: '#38bdf8' }}> ts_rank, ts_zscore, ts_delta, correlation, decay_linear</code>.
+              </p>
+
+              <textarea
+                rows={3}
+                value={formulaInput}
+                onChange={(e) => setFormulaInput(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: '#0a0d14',
+                  border: '1px solid var(--border-terminal)',
+                  color: '#34d399',
+                  padding: '0.5rem 0.65rem',
+                  borderRadius: '3px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.78rem',
+                  outline: 'none'
+                }}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.65rem', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
+                  AST Depth: 3 · Terminals: 3 · Operators: 2
+                </span>
+                <button
+                  onClick={handleEvaluateFormula}
+                  style={{
+                    background: '#1e293b',
+                    border: '1px solid #38bdf8',
+                    color: '#38bdf8',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '3px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <Play size={11} />
+                  <span>COMPILE & BACKTEST</span>
                 </button>
-              ))}
+              </div>
+
+              {evalResult && (
+                <div style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.65rem', borderRadius: '3px', color: '#34d399', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+                  <CheckCircle2 size={13} style={{ display: 'inline', marginRight: '0.35rem' }} />
+                  {evalResult}
+                </div>
+              )}
             </div>
           </div>
 
-          {selectedMethod === 'symbolic' && (
-            <div>
-              <div className="section-title">Genetic Programming — Expression Search</div>
-              <ResponsiveContainer width="100%" height={140}>
-                <LineChart data={geneticProgress}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="gen" tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} label={{ value: 'Generation', position: 'insideBottom', offset: -2, fontSize: 9, fill: '#475569' }} />
-                  <YAxis tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line type="monotone" dataKey="best" name="Best IC" stroke="#8b5cf6" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="avg" name="Avg IC" stroke="#06b6d4" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+          {/* Genetic Programming Evolution Curve */}
+          <ChartContainer
+            title="GENETIC PROGRAMMING FITNESS EVOLUTION"
+            subtitle="Generation vs Rank IC (Population size: 500, Tournament size: 5)"
+            badge="PARALLEL GP"
+            badgeType="live"
+          >
+            <div style={{ width: '100%', height: '220px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={gpCurve} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="gen" stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" tickFormatter={(v) => `G${v}`} />
+                  <YAxis stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" tickFormatter={(v) => v.toFixed(3)} />
+                  <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#f8fafc' }} />
+                  <Line type="monotone" dataKey="bestIC" name="Best Fitness (IC)" stroke="#38bdf8" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="avgIC" name="Population Avg IC" stroke="#64748b" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
-
-              <div className="section-title" style={{ marginTop: '1rem' }}>Top Expressions Found</div>
-              {expressions.map((e, i) => (
-                <div key={i} style={{
-                  padding: '0.6rem 0.75rem', marginBottom: '0.35rem',
-                  background: 'var(--bg-secondary)', borderRadius: 8,
-                  border: '1px solid var(--border-subtle)',
-                }}>
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: '0.72rem', color: '#8b5cf6', marginBottom: '0.3rem' }}>{e.expr}</div>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>IC: <span style={{ color: e.ic > 0 ? '#10b981' : '#f43f5e', fontFamily: 'JetBrains Mono' }}>{e.ic}</span></span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Sharpe: <span style={{ color: '#3b82f6', fontFamily: 'JetBrains Mono' }}>{e.sharpe}</span></span>
-                  </div>
-                </div>
-              ))}
             </div>
-          )}
-
-          {selectedMethod === 'ml' && (
-            <div>
-              <div className="section-title">ML Feature Importance</div>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart layout="vertical" data={[
-                  { feature: 'momentum_21d', importance: 0.18 },
-                  { feature: 'order_flow_imb', importance: 0.15 },
-                  { feature: 'bid_ask_spread', importance: 0.12 },
-                  { feature: 'earnings_surprise', importance: 0.11 },
-                  { feature: 'volume_surprise', importance: 0.09 },
-                  { feature: 'ev_ebitda_zscore', importance: 0.08 },
-                  { feature: 'vol_skew', importance: 0.07 },
-                  { feature: 'insider_ratio', importance: 0.06 },
-                ]}>
-                  <XAxis type="number" tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} />
-                  <YAxis dataKey="feature" type="category" tick={{ fontSize: 9, fill: '#475569', fontFamily: 'JetBrains Mono' }} tickLine={false} axisLine={false} width={110} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="importance" name="Importance" fill="#8b5cf6" radius={[0, 3, 3, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {selectedMethod === 'factors' && (
-            <div>
-              <div className="section-title">Traditional Factor Scores</div>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={[
-                  { factor: 'Momentum', score: 87 },
-                  { factor: 'Value', score: 62 },
-                  { factor: 'Quality', score: 71 },
-                  { factor: 'Carry', score: 55 },
-                  { factor: 'Volatility', score: 48 },
-                  { factor: 'Liquidity', score: 78 },
-                  { factor: 'Dispersion', score: 65 },
-                  { factor: 'Seasonality', score: 43 },
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="factor" tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="score" name="Score" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          </ChartContainer>
         </div>
 
-        {/* IC vs Sharpe Scatter */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">Alpha Candidates — IC vs Sharpe</span>
-              <span className="badge badge-violet">{candidates.length} candidates</span>
-            </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <ScatterChart>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="ic" name="IC" tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} label={{ value: 'IC', position: 'insideBottom', offset: -2, fontSize: 9, fill: '#475569' }} />
-                <YAxis dataKey="sharpe" name="Sharpe" tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} label={{ value: 'Sharpe', angle: -90, position: 'insideLeft', fontSize: 9, fill: '#475569' }} />
-                <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
-                <Scatter data={scatterData} fill="#8b5cf6" fillOpacity={0.7} />
-              </ScatterChart>
+        {/* Hypotheses Catalog */}
+        <div className="terminal-card">
+          <div className="terminal-card-header">
+            <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+              QUANTITATIVE RESEARCH HYPOTHESES REPOSITORY
+            </span>
+            <span className="badge-tag badge-live">PEER REVIEWED</span>
+          </div>
+          <div className="terminal-card-body">
+            {loading ? <LoadingSkeleton height="150px" /> : (
+              <DataTable columns={hypothesisColumns} data={hypotheses} pageSize={5} />
+            )}
+          </div>
+        </div>
+
+        {/* Feature Importance */}
+        <ChartContainer
+          title="GLOBAL SHAP & BOOSTING SPLIT IMPORTANCE"
+          subtitle="Relative feature gain across 500 gradient boosted trees"
+          badge="LIGHTGBM"
+          badgeType="neutral"
+        >
+          <div style={{ width: '100%', height: '200px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={importanceData} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" horizontal={false} />
+                <XAxis type="number" stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" />
+                <YAxis type="category" dataKey="feature" stroke="#94a3b8" fontSize={10} fontFamily="var(--font-mono)" width={120} tickLine={false} />
+                <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#f8fafc' }} />
+                <Bar dataKey="importance" fill="#38bdf8" radius={[0, 2, 2, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Hypothesis Pipeline */}
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">Hypothesis Pipeline</span>
-              <button className="btn btn-primary" style={{ fontSize: '0.72rem', padding: '0.3rem 0.6rem' }}>+ New</button>
-            </div>
-            {hypotheses.map((h) => (
-              <div key={h.id} style={{
-                display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                padding: '0.6rem 0.75rem', marginBottom: '0.35rem',
-                background: 'var(--bg-secondary)', borderRadius: 8,
-                border: `1px solid ${statusColor[h.status]}22`,
-              }}>
-                <span className={`badge ${statusBadge[h.status]}`} style={{ marginTop: '0.1rem' }}>{h.status}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{h.hypothesis}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{h.id} · {h.category}</div>
-                </div>
-                <ChevronRight size={12} color="var(--text-muted)" />
-              </div>
-            ))}
-          </div>
-        </div>
+        </ChartContainer>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

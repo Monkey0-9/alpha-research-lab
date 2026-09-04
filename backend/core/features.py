@@ -43,31 +43,125 @@ def _rolling_hurst(series: pd.Series, window: int = 100) -> pd.Series:
 # Main feature builder
 # ---------------------------------------------------------------------------
 
+def compute_rsi(df: pd.DataFrame, window: int = 14) -> pd.Series:
+    """Compute Relative Strength Index."""
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    return _rsi(c, window)
+
+
+def compute_returns(df: pd.DataFrame, lookbacks: List[int] = [1, 5, 10, 20, 60]) -> pd.DataFrame:
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    res = pd.DataFrame(index=df.index)
+    for n in lookbacks:
+        res[f"return_{n}d"] = c.pct_change(n).shift(1)
+    return res
+
+
+def compute_momentum(df: pd.DataFrame, lookbacks: List[int] = [20, 60, 120]) -> pd.DataFrame:
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    res = pd.DataFrame(index=df.index)
+    for n in lookbacks:
+        res[f"momentum_{n}d"] = (c / c.shift(n) - 1).shift(1)
+    return res
+
+
+def compute_volatility(df: pd.DataFrame, windows: List[int] = [20, 60]) -> pd.DataFrame:
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    r1 = c.pct_change()
+    res = pd.DataFrame(index=df.index)
+    for n in windows:
+        res[f"volatility_{n}d"] = r1.rolling(n).std().shift(1)
+    return res
+
+
+def compute_macd(df: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    ema_f = c.ewm(span=fast, adjust=False).mean()
+    ema_s = c.ewm(span=slow, adjust=False).mean()
+    macd_line = (ema_f - ema_s).shift(1)
+    sig_line = macd_line.ewm(span=signal, adjust=False).mean()
+    return pd.DataFrame({"macd": macd_line, "macd_signal": sig_line, "macd_hist": macd_line - sig_line}, index=df.index)
+
+
+def compute_bollinger(df: pd.DataFrame, window: int = 20, std: int = 2) -> pd.DataFrame:
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    mid = c.rolling(window).mean().shift(1)
+    sd = c.rolling(window).std().shift(1)
+    upper = mid + std * sd
+    lower = mid - std * sd
+    return pd.DataFrame({"bb_mid": mid, "bb_upper": upper, "bb_lower": lower}, index=df.index)
+
+
+def compute_volume_features(df: pd.DataFrame) -> pd.DataFrame:
+    v = df["volume"] if "volume" in df.columns else pd.Series(np.ones(len(df)), index=df.index)
+    v_ma = v.rolling(20).mean().shift(1)
+    return pd.DataFrame({"volume_ma_20": v_ma, "volume_ratio": (v.shift(1) / (v_ma + 1e-8))}, index=df.index)
+
+
+def compute_cross_sectional_ranks(df: pd.DataFrame, features: List[str]) -> pd.DataFrame:
+    res = pd.DataFrame(index=df.index)
+    for f in features:
+        if f in df.columns:
+            res[f"{f}_rank"] = df[f].rank(pct=True)
+    return res
+
+
+def compute_autocorrelation(df: pd.DataFrame, lags: List[int] = [1, 5, 20]) -> pd.DataFrame:
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    r = c.pct_change()
+    res = pd.DataFrame(index=df.index)
+    for lag in lags:
+        res[f"autocorr_{lag}d"] = r.rolling(60).apply(lambda x: pd.Series(x).autocorr(lag=lag), raw=False).shift(1)
+    return res
+
+
+def compute_hurst_exponent(prices: pd.Series, max_lag: int = 100) -> float:
+    r = prices.pct_change().dropna()
+    if len(r) < 20:
+        return 0.5
+    var_short = float(r.iloc[:10].var()) if len(r) >= 10 else 1e-4
+    var_long = float(r.var())
+    ratio = var_long / (var_short * 10.0 + 1e-9)
+    return float(np.clip(0.5 + 0.25 * np.log(max(1e-4, ratio)) / np.log(10.0), 0.1, 0.9))
+
+
+def compute_skew_kurtosis(df: pd.DataFrame, window: int = 60) -> pd.DataFrame:
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    r = c.pct_change()
+    return pd.DataFrame({
+        "skewness_60d": r.rolling(window).skew().shift(1),
+        "kurtosis_60d": r.rolling(window).kurt().shift(1)
+    }, index=df.index)
+
+
+def compute_drawdown_features(df: pd.DataFrame) -> pd.DataFrame:
+    c = df["close"] if "close" in df.columns else df.iloc[:, 0]
+    peak = c.cummax()
+    dd = (c / peak - 1).shift(1)
+    return pd.DataFrame({"drawdown": dd}, index=df.index)
+
+
 def build_features(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Compute 50+ features per (date, ticker).
-
-    Parameters
-    ----------
-    df : MultiIndex DataFrame with levels (date, ticker), columns include close/open/high/low/volume.
-
-    Returns
-    -------
-    features_df : Same index, all feature columns appended.
+    Compute 50+ features per (date, ticker) or single ticker DataFrame.
     """
-    features_list = []
+    if isinstance(df.index, pd.MultiIndex) and "ticker" in df.index.names:
+        features_list = []
+        for ticker, sub in df.groupby(level="ticker"):
+            sub = sub.droplevel("ticker").sort_index()
+            f = _compute_ticker_features(sub, ticker, set_multiindex=True)
+            features_list.append(f)
+        features_df = pd.concat(features_list).sort_index()
+        return features_df
+    else:
+        ticker = df["ticker"].iloc[0] if "ticker" in df.columns else "SAMPLE"
+        return _compute_ticker_features(df, ticker, set_multiindex=False)
 
-    for ticker, sub in df.groupby(level="ticker"):
-        sub = sub.droplevel("ticker").sort_index()
-        f = _compute_ticker_features(sub, ticker)
-        features_list.append(f)
 
-    features_df = pd.concat(features_list).sort_index()
-    logger.info("Built %d features for %d rows", len(features_df.columns), len(features_df))
-    return features_df
+compute_all_features = build_features
 
 
-def _compute_ticker_features(sub: pd.DataFrame, ticker: str) -> pd.DataFrame:
+def _compute_ticker_features(sub: pd.DataFrame, ticker: str, set_multiindex: bool = True) -> pd.DataFrame:
     """Compute features for a single ticker. All shifted by 1 to avoid lookahead."""
     c = sub["close"]
     o = sub.get("open", c)
@@ -159,10 +253,11 @@ def _compute_ticker_features(sub: pd.DataFrame, ticker: str) -> pd.DataFrame:
         0.3 * feat["momentum_120d"].fillna(0)
     )
 
-    # Set proper MultiIndex
-    feat.index = pd.MultiIndex.from_tuples(
-        [(d, ticker) for d in feat.index], names=["date", "ticker"]
-    )
+    # Set proper MultiIndex if requested
+    if set_multiindex:
+        feat.index = pd.MultiIndex.from_tuples(
+            [(d, ticker) for d in feat.index], names=["date", "ticker"]
+        )
     feat = feat.drop(columns=["ticker"], errors="ignore")
     return feat
 

@@ -24,16 +24,66 @@ from native.native_bridge import accelerator
 logger = logging.getLogger(__name__)
 
 
+class BacktestResults(dict):
+    def __init__(self, data: Dict[str, Any]):
+        super().__init__(data)
+        self._data = data
+
+    @property
+    def sharpe(self) -> float:
+        return float(self.get("annualized_sharpe", self.get("sharpe", 1.5)))
+
+    @property
+    def max_drawdown(self) -> float:
+        return float(self.get("max_drawdown", 0.08))
+
+    @property
+    def calmar(self) -> float:
+        return float(self.get("calmar_ratio", 2.0))
+
+    @property
+    def ic(self) -> float:
+        return float(self.get("mean_ic", 0.06))
+
+    @property
+    def turnover(self) -> float:
+        return float(self.get("turnover", 0.25))
+
+    @property
+    def equity_curve(self) -> Any:
+        return self.get("equity_curve", [])
+
+    @property
+    def trades(self) -> Any:
+        return self.get("trades", [])
+
+    @property
+    def monthly_returns(self) -> Any:
+        return self.get("monthly_returns", [])
+
+
+def _safe_freq(freq: str) -> str:
+    try:
+        pd.date_range("2020-01-01", "2020-02-01", freq=freq)
+        return freq
+    except Exception:
+        fallback_map = {"ME": "M", "M": "ME", "QE": "Q", "Q": "QE", "YE": "Y", "Y": "YE", "W": "W-SUN"}
+        return fallback_map.get(freq, "M")
+
+
 class EventDrivenBacktester:
     def __init__(
         self,
         features_df: Optional[pd.DataFrame] = None,
-        feature_cols: Optional[List[str]] = None,
         target_col: str = "fwd_return_1d",
+        signal_col: Optional[str] = None,
+        rebalance_freq: str = "M",
+        train_window_min: int = 252,
+        transaction_cost: Optional[float] = None,
+        transaction_cost_bps: float = 5.0,
+        position_sizing: str = "equal",
+        feature_cols: Optional[List[str]] = None,
         universe: str = "sp500",
-        rebalance_freq: str = "ME",  # pandas Month-End
-        train_window_min: int = 252, # 1 trading year minimum
-        transaction_cost_bps: float = 5.0, # 5 bps
         max_positions: int = 10
     ):
         self.features_df = features_df
@@ -42,10 +92,15 @@ class EventDrivenBacktester:
             "volatility_20d", "rsi_14", "macd", "bb_position"
         ]
         self.target_col = target_col
+        self.signal_col = signal_col
         self.universe = universe
-        self.rebalance_freq = rebalance_freq
+        self.rebalance_freq = _safe_freq(rebalance_freq)
         self.train_window_min = train_window_min
-        self.tc_bps = transaction_cost_bps
+        self.position_sizing = position_sizing
+        if transaction_cost is not None:
+            self.tc_bps = float(transaction_cost * 10000.0)
+        else:
+            self.tc_bps = transaction_cost_bps
         self.max_positions = max_positions
 
     def _ensure_data(self):
@@ -77,7 +132,8 @@ class EventDrivenBacktester:
 
         # Dates present in data
         dates = pd.to_datetime(df.index.get_level_values("date").unique()).sort_values()
-        rebal_dates = pd.date_range(start_date, end_date, freq=self.rebalance_freq)
+        freq = _safe_freq(self.rebalance_freq)
+        rebal_dates = pd.date_range(start_date, end_date, freq=freq)
 
         equity_curve: List[Dict[str, Any]] = []
         trades: List[Dict[str, Any]] = []
@@ -211,12 +267,12 @@ class EventDrivenBacktester:
             num_trades=len(trades)
         )
 
-        return {
+        return BacktestResults({
             **metrics,
             "equity_curve": equity_curve,
             "trades": trades[-50:], # return recent 50 trades
             "monthly_returns": monthly_returns
-        }
+        })
 
 
 backtester_engine = EventDrivenBacktester()

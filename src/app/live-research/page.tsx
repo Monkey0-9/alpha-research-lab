@@ -1,208 +1,252 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import TerminalHeader from '@/components/TerminalHeader';
+import MetricCard from '@/components/MetricCard';
+import ChartContainer from '@/components/ChartContainer';
+import DataTable, { Column } from '@/components/DataTable';
+import Badge from '@/components/Badge';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { Activity, Radio, CheckCircle2, ArrowRight } from 'lucide-react';
+import { formatCurrency, formatBps } from '@/lib/utils';
 import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ReferenceLine
 } from 'recharts';
-import { Activity, CheckCircle2, Clock, GitBranch, TrendingUp, Play, Pause } from 'lucide-react';
-import { generatePnL, generateDrawdown, generateICTimeSeries } from '@/lib/data';
 
-const paperTrades = [
-  { id: 'PT-001', alpha: 'Momentum Reversal 21D', started: '2026-07-01', days: 64, sharpe: 1.42, ic: 0.081, pnl: '+$12,840', status: 'promote', color: '#10b981' },
-  { id: 'PT-002', alpha: 'Vol Surface Skew', started: '2026-07-15', days: 50, sharpe: 1.18, ic: 0.069, pnl: '+$7,220', status: 'promote', color: '#10b981' },
-  { id: 'PT-003', alpha: 'Order Flow Imbalance', started: '2026-08-01', days: 33, sharpe: 1.61, ic: 0.097, pnl: '+$18,450', status: 'watching', color: '#3b82f6' },
-  { id: 'PT-004', alpha: 'EV/EBITDA Zscore', started: '2026-08-10', days: 24, sharpe: 0.88, ic: 0.044, pnl: '+$1,240', status: 'watching', color: '#f59e0b' },
-  { id: 'PT-005', alpha: 'Macro Beta Timing', started: '2026-08-20', days: 14, sharpe: 0.31, ic: 0.019, pnl: '-$820', status: 'abort', color: '#f43f5e' },
-];
-
-const productionAlphas = [
-  { id: 'LIVE-001', name: 'Earnings Surprise Drift', live: '2026-03-01', aum: '$2.1M', sharpe: 1.44, ic: 0.078, status: 'healthy' },
-  { id: 'LIVE-002', name: 'Momentum Reversal 14D', live: '2026-01-15', aum: '$3.4M', sharpe: 1.31, ic: 0.071, status: 'healthy' },
-  { id: 'LIVE-003', name: 'Order Flow L2', live: '2025-11-01', aum: '$1.8M', sharpe: 1.67, ic: 0.092, status: 'healthy' },
-  { id: 'LIVE-004', name: 'Value Factor Composite', live: '2025-08-20', aum: '$2.8M', sharpe: 1.12, ic: 0.058, status: 'decay' },
-  { id: 'LIVE-005', name: 'Insider Net Buy', live: '2025-06-10', aum: '$1.2M', sharpe: 0.72, ic: 0.031, status: 'retire' },
-];
-
-const promotionCriteria = [
-  { label: 'Paper Trading Days', required: '≥ 60', current: '64', pass: true },
-  { label: 'OOS Sharpe', required: '≥ 1.0', current: '1.42', pass: true },
-  { label: 'IC in Paper Period', required: '≥ 0.05', current: '0.081', pass: true },
-  { label: 'Correlation to Live Alphas', required: '< 0.6', current: '0.34', pass: true },
-  { label: 'Capacity Check', required: '$5M+', current: '$12M', pass: true },
-  { label: 'Quality Gate Score', required: '≥ 7/9', required2: '', current: '8/9', pass: true },
-];
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0.6rem 0.9rem' }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
-        {payload.map((p: any, i: number) => (
-          <p key={i} style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: p.color || '#8b5cf6' }}>
-            {p.name}: {typeof p.value === 'number' ? p.value.toFixed(4) : p.value}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
+interface SignalItem {
+  timestamp: string;
+  ticker: string;
+  side: 'BUY' | 'SELL';
+  strength: number;
+  predicted_bps: number;
+  urgency: string;
+  confidence: number;
+}
 
 export default function LiveResearchPage() {
-  const [pnlData, setPnlData] = useState<any[]>([]);
-  const [icData, setIcData] = useState<any[]>([]);
-  const [selectedPaper, setSelectedPaper] = useState('PT-001');
+  const [promoted, setPromoted] = useState(false);
 
-  useEffect(() => {
-    const raw = generatePnL(90);
-    setPnlData(generateDrawdown(raw).slice(-60));
-    setIcData(generateICTimeSeries(24));
-  }, []);
+  const signals: SignalItem[] = [
+    { timestamp: '15:58:12 EST', ticker: 'NVDA', side: 'BUY', strength: 0.88, predicted_bps: 45.2, urgency: 'HIGH', confidence: 0.92 },
+    { timestamp: '15:57:45 EST', ticker: 'AAPL', side: 'BUY', strength: 0.65, predicted_bps: 28.5, urgency: 'MEDIUM', confidence: 0.85 },
+    { timestamp: '15:56:30 EST', ticker: 'INTC', side: 'SELL', strength: -0.74, predicted_bps: -36.4, urgency: 'HIGH', confidence: 0.89 },
+    { timestamp: '15:55:10 EST', ticker: 'MSFT', side: 'BUY', strength: 0.58, predicted_bps: 22.1, urgency: 'LOW', confidence: 0.81 },
+    { timestamp: '15:54:02 EST', ticker: 'BA', side: 'SELL', strength: -0.62, predicted_bps: -31.8, urgency: 'MEDIUM', confidence: 0.86 },
+    { timestamp: '15:52:19 EST', ticker: 'AMZN', side: 'BUY', strength: 0.71, predicted_bps: 34.0, urgency: 'MEDIUM', confidence: 0.88 },
+  ];
+
+  const signalColumns: Column<SignalItem>[] = [
+    { key: 'timestamp', header: 'Time (EST)', render: (r) => <span style={{ color: '#64748b' }}>{r.timestamp}</span> },
+    { key: 'ticker', header: 'Ticker', render: (r) => <strong style={{ color: '#f8fafc' }}>{r.ticker}</strong> },
+    {
+      key: 'side',
+      header: 'Action',
+      render: (r) => <Badge label={r.side} type={r.side === 'BUY' ? 'pass' : 'fail'} size="sm" />
+    },
+    {
+      key: 'strength',
+      header: 'Signal Strength',
+      align: 'right',
+      render: (r) => (
+        <span className="tabular-nums" style={{ color: r.strength > 0 ? '#34d399' : '#fb7185', fontWeight: 600 }}>
+          {r.strength > 0 ? '+' : ''}{r.strength.toFixed(2)}
+        </span>
+      )
+    },
+    {
+      key: 'predicted_bps',
+      header: 'Predicted Return',
+      align: 'right',
+      render: (r) => <span className="tabular-nums">{formatBps(r.predicted_bps)}</span>
+    },
+    {
+      key: 'confidence',
+      header: 'Model Confidence',
+      align: 'right',
+      render: (r) => <span className="tabular-nums">{(r.confidence * 100).toFixed(0)}%</span>
+    },
+    {
+      key: 'urgency',
+      header: 'Urgency',
+      align: 'center',
+      render: (r) => <Badge label={r.urgency} type={r.urgency === 'HIGH' ? 'warn' : 'neutral'} size="sm" />
+    }
+  ];
+
+  // Intraday PnL series
+  const intradayPnL = [
+    { time: '09:30', pnl: 0 },
+    { time: '10:00', pnl: 2400 },
+    { time: '10:30', pnl: 1800 },
+    { time: '11:00', pnl: 4500 },
+    { time: '11:30', pnl: 6200 },
+    { time: '12:00', pnl: 5800 },
+    { time: '13:00', pnl: 8100 },
+    { time: '14:00', pnl: 11400 },
+    { time: '15:00', pnl: 14800 },
+    { time: '15:30', pnl: 16900 },
+    { time: '16:00', pnl: 18450 }
+  ];
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div className="page-header-badge"><Activity size={10} /> 11 — Live Research</div>
-        <h1>Live Research</h1>
-        <p>Manage the paper → production pipeline. Monitor paper trading experiments, track promotion criteria, and oversee production alpha health.</p>
-      </div>
+    <ErrorBoundary fallbackTitle="Live Research Simulator Interrupted">
+      <TerminalHeader title="MODULE 11 // LIVE RESEARCH & PAPER TRADING SIMULATOR" />
 
-      {/* Stats */}
-      <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-        {[
-          { label: 'Paper Experiments', value: '5', color: '#8b5cf6' },
-          { label: 'Ready to Promote', value: '2', color: '#10b981' },
-          { label: 'Production Alphas', value: '5', color: '#3b82f6' },
-          { label: 'Total AUM Managed', value: '$11.3M', color: '#f59e0b' },
-        ].map(m => (
-          <div key={m.label} className="card" style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.4rem' }}>{m.label}</div>
-            <div className="metric-value" style={{ color: m.color, fontSize: '1.6rem' }}>{m.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Pipeline Visual */}
-      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
-        <div className="card-header">
-          <span className="card-title">Paper → Production Pipeline</span>
-          <span className="badge badge-violet"><GitBranch size={10} /> Research Lifecycle</span>
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* KPI Strip */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.65rem' }}>
+          <MetricCard
+            label="Live Paper NAV"
+            value="$2.48M"
+            change="+$18.4K Today"
+            positive={true}
+            subtext="Simulated AUM Pool"
+            status="live"
+          />
+          <MetricCard
+            label="Intraday P&L"
+            value="+$18,450"
+            change="+74 bps"
+            deltaBps={74}
+            positive={true}
+            subtext="Realized + Unrealized"
+            status="pass"
+          />
+          <MetricCard
+            label="Canary Signals"
+            value="48"
+            change="6 Pending Exec"
+            positive={true}
+            subtext="Live Pipeline Generated"
+            status="pass"
+          />
+          <MetricCard
+            label="Realized Sharpe"
+            value="2.08"
+            change="Trailing 30D"
+            positive={true}
+            subtext="Live Paper Track Record"
+            status="pass"
+          />
+          <MetricCard
+            label="Simulated Slippage"
+            value="1.4 bps"
+            change="-$258 Total"
+            positive={true}
+            subtext="Almgren-Chriss Applied"
+            status="pass"
+          />
+          <MetricCard
+            label="Deployment Stage"
+            value="CANARY"
+            change="5% Prod Capital"
+            positive={true}
+            subtext="Live Governance Tier"
+            status="live"
+          />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-          {[
-            { stage: 'Hypothesis', count: 12, color: '#475569', icon: '💡' },
-            { stage: 'Backtest', count: 8, color: '#3b82f6', icon: '📊' },
-            { stage: 'Statistical Gate', count: 6, color: '#8b5cf6', icon: '🔬' },
-            { stage: 'Quality Gate', count: 5, color: '#f59e0b', icon: '🛡️' },
-            { stage: 'Paper Trading', count: 5, color: '#f97316', icon: '📝' },
-            { stage: 'Production', count: 5, color: '#10b981', icon: '🚀' },
-          ].map((s, i, arr) => (
-            <div key={s.stage} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-              <div style={{
-                padding: '0.6rem 1rem', borderRadius: 10, background: `${s.color}18`,
-                border: `1px solid ${s.color}30`, textAlign: 'center', minWidth: 100,
-              }}>
-                <div style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>{s.icon}</div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: s.color }}>{s.stage}</div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: s.color, fontFamily: 'JetBrains Mono' }}>{s.count}</div>
-              </div>
-              {i < arr.length - 1 && (
-                <div style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>→</div>
-              )}
+
+        {/* Intraday Cumulative PnL Curve & Live Strategy Card */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.85rem' }}>
+          <ChartContainer
+            title="INTRADAY REALIZED CUMULATIVE P&L TRAJECTORY"
+            subtitle="Market session mark-to-market progression (EST market hours)"
+            badge="MKT CLOSE: +$18.45K"
+            badgeType="live"
+          >
+            <div style={{ width: '100%', height: '240px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={intradayPnL} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="time" stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" />
+                  <YAxis stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`} />
+                  <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#f8fafc' }} formatter={(v: any) => [formatCurrency(Number(v)), 'Intraday PnL']} />
+                  <ReferenceLine y={0} stroke="#475569" />
+                  <Line type="monotone" dataKey="pnl" name="Intraday PnL" stroke="#34d399" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-          ))}
-        </div>
-      </div>
+          </ChartContainer>
 
-      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-        {/* Paper Trading Experiments */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Paper Trading Experiments</span>
-            <span className="badge badge-blue"><Clock size={10} /> 5 Active</span>
-          </div>
-          <div style={{ display: 'grid', gap: '0.4rem' }}>
-            {paperTrades.map(pt => (
-              <div
-                key={pt.id}
-                onClick={() => setSelectedPaper(pt.id)}
+          {/* Strategy Deployment Governance Card */}
+          <div className="terminal-card">
+            <div className="terminal-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Radio size={14} color="#38bdf8" />
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                  STRATEGY GOVERNANCE GATE
+                </span>
+              </div>
+              <span className="badge-tag badge-live">CANARY LIVE</span>
+            </div>
+            <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+              <div>
+                <span style={{ color: '#64748b' }}>STRATEGY:</span>
+                <div style={{ color: '#f8fafc', fontWeight: 700 }}>Alpha-Ensemble-V4 (Cross-Sectional)</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>PAPER DAYS LIVE:</span>
+                <span style={{ color: '#38bdf8', fontWeight: 600 }}>45 Days</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>SHARPE STABILITY:</span>
+                <span style={{ color: '#34d399', fontWeight: 600 }}>2.08 (vs 2.14 IS)</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>MAX LIVE DRAWDOWN:</span>
+                <span style={{ color: '#fb7185', fontWeight: 600 }}>-3.8%</span>
+              </div>
+
+              <button
+                onClick={() => setPromoted(true)}
+                disabled={promoted}
                 style={{
-                  padding: '0.6rem 0.85rem', borderRadius: 8, cursor: 'pointer',
-                  background: selectedPaper === pt.id ? `${pt.color}10` : 'var(--bg-secondary)',
-                  border: `1px solid ${selectedPaper === pt.id ? `${pt.color}30` : 'var(--border-subtle)'}`,
-                  transition: 'all 0.15s',
+                  background: promoted ? 'rgba(16, 185, 129, 0.1)' : '#161f33',
+                  border: `1px solid ${promoted ? '#10b981' : '#38bdf8'}`,
+                  color: promoted ? '#34d399' : '#38bdf8',
+                  padding: '0.45rem',
+                  borderRadius: '3px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: promoted ? 'default' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  marginTop: '0.5rem'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>{pt.alpha}</span>
-                  <span className={`badge ${pt.status === 'promote' ? 'badge-emerald' : pt.status === 'abort' ? 'badge-rose' : 'badge-blue'}`}>
-                    {pt.status === 'promote' ? '↑ Promote' : pt.status === 'abort' ? '✕ Abort' : '● Watching'}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: '1.2rem', fontSize: '0.7rem', fontFamily: 'JetBrains Mono', color: 'var(--text-muted)' }}>
-                  <span>Day {pt.days}</span>
-                  <span style={{ color: '#3b82f6' }}>Sharpe {pt.sharpe}</span>
-                  <span style={{ color: '#8b5cf6' }}>IC {pt.ic}</span>
-                  <span style={{ color: pt.pnl.startsWith('+') ? '#10b981' : '#f43f5e' }}>{pt.pnl}</span>
-                </div>
-              </div>
-            ))}
+                {promoted ? <CheckCircle2 size={12} /> : <ArrowRight size={12} />}
+                <span>{promoted ? 'PROMOTED TO FULL PRODUCTION' : 'PROMOTE TO PRODUCTION'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Promotion Checklist */}
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Promotion Criteria — PT-001</span>
-            <span className="badge badge-emerald"><CheckCircle2 size={10} /> 6 / 6 Pass</span>
+        {/* Live Signal Feed Table */}
+        <div className="terminal-card">
+          <div className="terminal-card-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Activity size={14} color="#38bdf8" />
+              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                REAL-TIME ALPHA SIGNAL EMISSIONS & ORDERS
+              </span>
+            </div>
+            <span className="badge-tag badge-live">STREAMING TICK-BY-TICK</span>
           </div>
-          <div style={{ display: 'grid', gap: '0.35rem', marginBottom: '1rem' }}>
-            {promotionCriteria.map(c => (
-              <div key={c.label} className={`checklist-item ${c.pass ? 'pass' : 'fail'}`}>
-                <CheckCircle2 size={13} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{c.label}</div>
-                  <div style={{ fontSize: '0.68rem', opacity: 0.8 }}>Required: {c.required} · Current: {c.current}</div>
-                </div>
-              </div>
-            ))}
+          <div className="terminal-card-body">
+            <DataTable columns={signalColumns} data={signals} pageSize={6} />
           </div>
-          <button className="btn btn-emerald" style={{ width: '100%', justifyContent: 'center' }}>
-            <Play size={13} /> Promote PT-001 to Production
-          </button>
         </div>
       </div>
-
-      {/* Production Alpha Health */}
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">Production Alpha Health</span>
-          <span className="badge badge-emerald">5 Live Alphas</span>
-        </div>
-        <table className="data-table">
-          <thead>
-            <tr><th>ID</th><th>Alpha</th><th>Live Since</th><th>AUM</th><th>Sharpe</th><th>IC</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            {productionAlphas.map(a => (
-              <tr key={a.id}>
-                <td style={{ fontFamily: 'JetBrains Mono', color: '#8b5cf6' }}>{a.id}</td>
-                <td style={{ color: 'var(--text-primary)', fontFamily: 'inherit' }}>{a.name}</td>
-                <td style={{ color: 'var(--text-muted)' }}>{a.live}</td>
-                <td style={{ color: '#3b82f6' }}>{a.aum}</td>
-                <td style={{ color: a.sharpe >= 1.2 ? '#10b981' : a.sharpe >= 0.8 ? '#f59e0b' : '#f43f5e' }}>{a.sharpe}</td>
-                <td>{a.ic}</td>
-                <td>
-                  <span className={`badge ${a.status === 'healthy' ? 'badge-emerald' : a.status === 'decay' ? 'badge-amber' : 'badge-rose'}`}>
-                    {a.status === 'healthy' ? '● Healthy' : a.status === 'decay' ? '⚠ Decay' : '↓ Retire'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </ErrorBoundary>
   );
 }

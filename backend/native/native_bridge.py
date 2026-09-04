@@ -7,31 +7,40 @@ from __future__ import annotations
 import ctypes
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent
 
+
+def _find_lib(dir_name: str, base_name: str) -> Optional[Path]:
+    for ext in (".dll", ".so", ".dylib"):
+        p = BASE_DIR / dir_name / f"{base_name}{ext}"
+        if p.exists():
+            return p
+    return None
+
+
 # Load C Engine
-C_LIB_PATH = BASE_DIR / "c_engine" / "c_engine.dll"
+C_LIB_PATH = _find_lib("c_engine", "c_engine")
 _c_lib = None
-if C_LIB_PATH.exists():
+if C_LIB_PATH and C_LIB_PATH.exists():
     try:
         _c_lib = ctypes.CDLL(str(C_LIB_PATH))
         _c_lib.c_rolling_mean.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
         _c_lib.c_rolling_std.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
         _c_lib.c_rolling_rsi.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
         _c_lib.c_simulate_pnl.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_double]
-        logger.info("C Native Engine loaded successfully.")
+        logger.info("C Native Engine loaded successfully from %s", C_LIB_PATH)
     except Exception as e:
         logger.warning("Could not load C engine: %s", e)
 
 # Load C++ Engine
-CPP_LIB_PATH = BASE_DIR / "cpp_engine" / "cpp_engine.dll"
+CPP_LIB_PATH = _find_lib("cpp_engine", "cpp_engine")
 _cpp_lib = None
-if CPP_LIB_PATH.exists():
+if CPP_LIB_PATH and CPP_LIB_PATH.exists():
     try:
         _cpp_lib = ctypes.CDLL(str(CPP_LIB_PATH))
         _cpp_lib.cpp_almgren_chriss_trajectory.argtypes = [
@@ -45,14 +54,14 @@ if CPP_LIB_PATH.exists():
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double)
         ]
-        logger.info("C++ Native Engine loaded successfully.")
+        logger.info("C++ Native Engine loaded successfully from %s", CPP_LIB_PATH)
     except Exception as e:
         logger.warning("Could not load C++ engine: %s", e)
 
 # Load Rust Engine
-RUST_LIB_PATH = BASE_DIR / "rust_engine" / "rust_engine.dll"
+RUST_LIB_PATH = _find_lib("rust_engine", "rust_engine")
 _rust_lib = None
-if RUST_LIB_PATH.exists():
+if RUST_LIB_PATH and RUST_LIB_PATH.exists():
     try:
         _rust_lib = ctypes.CDLL(str(RUST_LIB_PATH))
         _rust_lib.rust_sharpe_ratio.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_size_t, ctypes.c_double]

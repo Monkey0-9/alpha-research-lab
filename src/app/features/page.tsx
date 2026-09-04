@@ -1,251 +1,237 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { LineChart, Line, BarChart, Bar, RadarChart, Radar, PolarGrid, PolarAngleAxis, ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Cpu, TrendingUp, Activity, Layers, Sliders } from 'lucide-react';
-import { generateICTimeSeries, generateFactorReturns } from '@/lib/data';
+import React, { useEffect, useState } from 'react';
+import TerminalHeader from '@/components/TerminalHeader';
+import MetricCard from '@/components/MetricCard';
+import ChartContainer from '@/components/ChartContainer';
+import DataTable, { Column } from '@/components/DataTable';
+import Badge from '@/components/Badge';
+import FeatureICBar from '@/components/FeatureICBar';
+import Heatmap from '@/components/Heatmap';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import * as api from '@/lib/api';
+import * as types from '@/lib/types';
+import { Cpu, Zap, Activity } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ReferenceLine
+} from 'recharts';
 
-const featureCategories = ['Price', 'Fundamental', 'Macro', 'Microstructure'];
-
-const factors = {
-  Price: [
-    { name: 'Momentum 1M', ic: 0.072, sharpe: 1.31, decay: 21, turnover: 18 },
-    { name: 'Momentum 3M', ic: 0.085, sharpe: 1.54, decay: 30, turnover: 12 },
-    { name: 'Momentum 12M', ic: 0.091, sharpe: 1.67, decay: 60, turnover: 8 },
-    { name: 'Mean Reversion 5D', ic: -0.062, sharpe: 1.22, decay: 5, turnover: 45 },
-    { name: 'Volatility 21D', ic: -0.048, sharpe: 0.94, decay: 21, turnover: 20 },
-    { name: 'Seasonality', ic: 0.038, sharpe: 0.82, decay: 252, turnover: 4 },
-  ],
-  Fundamental: [
-    { name: 'EV/EBITDA Zscore', ic: 0.062, sharpe: 1.12, decay: 90, turnover: 3 },
-    { name: 'P/B Ratio', ic: 0.055, sharpe: 1.04, decay: 90, turnover: 3 },
-    { name: 'Gross Margin Trend', ic: 0.047, sharpe: 0.93, decay: 120, turnover: 2 },
-    { name: 'ROE Surprise', ic: 0.071, sharpe: 1.28, decay: 45, turnover: 8 },
-    { name: 'Debt/Equity', ic: -0.041, sharpe: 0.78, decay: 90, turnover: 2 },
-    { name: 'Free Cash Flow Yield', ic: 0.058, sharpe: 1.08, decay: 90, turnover: 3 },
-  ],
-  Macro: [
-    { name: 'Rate Sensitivity', ic: 0.035, sharpe: 0.72, decay: 60, turnover: 5 },
-    { name: 'Credit Spread Beta', ic: 0.028, sharpe: 0.61, decay: 30, turnover: 10 },
-    { name: 'Inflation Beta', ic: 0.031, sharpe: 0.67, decay: 90, turnover: 4 },
-    { name: 'Carry', ic: 0.044, sharpe: 0.89, decay: 252, turnover: 2 },
-    { name: 'Dispersion', ic: 0.052, sharpe: 1.01, decay: 21, turnover: 15 },
-  ],
-  Microstructure: [
-    { name: 'Order Flow Imbalance', ic: 0.105, sharpe: 1.78, decay: 5, turnover: 60 },
-    { name: 'Bid-Ask Spread', ic: -0.078, sharpe: 1.41, decay: 10, turnover: 30 },
-    { name: 'Trade Size Imbalance', ic: 0.089, sharpe: 1.56, decay: 3, turnover: 80 },
-    { name: 'Amihud Illiquidity', ic: -0.065, sharpe: 1.18, decay: 21, turnover: 12 },
-    { name: 'Volume Surprise', ic: 0.073, sharpe: 1.32, decay: 5, turnover: 50 },
-  ],
-};
-
-const radarData = [
-  { factor: 'Momentum', value: 87 },
-  { factor: 'Value', value: 62 },
-  { factor: 'Quality', value: 71 },
-  { factor: 'Carry', value: 55 },
-  { factor: 'Volatility', value: 48 },
-  { factor: 'Liquidity', value: 78 },
-  { factor: 'Seasonality', value: 43 },
-  { factor: 'Mean Rev', value: 65 },
-];
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 8, padding: '0.6rem 0.9rem' }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>{label}</p>
-        {payload.map((p: any, i: number) => (
-          <p key={i} style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: p.color || '#3b82f6' }}>
-            {p.name}: {p.value}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
-export default function FeaturesPage() {
-  const [activeTab, setActiveTab] = useState('Price');
-  const [icData, setIcData] = useState<any[]>([]);
-  const [momentum, setMomentum] = useState(21);
-  const [lookback, setLookback] = useState(60);
-  const [featuresList, setFeaturesList] = useState<any[]>([]);
+export default function FeatureFactoryPage() {
+  const [loading, setLoading] = useState(true);
+  const [features, setFeatures] = useState<types.FeatureItem[]>([]);
+  const [selectedFeature, setSelectedFeature] = useState('Momentum 20D');
+  const [lookbackDays, setLookbackDays] = useState(20);
 
   useEffect(() => {
-    fetch('/api/features/ic')
-      .then(r => r.json())
-      .then(json => {
-        if (json && json.results) {
-          setIcData(json.results.map((r: any, idx: number) => ({
-            date: `W-${idx + 1}`,
-            ic: r.ic,
-            value: r.ic,
-            ic_ir: r.ic_ir,
-          })));
-        } else {
-          setIcData(generateICTimeSeries(52));
-        }
-      })
-      .catch(() => {
-        setIcData(generateICTimeSeries(52));
-      });
-
-    fetch('/api/features/list')
-      .then(r => r.json())
-      .then(json => {
-        if (json && json.features) {
-          setFeaturesList(json.features);
-        }
-      })
-      .catch(() => {});
+    async function load() {
+      try {
+        const res = await api.getFeaturesList();
+        setFeatures(res.features);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
-  const currentFactors = factors[activeTab as keyof typeof factors];
+  const featureColumns: Column<types.FeatureItem>[] = [
+    {
+      key: 'name',
+      header: 'Feature Signal Name',
+      render: (r) => (
+        <div>
+          <div style={{ fontWeight: 600, color: '#f8fafc' }}>{r.name}</div>
+          <div style={{ fontSize: '0.65rem', color: '#64748b' }}>{r.description}</div>
+        </div>
+      )
+    },
+    { key: 'category', header: 'Category' },
+    { key: 'lookback', header: 'Window' },
+    {
+      key: 'ic_mean',
+      header: 'Mean IC',
+      align: 'right',
+      render: (r) => <span className="tabular-nums" style={{ fontWeight: 700, color: r.ic_mean >= 0.05 ? '#34d399' : '#38bdf8' }}>{(r.ic_mean * 100).toFixed(2)}%</span>
+    },
+    {
+      key: 'ic_ir',
+      header: 'IC IR',
+      align: 'right',
+      render: (r) => <span className="tabular-nums">{r.ic_ir.toFixed(2)}</span>
+    },
+    {
+      key: 't_statistic',
+      header: 't-Statistic',
+      align: 'right',
+      render: (r) => <span className="tabular-nums" style={{ color: r.t_statistic > 3.0 ? '#34d399' : '#f8fafc' }}>{r.t_statistic.toFixed(2)}</span>
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      align: 'center',
+      render: (r) => <Badge label={r.status} type={r.status === 'PROMOTED' ? 'live' : 'warn'} />
+    }
+  ];
+
+  // Correlation Matrix
+  const corrLabels = ['MOM20D', 'VOL20D', 'RSI14D', 'VOL_SHOCK', 'MACD', 'BB%B'];
+  const corrMatrix = [
+    [1.00, -0.22, 0.45, 0.12, 0.68, 0.52],
+    [-0.22, 1.00, -0.38, 0.42, -0.15, -0.28],
+    [0.45, -0.38, 1.00, -0.05, 0.51, 0.74],
+    [0.12, 0.42, -0.05, 1.00, 0.08, -0.02],
+    [0.68, -0.15, 0.51, 0.08, 1.00, 0.58],
+    [0.52, -0.28, 0.74, -0.02, 0.58, 1.00],
+  ];
+
+  // Rolling IC mock data
+  const rollingICData = Array.from({ length: 48 }, (_, i) => {
+    const d = new Date(Date.now() - (48 - i) * 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    return {
+      date: d,
+      rolling_ic: parseFloat((0.08 + Math.sin(i * 0.3) * 0.04 + (Math.random() - 0.5) * 0.02).toFixed(3)),
+      benchmark_ic: 0.05
+    };
+  });
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div className="page-header-badge"><Cpu size={10} /> 02 — Feature / Signal Factory</div>
-        <h1>Feature / Signal Factory</h1>
-        <p>Generate and evaluate signals across price, fundamental, macro, and microstructure categories.</p>
-      </div>
+    <ErrorBoundary fallbackTitle="Feature Signal Factory Interrupted">
+      <TerminalHeader title="MODULE 02 // FEATURE & SIGNAL ENGINEERING FACTORY" />
 
-      {/* Stats */}
-      <div className="grid-4" style={{ marginBottom: '1.5rem' }}>
-        {[
-          { label: 'Total Features', value: '847', color: '#3b82f6' },
-          { label: 'Active Signals', value: '124', color: '#10b981' },
-          { label: 'Avg IC (60d)', value: '0.063', color: '#8b5cf6' },
-          { label: 'IC Hit Rate', value: '67.3%', color: '#f59e0b' },
-        ].map(m => (
-          <div key={m.label} className="card" style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.4rem' }}>{m.label}</div>
-            <div className="metric-value" style={{ color: m.color, fontSize: '1.6rem' }}>{m.value}</div>
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* KPI Strip */}
+        {loading ? <LoadingSkeleton height="85px" count={1} /> : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.65rem' }}>
+            <MetricCard
+              label="Feature Catalog"
+              value="148"
+              change="+12 Promoted"
+              positive={true}
+              subtext="Cross-Sectional & Time-Series"
+              status="live"
+            />
+            <MetricCard
+              label="Mean Portfolio IC"
+              value="0.082"
+              change="IR: 2.00"
+              positive={true}
+              subtext="Information Coefficient"
+              status="pass"
+            />
+            <MetricCard
+              label="Top Feature IC"
+              value="0.098"
+              change="OFI Intraday"
+              positive={true}
+              subtext="Order Book Depth Flow"
+              status="pass"
+            />
+            <MetricCard
+              label="Mean t-Statistic"
+              value="3.84"
+              change="p < 0.0001"
+              positive={true}
+              subtext="Robust Significance"
+              status="pass"
+            />
+            <MetricCard
+              label="Significant Signals"
+              value="87.5%"
+              change="|t| > 2.0 Cutoff"
+              positive={true}
+              subtext="Passed False Discovery Test"
+              status="pass"
+            />
+            <MetricCard
+              label="Max Pairwise Corr"
+              value="0.74"
+              change="RSI vs BB%B"
+              positive={false}
+              subtext="Clustered via HRP"
+              status="pass"
+            />
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* Parameter Controls + IC Chart */}
-      <div className="grid-2" style={{ marginBottom: '1.5rem' }}>
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Signal Parameters</span>
-            <Sliders size={14} color="var(--text-muted)" />
-          </div>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Momentum Window</span>
-              <span style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: '#3b82f6' }}>{momentum}D</span>
+        {/* Feature Catalog Table */}
+        <div className="terminal-card">
+          <div className="terminal-card-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Cpu size={14} color="#38bdf8" />
+              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                ALPHA SIGNAL & PREDICTIVE FEATURE INVENTORY
+              </span>
             </div>
-            <input type="range" min={5} max={252} value={momentum} onChange={e => setMomentum(+e.target.value)} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>5D</span>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>252D</span>
-            </div>
+            <span className="badge-tag badge-pass">PRODUCTION PROMOTED</span>
           </div>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>IC Lookback</span>
-              <span style={{ fontSize: '0.8rem', fontFamily: 'JetBrains Mono', color: '#10b981' }}>{lookback}D</span>
-            </div>
-            <input type="range" min={20} max={252} value={lookback} onChange={e => setLookback(+e.target.value)} />
+          <div className="terminal-card-body">
+            {loading ? <LoadingSkeleton height="160px" /> : (
+              <DataTable columns={featureColumns} data={features} searchKey="name" searchPlaceholder="Filter features..." pageSize={6} />
+            )}
           </div>
+        </div>
 
-          <div style={{ marginTop: '1rem' }}>
-            <div className="section-title">Factor Scores (Radar)</div>
-            <ResponsiveContainer width="100%" height={200}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="rgba(255,255,255,0.06)" />
-                <PolarAngleAxis dataKey="factor" tick={{ fontSize: 10, fill: '#475569' }} />
-                <Radar name="Score" dataKey="value" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} strokeWidth={1.5} />
-              </RadarChart>
+        {/* Predictive Power (IC Bar) & Feature Correlation Heatmap */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+          <ChartContainer
+            title="FEATURE INFORMATION COEFFICIENT (IC) RANKING"
+            subtitle="Spearman rank correlation against 1-day forward returns (|t| > 2.0)"
+            badge="BENCHMARK IC: 0.05"
+            badgeType="live"
+          >
+            {loading ? <LoadingSkeleton height="280px" /> : (
+              <FeatureICBar
+                data={features.map((f) => ({ feature: f.name.slice(0, 16), ic: f.ic_mean, t_stat: f.t_statistic }))}
+                height={280}
+              />
+            )}
+          </ChartContainer>
+
+          <div className="terminal-card">
+            <div className="terminal-card-header">
+              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                PAIRWISE FEATURE CORRELATION MATRIX
+              </span>
+              <span className="badge-tag badge-neutral">ORTHOGONALITY CHECK</span>
+            </div>
+            <div className="terminal-card-body">
+              <Heatmap labels={corrLabels} matrix={corrMatrix} />
+            </div>
+          </div>
+        </div>
+
+        {/* Rolling IC Time-Series */}
+        <ChartContainer
+          title="ROLLING 20-DAY INFORMATION COEFFICIENT (MOMENTUM 20D)"
+          subtitle="Temporal stability tracking across varying volatility regimes"
+          badge="STABILITY: 88%"
+          badgeType="live"
+        >
+          <div style={{ width: '100%', height: '220px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={rollingICData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
+                <XAxis dataKey="date" stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" />
+                <YAxis stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" domain={[-0.05, 0.15]} tickFormatter={(v) => v.toFixed(2)} />
+                <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#f8fafc' }} />
+                <ReferenceLine y={0.05} stroke="#34d399" strokeDasharray="3 3" label={{ value: 'Target IC: 0.05', fill: '#34d399', fontSize: 10, fontFamily: 'var(--font-mono)' }} />
+                <ReferenceLine y={0} stroke="#475569" />
+                <Line type="monotone" dataKey="rolling_ic" name="Rolling IC (20D)" stroke="#38bdf8" strokeWidth={1.8} dot={false} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <span className="card-title">Rolling IC / Rank IC</span>
-            <span className="badge badge-blue">52 weeks</span>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={icData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} interval={12} />
-              <YAxis tick={{ fontSize: 9, fill: '#475569' }} tickLine={false} axisLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="ic" name="IC" stroke="#3b82f6" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="rankIC" name="Rank IC" stroke="#10b981" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-            </LineChart>
-          </ResponsiveContainer>
-
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#3b82f6', fontFamily: 'JetBrains Mono' }}>0.063</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Mean IC</div>
-            </div>
-            <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981', fontFamily: 'JetBrains Mono' }}>3.74</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>IC t-stat</div>
-            </div>
-            <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#8b5cf6', fontFamily: 'JetBrains Mono' }}>0.41</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>IC IR</div>
-            </div>
-          </div>
-        </div>
+        </ChartContainer>
       </div>
-
-      {/* Factor Table with Tabs */}
-      <div className="card">
-        <div className="card-header">
-          <span className="card-title">Signal Library</span>
-          <div className="tab-bar" style={{ marginBottom: 0 }}>
-            {featureCategories.map(t => (
-              <button key={t} className={`tab-btn ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>{t}</button>
-            ))}
-          </div>
-        </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Signal Name</th>
-              <th>IC (60d)</th>
-              <th>Sharpe</th>
-              <th>Decay (days)</th>
-              <th>Turnover %</th>
-              <th>Strength</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentFactors.map((f) => (
-              <tr key={f.name}>
-                <td style={{ color: 'var(--text-primary)', fontFamily: 'inherit', fontWeight: 500 }}>{f.name}</td>
-                <td style={{ color: f.ic > 0 ? '#10b981' : '#f43f5e' }}>{f.ic.toFixed(3)}</td>
-                <td style={{ color: '#3b82f6' }}>{f.sharpe.toFixed(2)}</td>
-                <td>{f.decay}</td>
-                <td>{f.turnover}%</td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div className="progress-bar" style={{ flex: 1 }}>
-                      <div className="progress-fill" style={{
-                        width: `${Math.abs(f.ic) * 1000}%`,
-                        background: f.ic > 0 ? '#10b981' : '#f43f5e',
-                      }} />
-                    </div>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', minWidth: 30 }}>
-                      {(Math.abs(f.ic) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </ErrorBoundary>
   );
 }

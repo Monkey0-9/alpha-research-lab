@@ -125,3 +125,31 @@ def test_dashboard_summary():
     data = res.json()
     assert "portfolio" in data
     assert "live_paper_pnl" in data
+
+
+def test_alpha_discovery_endpoints():
+    res_hyp = client.get("/api/alpha-discovery/hypotheses")
+    assert res_hyp.status_code == 200
+    assert len(res_hyp.json()) > 0
+
+    res_gp = client.post("/api/alpha-discovery/gp", json={"population_size": 20, "generations": 2})
+    assert res_gp.status_code == 200
+    assert "best_formula" in res_gp.json()
+
+
+def test_statistical_engine_endpoints():
+    res_mtc = client.get("/api/statistical-engine/mtc")
+    assert res_mtc.status_code == 200
+    assert "bonferroni_significant" in res_mtc.json()
+
+    res_dsr = client.post("/api/statistical-engine/dsr", json={"sharpe": 1.65, "n_trials": 100})
+    assert res_dsr.status_code == 200
+    assert "deflated_sharpe" in res_dsr.json()
+
+
+def test_backtest_run():
+    res = client.post("/api/backtest/run", json={"start_date": "2022-01-01", "end_date": "2023-12-31", "model_type": "lightgbm"})
+    assert res.status_code == 200
+    data = res.json()
+    assert "sharpe" in data or "annualized_sharpe" in data
+
