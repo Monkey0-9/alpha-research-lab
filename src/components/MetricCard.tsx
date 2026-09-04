@@ -1,7 +1,5 @@
 'use client';
-
 import React from 'react';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 interface MetricCardProps {
   label: string;
@@ -14,6 +12,7 @@ interface MetricCardProps {
   subtext?: string;
   status?: 'pass' | 'warn' | 'fail' | 'live' | 'neutral';
   tooltip?: string;
+  highlight?: boolean;  // Yellow highlight like Bloomberg
 }
 
 export default function MetricCard({
@@ -25,51 +24,67 @@ export default function MetricCard({
   benchmark,
   benchmarkLabel = 'BMK',
   subtext,
-  status = 'neutral'
+  status = 'neutral',
+  highlight = false,
 }: MetricCardProps) {
   const isPositive = positive ?? (deltaBps !== undefined ? deltaBps >= 0 : undefined);
+  const changeColor = isPositive === undefined ? '#AAAAAA' : isPositive ? '#00FF41' : '#FF3333';
+
+  // Status dot color
+  const dotColor =
+    status === 'pass' || status === 'live' ? '#00FF41' :
+    status === 'warn' ? '#FF6600' :
+    status === 'fail' ? '#FF3333' : '#444444';
 
   return (
-    <div className="terminal-card" style={{ padding: '0.85rem 1rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-        <span style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-          {label}
-        </span>
-        {status !== 'neutral' && (
-          <span className={`status-indicator-dot ${status === 'pass' || status === 'live' ? 'live' : status === 'warn' ? 'warn' : 'fail'}`} />
-        )}
+    <div
+      className="bb-metric"
+      style={highlight ? { border: '1px solid #FFFF00', background: '#0d0d00' } : {}}
+    >
+      {/* Label row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+        <span className="bb-metric-label">{label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          {status !== 'neutral' && (
+            <span style={{
+              width: 7, height: 7, borderRadius: 0,
+              background: dotColor,
+              display: 'inline-block',
+              boxShadow: `0 0 5px ${dotColor}`,
+              flexShrink: 0,
+            }} />
+          )}
+        </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.35rem' }}>
-        <div style={{ fontSize: '1.45rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em', color: '#f8fafc' }} className="tabular-nums">
-          {value}
-        </div>
+      {/* Main Value */}
+      <div className="bb-metric-value">
+        {value}
+      </div>
 
-        {change && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.15rem',
-            fontSize: '0.72rem',
-            fontFamily: 'var(--font-mono)',
-            fontWeight: 600,
-            color: isPositive ? '#34d399' : '#fb7185'
-          }}>
-            {isPositive ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
-            <span>{change}</span>
-            {deltaBps !== undefined && (
-              <span style={{ opacity: 0.8, fontSize: '0.65rem' }}>({deltaBps > 0 ? '+' : ''}{deltaBps.toFixed(0)} bps)</span>
+      {/* Change */}
+      {change && (
+        <div className={`bb-metric-change ${isPositive ? 'pos' : isPositive === false ? 'neg' : 'neutral'}`}>
+          {isPositive ? '▲' : isPositive === false ? '▼' : '—'} {change}
+          {deltaBps !== undefined && (
+            <span style={{ color: '#666', fontSize: '0.62rem', marginLeft: '0.3rem', fontWeight: 400 }}>
+              ({deltaBps > 0 ? '+' : ''}{deltaBps.toFixed(0)}bp)
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Sub-row */}
+      {(subtext || benchmark !== undefined) && (
+        <div className="bb-metric-sub">
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {subtext && <span>{subtext}</span>}
+            {benchmark !== undefined && (
+              <span style={{ color: '#666' }}>
+                {benchmarkLabel}: <span style={{ color: '#AAAAAA' }}>{benchmark}</span>
+              </span>
             )}
           </div>
-        )}
-      </div>
-
-      {(benchmark !== undefined || subtext) && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', paddingTop: '0.25rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-          {subtext && <span>{subtext}</span>}
-          {benchmark !== undefined && (
-            <span>{benchmarkLabel}: <span style={{ color: 'var(--text-secondary)' }}>{benchmark}</span></span>
-          )}
         </div>
       )}
     </div>

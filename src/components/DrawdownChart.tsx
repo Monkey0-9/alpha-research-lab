@@ -1,85 +1,83 @@
 'use client';
-
 import React from 'react';
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ReferenceLine
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
-
-interface DrawdownPoint {
-  date: string;
-  drawdown: number; // e.g. -0.05 for -5% or -5.0
-}
+import type { ChartTooltipProps } from '@/lib/types';
 
 interface DrawdownChartProps {
-  data: DrawdownPoint[];
+  data: Array<{ date: string; drawdown: number }>;
   height?: number;
+  limitPct?: number;
 }
 
-export default function DrawdownChart({ data, height = 200 }: DrawdownChartProps) {
-  // Normalize if drawdown is fraction vs percentage
-  const formattedData = data.map((d) => ({
-    date: d.date,
-    drawdown: Math.abs(d.drawdown) <= 1.0 ? -(Math.abs(d.drawdown) * 100) : -(Math.abs(d.drawdown))
-  }));
+function BBTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null;
+  const val = Number(payload[0]?.value ?? 0);
+  return (
+    <div style={{
+      background: '#0a0500', border: '1px solid #FF6600',
+      padding: '0.4rem 0.65rem', fontFamily: 'var(--font-mono)', fontSize: '0.65rem',
+    }}>
+      <div style={{ color: '#FF6600', fontWeight: 700, marginBottom: '0.15rem' }}>{label}</div>
+      <div style={{ color: '#FF3333', fontWeight: 700, fontSize: '0.75rem' }}>
+        DD: {val.toFixed(2)}%
+      </div>
+    </div>
+  );
+}
 
-  const maxDrawdown = Math.min(...formattedData.map((d) => d.drawdown));
+export default function DrawdownChart({
+  data,
+  height = 280,
+  limitPct = -12.0,
+}: DrawdownChartProps) {
+  if (!data || data.length === 0) return null;
 
   return (
-    <div style={{ width: '100%', height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={formattedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-          <defs>
-            <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
-          <XAxis
-            dataKey="date"
-            stroke="#64748b"
-            fontSize={10}
-            fontFamily="var(--font-mono)"
-            tickLine={false}
-            dy={5}
-          />
-          <YAxis
-            stroke="#64748b"
-            fontSize={10}
-            fontFamily="var(--font-mono)"
-            tickLine={false}
-            domain={['auto', 0]}
-            tickFormatter={(v) => `${v.toFixed(1)}%`}
-          />
-          <Tooltip
-            contentStyle={{
-              background: '#0d1117',
-              border: '1px solid #1e293b',
-              borderRadius: '3px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              color: '#f8fafc'
-            }}
-            formatter={(value: any) => [`${Number(value).toFixed(2)}%`, 'Underwater Depth']}
-          />
-          <ReferenceLine y={maxDrawdown} stroke="#f43f5e" strokeDasharray="3 3" label={{ value: `Max DD: ${maxDrawdown.toFixed(2)}%`, fill: '#fb7185', fontSize: 10, fontFamily: 'var(--font-mono)', position: 'insideBottomLeft' }} />
-          <Area
-            type="monotone"
-            dataKey="drawdown"
-            stroke="#f43f5e"
-            strokeWidth={1.5}
-            fillOpacity={1}
-            fill="url(#drawdownGradient)"
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height={height}>
+      <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+        <defs>
+          <linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#FF3333" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="#FF3333" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="" stroke="#1a1a1a" vertical={false} />
+        <XAxis
+          dataKey="date"
+          tickLine={false}
+          axisLine={{ stroke: '#2a2a2a' }}
+          tick={{ fill: '#555', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+          tickFormatter={(v) => v.slice(5)}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: '#555', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+          tickFormatter={(v) => `${v.toFixed(1)}%`}
+          width={50}
+        />
+        <Tooltip content={<BBTooltip />} />
+        <ReferenceLine y={limitPct} stroke="#FF3333" strokeDasharray="3 2" label={{
+          value: `LIMIT ${limitPct}%`,
+          fill: '#FF3333',
+          fontSize: 9,
+          fontFamily: 'var(--font-mono)',
+          fontWeight: 700,
+        }} />
+        <ReferenceLine y={0} stroke="#333" />
+        <Area
+          type="monotone"
+          dataKey="drawdown"
+          stroke="#FF3333"
+          strokeWidth={1.2}
+          fill="url(#ddGrad)"
+          dot={false}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
   );
 }

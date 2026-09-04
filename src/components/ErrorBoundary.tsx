@@ -1,25 +1,13 @@
 'use client';
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertOctagon, RotateCcw } from 'lucide-react';
 
-interface Props {
-  children: ReactNode;
-  fallbackTitle?: string;
-}
+export default class ErrorBoundary extends Component<
+  { children: ReactNode; fallbackTitle?: string },
+  { hasError: boolean; error: Error | null }
+> {
+  public state = { hasError: false, error: null as Error | null };
 
-interface State {
-  hasError: boolean;
-  error: Error | null;
-}
-
-export default class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null
-  };
-
-  public static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
@@ -30,35 +18,27 @@ export default class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="terminal-card" style={{ padding: '1.5rem', textAlign: 'center', borderColor: '#f43f5e' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
-            <AlertOctagon size={28} color="#f43f5e" />
+        <div style={{
+          background: '#0a0000', border: '2px solid #CC2222',
+          padding: '1.5rem', textAlign: 'center',
+          fontFamily: 'var(--font-mono)',
+        }}>
+          <div style={{ color: '#FF3333', fontSize: '1rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '0.04em' }}>
+            ⚠ {(this.props.fallbackTitle || 'PIPELINE COMPONENT ERROR').toUpperCase()}
           </div>
-          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc', fontFamily: 'var(--font-mono)', marginBottom: '0.35rem' }}>
-            {this.props.fallbackTitle || 'Quantitative Pipeline Component Interrupted'}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: 'var(--font-mono)', marginBottom: '1rem', maxWidth: '500px', margin: '0 auto 1rem auto' }}>
-            {this.state.error?.message || 'A numerical error or undefined telemetry frame occurred.'}
+          <div style={{ color: '#666', fontSize: '0.65rem', marginBottom: '1rem', maxWidth: '500px', margin: '0 auto 1rem' }}>
+            {this.state.error?.message || 'NUMERICAL ERROR OR UNDEFINED TELEMETRY FRAME.'}
           </div>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: '#161f33',
-              border: '1px solid #38bdf8',
-              color: '#38bdf8',
-              padding: '0.35rem 0.85rem',
-              borderRadius: '3px',
-              fontSize: '0.72rem',
-              fontFamily: 'var(--font-mono)',
-              cursor: 'pointer',
-              fontWeight: 600
+              background: '#CC2222', border: 'none', color: '#fff',
+              padding: '0.3rem 0.85rem', fontSize: '0.65rem',
+              fontFamily: 'var(--font-mono)', cursor: 'pointer',
+              fontWeight: 900, letterSpacing: '0.06em',
             }}
           >
-            <RotateCcw size={12} />
-            <span>REINITIALIZE SUB-PIPELINE</span>
+            ↺ REINITIALIZE SUB-PIPELINE
           </button>
         </div>
       );

@@ -1,83 +1,126 @@
 @import "tailwindcss";
 
+/* =========================================================
+   BLOOMBERG TERMINAL DESIGN SYSTEM
+   Primary: #FF6600 (Bloomberg Orange)
+   Background: #000000 (Pure Black)
+   Data White: #FFFFFF
+   Active Yellow: #FFFF00
+   Green: #00FF00 / #00CC00
+   Red: #FF0000 / #CC3333
+   ========================================================= */
+
 @layer base {
   :root {
-    --bg-terminal: #07090e;
-    --bg-primary: #0a0d14;
-    --bg-secondary: #0f1420;
-    --bg-card: #121826;
-    --bg-card-hover: #172033;
-    --bg-subtle: #192236;
-    
-    --border-terminal: #1a2234;
-    --border-subtle: #202b42;
-    --border-accent: #2563eb;
-    
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --text-dim: #475569;
-    
-    --accent-blue: #38bdf8;
-    --accent-emerald: #10b981;
-    --accent-amber: #f59e0b;
-    --accent-rose: #f43f5e;
-    --accent-purple: #8b5cf6;
-    --accent-cyan: #06b6d4;
+    /* Bloomberg Core Colors */
+    --bb-black:       #000000;
+    --bb-dark:        #0a0a0a;
+    --bb-panel:       #0d0d0d;
+    --bb-panel-2:     #111111;
+    --bb-panel-3:     #141414;
+    --bb-panel-hover: #1a1a1a;
 
-    --font-mono: 'JetBrains Mono', 'Roboto Mono', Menlo, monospace;
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    
-    --sidebar-width: 250px;
+    /* Bloomberg Orange — signature brand color */
+    --bb-orange:      #FF6600;
+    --bb-orange-dim:  #CC5500;
+    --bb-orange-faint:#1a0900;
+    --bb-orange-border: rgba(255,102,0,0.35);
+
+    /* Bloomberg Yellow — selected / highlighted cells */
+    --bb-yellow:      #FFFF00;
+    --bb-yellow-dim:  #CCCC00;
+    --bb-yellow-faint:#111100;
+
+    /* Bloomberg Green — positive / buy / pass */
+    --bb-green:       #00FF41;
+    --bb-green-dim:   #00CC33;
+    --bb-green-faint: #001a0a;
+
+    /* Bloomberg Red — negative / sell / fail */
+    --bb-red:         #FF3333;
+    --bb-red-dim:     #CC2222;
+    --bb-red-faint:   #1a0000;
+
+    /* Bloomberg Cyan — secondary accent */
+    --bb-cyan:        #00CCFF;
+    --bb-cyan-dim:    #0099CC;
+
+    /* Bloomberg Magenta — special labels */
+    --bb-magenta:     #FF44CC;
+
+    /* Text hierarchy */
+    --bb-text-primary:   #FFFFFF;
+    --bb-text-data:      #E8E8E8;
+    --bb-text-secondary: #AAAAAA;
+    --bb-text-muted:     #666666;
+    --bb-text-dim:       #444444;
+
+    /* Borders */
+    --bb-border:      #2a2a2a;
+    --bb-border-2:    #333333;
+    --bb-border-orange: rgba(255,102,0,0.4);
+
+    /* Fonts */
+    --font-mono:  'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+    --font-sans:  'JetBrains Mono', 'Consolas', monospace; /* Bloomberg is ALL mono */
+
+    /* Layout */
+    --sidebar-width: 230px;
+    --fkey-height:   28px;
     --header-height: 52px;
+    --ticker-height: 22px;
   }
 
   * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    border-color: var(--border-terminal);
+  }
+
+  html {
+    background: var(--bb-black);
+    color: var(--bb-text-data);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.35;
+    -webkit-font-smoothing: none;    /* Bloomberg uses crisp pixel rendering */
+    -moz-osx-font-smoothing: unset;
   }
 
   body {
-    background-color: var(--bg-terminal);
-    color: var(--text-primary);
-    font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 1.4;
-    letter-spacing: -0.01em;
-    -webkit-font-smoothing: antialiased;
+    background: var(--bb-black);
+    color: var(--bb-text-data);
+    font-family: var(--font-mono);
+    font-feature-settings: 'tnum' on, 'zero' on, 'ss01' on;
     overflow-x: hidden;
   }
 
-  /* Dense tabular numbers */
-  .font-mono, .tabular-nums {
-    font-family: var(--font-mono);
+  ::selection {
+    background: var(--bb-yellow);
+    color: var(--bb-black);
+  }
+
+  /* Dense tabular numbers — Bloomberg standard */
+  * {
     font-feature-settings: 'tnum' on, 'zero' on;
   }
 }
 
-/* Scrollbars */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-terminal);
-}
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 2px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
+/* =========================================================
+   SCROLLBARS — Bloomberg style (thin, dark)
+   ========================================================= */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bb-black); }
+::-webkit-scrollbar-thumb { background: #2a2a2a; }
+::-webkit-scrollbar-thumb:hover { background: var(--bb-orange); }
 
-/* App Layout */
+/* =========================================================
+   APP LAYOUT
+   ========================================================= */
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background-color: var(--bg-terminal);
+  background: var(--bb-black);
 }
 
 .main-content {
@@ -86,229 +129,841 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-terminal);
+  background: var(--bb-black);
 }
 
 .page-container {
-  padding: 1.25rem 1.5rem 3rem 1.5rem;
-  max-width: 1750px;
+  padding: 0.75rem 1rem 2rem 1rem;
   width: 100%;
-  margin: 0 auto;
 }
 
-/* Sidebar */
+/* =========================================================
+   BLOOMBERG SIDEBAR (Left Panel)
+   ========================================================= */
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background: var(--bg-primary);
-  border-right: 1px solid var(--border-terminal);
+  background: var(--bb-dark);
+  border-right: 1px solid var(--bb-orange);
   display: flex;
   flex-direction: column;
   z-index: 50;
+  font-family: var(--font-mono);
 }
 
 .sidebar-header {
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border-terminal);
-  background: #080b12;
+  padding: 0.55rem 0.75rem;
+  background: var(--bb-orange);
+  border-bottom: 2px solid #FF8800;
 }
 
 .sidebar-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 0.5rem 0;
+  padding: 0;
 }
 
 .nav-section-title {
-  padding: 0.5rem 1rem 0.25rem 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 600;
+  padding: 0.35rem 0.75rem 0.2rem 0.75rem;
+  font-size: 0.6rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  color: var(--bb-orange);
+  background: var(--bb-panel-2);
+  border-bottom: 1px solid var(--bb-border);
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.45rem 1rem;
-  font-size: 0.8rem;
+  gap: 0;
+  padding: 0;
+  font-size: 0.72rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--bb-text-secondary);
   text-decoration: none;
-  border-left: 2px solid transparent;
-  transition: all 0.12s ease-in-out;
+  border-bottom: 1px solid var(--bb-border);
+  transition: background 0.05s ease;
+  height: 26px;
+  overflow: hidden;
 }
 
 .nav-link:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.025);
+  color: var(--bb-text-primary);
+  background: var(--bb-panel-hover);
+}
+
+.nav-link:hover .nav-code {
+  background: var(--bb-orange);
+  color: var(--bb-black);
 }
 
 .nav-link.active {
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.06);
-  border-left-color: #38bdf8;
-  font-weight: 600;
-}
-
-.nav-code {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  font-weight: 600;
+  color: var(--bb-yellow);
+  background: #111100;
+  border-left: 2px solid var(--bb-yellow);
 }
 
 .nav-link.active .nav-code {
-  color: #38bdf8;
+  background: var(--bb-yellow);
+  color: var(--bb-black);
 }
 
-/* Terminal Top Header */
+.nav-code {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--bb-black);
+  background: #555555;
+  padding: 0 0.4rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  min-width: 28px;
+  justify-content: center;
+  letter-spacing: 0;
+  flex-shrink: 0;
+  transition: background 0.05s;
+}
+
+/* =========================================================
+   BLOOMBERG FUNCTION KEY BAR (F1–F12 equivalent)
+   ========================================================= */
+.fkey-bar {
+  height: var(--fkey-height);
+  background: #1a0d00;
+  border-bottom: 2px solid var(--bb-orange);
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  gap: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  flex-shrink: 0;
+}
+
+.fkey-btn {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0 0.45rem;
+  height: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--bb-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  border-right: 1px solid #2a1500;
+  transition: all 0.05s;
+}
+
+.fkey-btn:hover {
+  background: var(--bb-orange);
+  color: var(--bb-black);
+}
+
+.fkey-btn .fkey-num {
+  color: var(--bb-orange);
+  font-weight: 700;
+  font-size: 0.62rem;
+}
+
+.fkey-btn:hover .fkey-num {
+  color: var(--bb-black);
+}
+
+.fkey-separator {
+  width: 1px;
+  height: 16px;
+  background: #3a2200;
+  margin: 0 2px;
+}
+
+/* =========================================================
+   BLOOMBERG TOP HEADER
+   ========================================================= */
 .terminal-header {
   height: var(--header-height);
-  background: #080b12;
-  border-bottom: 1px solid var(--border-terminal);
+  background: var(--bb-dark);
+  border-bottom: 2px solid var(--bb-orange);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
   position: sticky;
   top: 0;
   z-index: 40;
+  font-family: var(--font-mono);
 }
 
-/* Cards & Containers */
-.terminal-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-terminal);
-  border-radius: 4px;
+.bb-cmd-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bb-black);
+  border: 1px solid var(--bb-orange);
+  height: 22px;
+  padding: 0 0.5rem;
+  gap: 0.4rem;
+  min-width: 200px;
+}
+
+.bb-cmd-prompt {
+  color: var(--bb-orange);
+  font-weight: 700;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+.bb-cmd-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--bb-yellow);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  width: 100%;
+  caret-color: var(--bb-yellow);
+}
+
+.bb-cmd-input::placeholder {
+  color: var(--bb-text-dim);
+}
+
+/* =========================================================
+   BLOOMBERG TICKER BAR
+   ========================================================= */
+.bb-ticker {
+  height: var(--ticker-height);
+  background: #0d0600;
+  border-top: 1px solid var(--bb-orange);
+  border-bottom: 1px solid #3a2200;
   overflow: hidden;
-  transition: border-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 39;
+}
+
+.bb-ticker-inner {
+  display: flex;
+  gap: 2rem;
+  animation: bbTicker 60s linear infinite;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding-left: 100%;
+}
+
+.bb-ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.bb-ticker-sym {
+  color: var(--bb-orange);
+  font-weight: 700;
+}
+
+.bb-ticker-price {
+  color: var(--bb-text-primary);
+  font-weight: 600;
+}
+
+.bb-ticker-chg.pos { color: var(--bb-green); }
+.bb-ticker-chg.neg { color: var(--bb-red); }
+
+@keyframes bbTicker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* =========================================================
+   BLOOMBERG PANELS / CARDS
+   ========================================================= */
+.bb-panel {
+  background: var(--bb-panel);
+  border: 1px solid var(--bb-border-2);
+  overflow: hidden;
+}
+
+.bb-panel:focus-within,
+.bb-panel:hover {
+  border-color: var(--bb-orange);
+}
+
+.bb-panel-header {
+  padding: 0.3rem 0.6rem;
+  background: #1a0d00;
+  border-bottom: 1px solid var(--bb-orange);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.bb-panel-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--bb-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bb-panel-subtitle {
+  font-size: 0.62rem;
+  color: var(--bb-text-muted);
+  text-transform: uppercase;
+}
+
+.bb-panel-body {
+  padding: 0.6rem 0.75rem;
+}
+
+/* Legacy aliases for backward compat */
+.terminal-card {
+  background: var(--bb-panel);
+  border: 1px solid var(--bb-border-2);
+  overflow: hidden;
 }
 
 .terminal-card:hover {
-  border-color: var(--border-subtle);
+  border-color: var(--bb-orange);
 }
 
 .terminal-card-header {
-  padding: 0.65rem 1rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-terminal);
+  padding: 0.3rem 0.6rem;
+  background: #1a0d00;
+  border-bottom: 1px solid var(--bb-orange);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .terminal-card-body {
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
 }
 
-/* Institutional Badges */
+/* =========================================================
+   BLOOMBERG METRIC CELL
+   ========================================================= */
+.bb-metric {
+  background: var(--bb-panel-2);
+  border: 1px solid var(--bb-border);
+  padding: 0.5rem 0.65rem;
+  position: relative;
+  cursor: default;
+  transition: border-color 0.08s;
+}
+
+.bb-metric:hover {
+  border-color: var(--bb-orange);
+  background: var(--bb-panel-hover);
+}
+
+.bb-metric-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bb-orange);
+  margin-bottom: 0.3rem;
+}
+
+.bb-metric-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+  color: var(--bb-text-primary);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.bb-metric-change {
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.bb-metric-change.pos { color: var(--bb-green); }
+.bb-metric-change.neg { color: var(--bb-red); }
+.bb-metric-change.neutral { color: var(--bb-text-secondary); }
+
+.bb-metric-sub {
+  font-size: 0.6rem;
+  color: var(--bb-text-muted);
+  margin-top: 0.2rem;
+  border-top: 1px solid var(--bb-border);
+  padding-top: 0.2rem;
+}
+
+/* =========================================================
+   BLOOMBERG BADGES / TAGS
+   ========================================================= */
+.bb-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.4rem;
+  height: 16px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  cursor: default;
+}
+
+.bb-tag-orange  { background: var(--bb-orange); color: var(--bb-black); }
+.bb-tag-yellow  { background: var(--bb-yellow); color: var(--bb-black); }
+.bb-tag-green   { background: var(--bb-green-dim); color: var(--bb-black); }
+.bb-tag-red     { background: var(--bb-red-dim); color: var(--bb-text-primary); }
+.bb-tag-cyan    { background: var(--bb-cyan-dim); color: var(--bb-black); }
+.bb-tag-white   { background: #ffffff; color: var(--bb-black); }
+.bb-tag-dim     { background: #333333; color: var(--bb-text-secondary); }
+.bb-tag-border  { background: transparent; color: var(--bb-orange); border: 1px solid var(--bb-orange); }
+
+/* Legacy badge aliases */
 .badge-tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.15rem 0.45rem;
-  border-radius: 2px;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  padding: 0 0.4rem;
+  height: 16px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  font-family: var(--font-mono);
 }
 
-.badge-pass {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
+.badge-pass    { background: var(--bb-green-dim); color: var(--bb-black); }
+.badge-warn    { background: #CC8800; color: var(--bb-black); }
+.badge-fail    { background: var(--bb-red-dim); color: var(--bb-text-primary); }
+.badge-live    { background: var(--bb-orange); color: var(--bb-black); }
+.badge-paper   { background: #666600; color: var(--bb-yellow); }
+.badge-neutral { background: #333333; color: var(--bb-text-secondary); }
 
-.badge-warn {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.badge-fail {
-  background: rgba(244, 63, 94, 0.12);
-  color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
-}
-
-.badge-live {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-
-.badge-paper {
-  background: rgba(139, 92, 246, 0.12);
-  color: #c084fc;
-  border: 1px solid rgba(139, 92, 246, 0.3);
-}
-
-.badge-neutral {
-  background: rgba(148, 163, 184, 0.1);
-  color: #94a3b8;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-/* Tables */
-.terminal-table {
+/* =========================================================
+   BLOOMBERG TABLES
+   ========================================================= */
+.bb-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  table-layout: fixed;
 }
 
-.terminal-table th {
-  background: var(--bg-secondary);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 600;
+.bb-table th {
+  background: #1a0d00;
+  color: var(--bb-orange);
+  font-size: 0.62rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 0.55rem 0.85rem;
+  padding: 0.3rem 0.5rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-terminal);
+  border-bottom: 1px solid var(--bb-orange);
+  border-right: 1px solid var(--bb-border);
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
 }
 
-.terminal-table td {
-  padding: 0.55rem 0.85rem;
-  border-bottom: 1px solid var(--border-terminal);
-  color: var(--text-primary);
+.bb-table th:last-child { border-right: none; }
+.bb-table th:hover { background: #2a1500; color: var(--bb-yellow); }
+
+.bb-table td {
+  padding: 0.28rem 0.5rem;
+  border-bottom: 1px solid var(--bb-border);
+  border-right: 1px solid var(--bb-border);
+  color: var(--bb-text-data);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-.terminal-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+.bb-table td:last-child { border-right: none; }
+
+.bb-table tr:hover td {
+  background: #0d0600;
+  color: var(--bb-text-primary);
 }
 
-/* Pulsing Status Dot */
-.status-indicator-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+.bb-table tr.selected td {
+  background: var(--bb-yellow-faint);
+  color: var(--bb-yellow);
+}
+
+/* Row striping */
+.bb-table tbody tr:nth-child(even) td {
+  background: rgba(255,102,0,0.02);
+}
+
+/* Legacy */
+.terminal-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; font-family: var(--font-mono); }
+.terminal-table th { background: #1a0d00; color: var(--bb-orange); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.3rem 0.5rem; text-align: left; border-bottom: 1px solid var(--bb-orange); white-space: nowrap; cursor: pointer; }
+.terminal-table td { padding: 0.28rem 0.5rem; border-bottom: 1px solid var(--bb-border); color: var(--bb-text-data); white-space: nowrap; }
+.terminal-table tr:hover td { background: #0d0600; }
+
+/* =========================================================
+   BLOOMBERG BUTTON STYLES
+   ========================================================= */
+.bb-btn {
+  padding: 0.25rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--bb-orange);
+  color: var(--bb-orange);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.06s;
+}
+
+.bb-btn:hover {
+  background: var(--bb-orange);
+  color: var(--bb-black);
+}
+
+.bb-btn-solid {
+  background: var(--bb-orange);
+  color: var(--bb-black);
+  border: 1px solid var(--bb-orange);
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.06s;
+}
+
+.bb-btn-solid:hover {
+  background: #FF8800;
+}
+
+.bb-btn-yellow {
+  background: var(--bb-yellow);
+  color: var(--bb-black);
+  border: none;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.bb-btn-yellow:hover { background: #CCCC00; }
+
+/* Timeframe selector */
+.bb-tf-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bb-black);
+  border: 1px solid var(--bb-border-2);
+  gap: 0;
+}
+
+.bb-tf-btn {
+  padding: 0.18rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--bb-border);
+  color: var(--bb-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.05s;
+}
+
+.bb-tf-btn:last-child { border-right: none; }
+.bb-tf-btn:hover { background: var(--bb-panel-hover); color: var(--bb-orange); }
+.bb-tf-btn.active { background: var(--bb-orange); color: var(--bb-black); }
+
+/* =========================================================
+   BLOOMBERG INPUT FIELDS
+   ========================================================= */
+.bb-input {
+  background: var(--bb-black);
+  border: 1px solid var(--bb-border-2);
+  color: var(--bb-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.25rem 0.5rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.08s;
+}
+
+.bb-input:focus {
+  border-color: var(--bb-orange);
+  color: var(--bb-yellow);
+}
+
+.bb-input::placeholder { color: var(--bb-text-dim); }
+
+.bb-select {
+  background: var(--bb-black);
+  border: 1px solid var(--bb-border-2);
+  color: var(--bb-orange);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.4rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.bb-select:focus { border-color: var(--bb-orange); }
+
+/* =========================================================
+   BLOOMBERG STATUS INDICATORS
+   ========================================================= */
+.bb-dot {
   display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
 }
 
-.status-indicator-dot.live {
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
+.bb-dot-green   { background: var(--bb-green); box-shadow: 0 0 6px var(--bb-green); }
+.bb-dot-red     { background: var(--bb-red); box-shadow: 0 0 6px var(--bb-red); }
+.bb-dot-orange  { background: var(--bb-orange); box-shadow: 0 0 6px var(--bb-orange); }
+.bb-dot-yellow  { background: var(--bb-yellow); box-shadow: 0 0 6px var(--bb-yellow); }
+.bb-dot-dim     { background: #555555; }
+
+/* Legacy */
+.status-indicator-dot { width: 7px; height: 7px; display: inline-block; flex-shrink: 0; }
+.status-indicator-dot.live { background: var(--bb-green); box-shadow: 0 0 6px var(--bb-green); }
+.status-indicator-dot.warn { background: var(--bb-orange); box-shadow: 0 0 6px var(--bb-orange); }
+.status-indicator-dot.fail { background: var(--bb-red); box-shadow: 0 0 6px var(--bb-red); }
+
+/* =========================================================
+   BLOOMBERG PROGRESS / BARS
+   ========================================================= */
+.bb-bar-track {
+  height: 8px;
+  background: var(--bb-border);
+  width: 100%;
 }
 
-.status-indicator-dot.warn {
-  background: #f59e0b;
-  box-shadow: 0 0 8px #f59e0b;
+.bb-bar-fill {
+  height: 100%;
+  background: var(--bb-orange);
+  transition: width 0.3s ease;
 }
 
-.status-indicator-dot.fail {
-  background: #f43f5e;
-  box-shadow: 0 0 8px #f43f5e;
+.bb-bar-fill.green { background: var(--bb-green-dim); }
+.bb-bar-fill.red   { background: var(--bb-red-dim); }
+.bb-bar-fill.yellow { background: var(--bb-yellow); }
+
+/* =========================================================
+   BLOOMBERG DIVIDERS
+   ========================================================= */
+.bb-divider {
+  height: 1px;
+  background: var(--bb-border-2);
+  margin: 0.5rem 0;
+}
+
+.bb-divider-orange {
+  height: 1px;
+  background: var(--bb-orange);
+  margin: 0.5rem 0;
+}
+
+.bb-h-divider {
+  width: 1px;
+  background: var(--bb-border-2);
+  align-self: stretch;
+}
+
+/* =========================================================
+   BLOOMBERG SCROLLING NEWS FEED
+   ========================================================= */
+.bb-feed-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid var(--bb-border);
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  transition: background 0.05s;
+}
+
+.bb-feed-item:hover {
+  background: var(--bb-panel-hover);
+  cursor: pointer;
+}
+
+.bb-feed-time {
+  color: var(--bb-orange);
+  font-weight: 700;
+  flex-shrink: 0;
+  font-size: 0.62rem;
+}
+
+.bb-feed-msg { color: var(--bb-text-data); }
+.bb-feed-msg.warn { color: #FFAA00; }
+.bb-feed-msg.err  { color: var(--bb-red); }
+.bb-feed-msg.info { color: var(--bb-cyan); }
+
+/* =========================================================
+   BLOOMBERG NUMBERS — color conventions
+   ========================================================= */
+.num-pos { color: var(--bb-green); font-weight: 700; }
+.num-neg { color: var(--bb-red); font-weight: 700; }
+.num-neutral { color: var(--bb-text-primary); }
+.num-orange { color: var(--bb-orange); font-weight: 700; }
+.num-yellow { color: var(--bb-yellow); font-weight: 700; }
+
+/* =========================================================
+   BLOOMBERG SECTION HEADER
+   ========================================================= */
+.bb-section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.6rem;
+  background: #0d0600;
+  border: 1px solid var(--bb-orange);
+  margin-bottom: 0;
+}
+
+.bb-section-hdr-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--bb-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* =========================================================
+   BLOOMBERG CHART RECHARTS OVERRIDES
+   ========================================================= */
+.recharts-cartesian-axis-tick-value {
+  fill: var(--bb-text-muted) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--bb-border) !important;
+  stroke-dasharray: none !important;
+}
+
+.recharts-tooltip-wrapper {
+  font-family: var(--font-mono) !important;
+}
+
+/* =========================================================
+   BLOOMBERG LOADING STATE
+   ========================================================= */
+.bb-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--bb-orange);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 1.5rem;
+}
+
+.bb-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--bb-border-2);
+  border-top-color: var(--bb-orange);
+  border-radius: 50%;
+  animation: bbSpin 0.7s linear infinite;
+}
+
+@keyframes bbSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   BLOOMBERG BLINKING CURSOR
+   ========================================================= */
+.bb-cursor::after {
+  content: '█';
+  color: var(--bb-orange);
+  animation: bbBlink 1s step-end infinite;
+}
+
+@keyframes bbBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* =========================================================
+   GRID UTILITIES
+   ========================================================= */
+.bb-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.bb-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+.bb-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.bb-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+
+/* =========================================================
+   BLOOMBERG SLIDER (Ensemble Weight Builder)
+   ========================================================= */
+input[type="range"].bb-range {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--bb-border-2);
+  outline: none;
+}
+
+input[type="range"].bb-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--bb-orange);
+  cursor: pointer;
+  border: 2px solid var(--bb-black);
+}
+
+input[type="range"].bb-range:focus { outline: none; }
+
+/* =========================================================
+   BLOOMBERG RADIO / CHECKBOX
+   ========================================================= */
+input[type="checkbox"].bb-check {
+  accent-color: var(--bb-orange);
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+}
+
+/* =========================================================
+   ANIMATION — flash on update
+   ========================================================= */
+@keyframes bbFlash {
+  0%   { background: rgba(255,102,0,0.3); }
+  100% { background: transparent; }
+}
+
+.bb-flash { animation: bbFlash 0.8s ease-out; }
+
+/* =========================================================
+   BLOOMBERG TOP-BAR SEPARATOR
+   ========================================================= */
+.bb-pipe {
+  color: var(--bb-orange);
+  opacity: 0.4;
+  margin: 0 0.3rem;
 }

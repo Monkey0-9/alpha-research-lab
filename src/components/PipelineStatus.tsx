@@ -1,34 +1,79 @@
 'use client';
-
 import React from 'react';
 import { PIPELINE_STAGES } from '@/lib/constants';
-import Badge from './Badge';
+
+const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  LIVE:      { bg: '#FF6600', color: '#000' },
+  PASS:      { bg: '#00CC33', color: '#000' },
+  RUNNING:   { bg: '#FFFF00', color: '#000' },
+  SYNCING:   { bg: '#0099CC', color: '#000' },
+  PENDING:   { bg: '#333333', color: '#AAAAAA' },
+  ERROR:     { bg: '#CC2222', color: '#fff' },
+};
 
 export default function PipelineStatus() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.5rem', width: '100%' }}>
-      {PIPELINE_STAGES.map((s) => (
-        <div
-          key={s.id}
-          style={{
-            background: '#0a0d14',
-            border: '1px solid var(--border-terminal)',
-            padding: '0.5rem 0.65rem',
-            borderRadius: '3px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-            <span style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
-              {s.label}
-            </span>
-            <Badge label={s.status} type={s.status === 'LIVE' ? 'live' : 'pass'} size="sm" />
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '3px', width: '100%' }}>
+      {PIPELINE_STAGES.map((s, idx) => {
+        const sty = STATUS_STYLE[s.status] || STATUS_STYLE.PASS;
+        return (
+          <div
+            key={s.id}
+            style={{
+              background: '#0a0a0a',
+              border: '1px solid #2a2a2a',
+              padding: '0.45rem 0.55rem',
+              position: 'relative',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            {/* Stage number badge */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <span style={{
+                background: '#1a1a1a', color: '#555',
+                fontSize: '0.55rem', fontWeight: 700,
+                padding: '0 0.25rem',
+              }}>
+                S{String(idx + 1).padStart(2, '0')}
+              </span>
+              <span style={{
+                background: sty.bg, color: sty.color,
+                fontSize: '0.55rem', fontWeight: 900,
+                padding: '0 0.3rem',
+              }}>
+                {s.status}
+              </span>
+            </div>
+
+            {/* Stage label */}
+            <div style={{
+              fontSize: '0.65rem', fontWeight: 700,
+              color: '#FFFFFF', letterSpacing: '0.01em',
+              marginBottom: '0.2rem',
+              lineHeight: 1.2,
+            }}>
+              {s.label.toUpperCase()}
+            </div>
+
+            {/* Latency */}
+            <div style={{ fontSize: '0.58rem', color: '#444' }}>
+              LAT: <span style={{ color: '#00FF41', fontWeight: 700 }}>{s.latency}</span>
+            </div>
+
+            {/* Connection arrow */}
+            {idx < PIPELINE_STAGES.length - 1 && (
+              <div style={{
+                position: 'absolute', right: '-8px', top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#FF6600', fontSize: '0.7rem',
+                zIndex: 1, fontWeight: 900,
+              }}>
+                ►
+              </div>
+            )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.62rem', fontFamily: 'var(--font-mono)', color: '#64748b' }}>
-            <span>LATENCY: <strong style={{ color: '#34d399' }}>{s.latency}</strong></span>
-            <span>{Object.entries(s).filter(([k]) => !['id', 'label', 'status', 'latency'].includes(k)).map(([k, v]) => `${k.toUpperCase()}: ${v}`).join(' ')}</span>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

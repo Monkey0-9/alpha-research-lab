@@ -2,58 +2,100 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard, Database, Cpu, FlaskConical, BarChart3,
-  Brain, GitBranch, ShieldCheck, PieChart, Zap,
-  AlertTriangle, Activity, Monitor, Terminal
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const MODULES = [
-  { href: '/', label: 'Executive Dashboard', code: '00', icon: LayoutDashboard },
-  { href: '/data', label: 'Data Infrastructure', code: '01', icon: Database },
-  { href: '/features', label: 'Feature / Signal Factory', code: '02', icon: Cpu },
-  { href: '/alpha-discovery', label: 'Alpha Discovery Lab', code: '03', icon: FlaskConical },
-  { href: '/statistical-engine', label: 'Statistical Engine', code: '04', icon: BarChart3 },
-  { href: '/model-lab', label: 'Model Research Lab', code: '05', icon: Brain },
-  { href: '/validation', label: 'TS Validation Engine', code: '06', icon: GitBranch },
-  { href: '/quality-gate', label: 'Alpha Quality Gate', code: '07', icon: ShieldCheck },
-  { href: '/portfolio', label: 'Portfolio Construction', code: '08', icon: PieChart },
-  { href: '/execution', label: 'Execution Research', code: '09', icon: Zap },
-  { href: '/risk', label: 'Institutional Risk', code: '10', icon: AlertTriangle },
-  { href: '/live-research', label: 'Live Paper Trading', code: '11', icon: Activity },
-  { href: '/monitoring', label: 'Production Telemetry', code: '12', icon: Monitor },
+  { href: '/',                  label: 'EXECUTIVE DASHBOARD',    code: '00', key: 'DASH' },
+  { href: '/data',              label: 'DATA INFRASTRUCTURE',     code: '01', key: 'DATA' },
+  { href: '/features',          label: 'FEATURE / SIGNAL FACTORY',code: '02', key: 'FEAT' },
+  { href: '/alpha-discovery',   label: 'ALPHA DISCOVERY LAB',     code: '03', key: 'ALPH' },
+  { href: '/statistical-engine',label: 'STATISTICAL ENGINE',      code: '04', key: 'STAT' },
+  { href: '/model-lab',         label: 'MODEL RESEARCH LAB',      code: '05', key: 'MODL' },
+  { href: '/validation',        label: 'TS VALIDATION ENGINE',    code: '06', key: 'VALD' },
+  { href: '/quality-gate',      label: 'ALPHA QUALITY GATE',      code: '07', key: 'QUAL' },
+  { href: '/portfolio',         label: 'PORTFOLIO CONSTRUCTION',  code: '08', key: 'PORT' },
+  { href: '/execution',         label: 'EXECUTION RESEARCH',      code: '09', key: 'EXEC' },
+  { href: '/risk',              label: 'INSTITUTIONAL RISK',      code: '10', key: 'RISK' },
+  { href: '/live-research',     label: 'LIVE PAPER TRADING',      code: '11', key: 'LIVE' },
+  { href: '/monitoring',        label: 'PRODUCTION TELEMETRY',    code: '12', key: 'TELE' },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [utcTime, setUtcTime] = useState('');
+  const [estTime, setEstTime] = useState('');
+  const [uptime, setUptime] = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      setUtcTime(now.toUTCString().slice(17, 25));
+      setEstTime(now.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour12: false }));
+      setUptime((u) => u + 1);
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const fmtUptime = (s: number) => {
+    const h = Math.floor(s / 3600).toString().padStart(2, '0');
+    const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${sec}`;
+  };
 
   return (
     <aside className="sidebar">
+      {/* Bloomberg Logo Header */}
       <div className="sidebar-header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ background: 'rgba(56, 189, 248, 0.15)', padding: '0.25rem', borderRadius: '3px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-              <Terminal size={14} color="#38bdf8" />
+          <div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 900, letterSpacing: '0.06em', color: '#000000', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+              QUANT<span style={{ color: '#1a0900' }}>ALPHA</span>
             </div>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.04em', color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>
-                QUANT<span style={{ color: '#38bdf8' }}>ALPHA</span>
-              </div>
-              <div style={{ fontSize: '0.62rem', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
-                HEDGE FUND WORKSTATION
-              </div>
+            <div style={{ fontSize: '0.58rem', color: '#3d1a00', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginTop: '1px', fontWeight: 700 }}>
+              INSTITUTIONAL TERMINAL v2.4
             </div>
           </div>
-          <span className="badge-tag badge-live" style={{ fontSize: '0.6rem', padding: '0.1rem 0.3rem' }}>
-            V2.4.1
-          </span>
+          <div style={{
+            background: '#000',
+            color: '#FF6600',
+            fontSize: '0.58rem',
+            fontWeight: 900,
+            padding: '0.15rem 0.4rem',
+            letterSpacing: '0.06em',
+            border: '1px solid #000',
+          }}>
+            PRO
+          </div>
         </div>
       </div>
 
+      {/* Time bar */}
+      <div style={{
+        padding: '0.25rem 0.75rem',
+        background: '#050300',
+        borderBottom: '1px solid var(--bb-border-2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        fontSize: '0.6rem',
+        fontFamily: 'var(--font-mono)',
+      }}>
+        <span style={{ color: '#FF6600', fontWeight: 700 }}>{utcTime || '00:00:00'} UTC</span>
+        <span style={{ color: '#666' }}>|</span>
+        <span style={{ color: '#888' }}>{estTime || '00:00:00'} EST</span>
+      </div>
+
+      {/* Nav Section Label */}
+      <div className="nav-section-title">
+        ◀ RESEARCH PIPELINE ▶
+      </div>
+
+      {/* Navigation */}
       <div className="sidebar-scroll">
-        <div className="nav-section-title">Research Pipeline Modules</div>
         {MODULES.map((mod) => {
-          const Icon = mod.icon;
           const isActive = pathname === mod.href;
           return (
             <Link
@@ -61,34 +103,70 @@ export default function Sidebar() {
               href={mod.href}
               className={`nav-link ${isActive ? 'active' : ''}`}
             >
-              <span className="nav-code">[{mod.code}]</span>
-              <Icon size={14} style={{ opacity: isActive ? 1 : 0.7 }} />
-              <span style={{ flex: 1, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {/* Function key code box */}
+              <span className="nav-code">{mod.code}</span>
+              {/* Module label */}
+              <span style={{
+                flex: 1,
+                paddingLeft: '0.55rem',
+                fontSize: '0.65rem',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: isActive ? 700 : 500,
+                letterSpacing: '0.01em',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+              }}>
                 {mod.label}
               </span>
+              {/* Right shortcut */}
               {isActive && (
-                <span className="status-indicator-dot live" />
+                <span style={{
+                  fontSize: '0.55rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: '#000',
+                  background: '#FFFF00',
+                  padding: '0 0.25rem',
+                  fontWeight: 900,
+                  marginRight: '0.25rem',
+                  flexShrink: 0,
+                }}>
+                  ●
+                </span>
               )}
             </Link>
           );
         })}
       </div>
 
-      <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border-terminal)', background: '#080b12' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span className="status-indicator-dot live" />
-            <span style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>
-              FFI ENGINE: ACTIVE
-            </span>
+      {/* Footer — system status */}
+      <div style={{
+        padding: '0.4rem 0.6rem',
+        borderTop: '2px solid #FF6600',
+        background: '#050300',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.2rem',
+        fontSize: '0.6rem',
+        fontFamily: 'var(--font-mono)',
+      }}>
+        {/* Status row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <span className="bb-dot bb-dot-green" style={{ width: 6, height: 6, borderRadius: 0 }} />
+            <span style={{ color: '#00FF41', fontWeight: 700 }}>ENGINE ONLINE</span>
           </div>
-          <span style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#34d399' }}>
-            0.4ms
-          </span>
+          <span style={{ color: '#FF6600', fontWeight: 700 }}>0.4ms</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.62rem', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
-          <span>MEM: 384MB / 16GB</span>
+        {/* AUM / Memory */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#555' }}>
+          <span>MEM: 384/16384MB</span>
           <span>AUM: $2.48M</span>
+        </div>
+        {/* Uptime */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#444' }}>
+          <span>UPTIME: {fmtUptime(uptime)}</span>
+          <span style={{ color: '#FF6600' }}>FFI:RUST+C</span>
         </div>
       </div>
     </aside>

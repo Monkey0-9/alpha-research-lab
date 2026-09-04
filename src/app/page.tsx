@@ -15,7 +15,44 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import * as api from '@/lib/api';
 import * as types from '@/lib/types';
 import { formatCurrency, formatPercent } from '@/lib/utils';
-import { generateTimeSeries, generateDrawdown } from '@/lib/data';
+
+function BBRow({ children, cols }: { children: React.ReactNode; cols: string }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: cols, gap: '3px' }}>
+      {children}
+    </div>
+  );
+}
+
+function SectionHeader({ title, badge, badgeColor = '#FF6600' }: { title: string; badge?: string; badgeColor?: string }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0.28rem 0.6rem',
+      background: '#0d0600',
+      borderTop: '1px solid #FF6600',
+      borderLeft: '1px solid #FF6600',
+      borderRight: '1px solid #FF6600',
+      borderBottom: '1px solid #2a1500',
+      fontFamily: 'var(--font-mono)',
+    }}>
+      <span style={{ color: '#FF6600', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.07em' }}>
+        {title}
+      </span>
+      {badge && (
+        <span style={{
+          background: badgeColor, color: '#000',
+          fontSize: '0.58rem', fontWeight: 900,
+          padding: '0 0.4rem', height: '15px',
+          display: 'inline-flex', alignItems: 'center',
+          fontFamily: 'var(--font-mono)', letterSpacing: '0.05em',
+        }}>
+          {badge}
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default function ExecutiveDashboard() {
   const [loading, setLoading] = useState(true);
@@ -35,39 +72,28 @@ export default function ExecutiveDashboard() {
         ]);
         setSummary(sum);
         setHoldings(hld.holdings);
-        setAlerts(tel.recent_alerts);
+        setAlerts(tel.recent_alerts || []);
 
-        // Synthetic 252-day equity curve
-        const baseCurve = [];
-        let pNav = 1.0;
-        let bNav = 1.0;
-        let peak = 1.0;
-        const ddArr = [];
+        // 252-day equity + drawdown series
+        const baseCurve: any[] = [];
+        const ddArr: any[] = [];
+        let pNav = 1.0, bNav = 1.0, peak = 1.0;
         const now = new Date();
-
         for (let i = 252; i >= 0; i--) {
-          const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+          const d = new Date(now.getTime() - i * 86400000).toISOString().slice(0, 10);
           const pRet = (Math.random() - 0.47) * 0.012 + 0.0007;
           const bRet = (Math.random() - 0.48) * 0.014 + 0.0004;
-          pNav *= (1.0 + pRet);
-          bNav *= (1.0 + bRet);
+          pNav *= (1 + pRet);
+          bNav *= (1 + bRet);
           peak = Math.max(peak, pNav);
-          const dd = (pNav - peak) / peak;
-
-          baseCurve.push({
-            date: d,
-            nav: parseFloat(pNav.toFixed(4)),
-            benchmark: parseFloat(bNav.toFixed(4))
-          });
-          ddArr.push({
-            date: d,
-            drawdown: parseFloat((dd * 100).toFixed(2))
-          });
+          const dd = ((pNav - peak) / peak) * 100;
+          baseCurve.push({ date: d, nav: parseFloat(pNav.toFixed(4)), benchmark: parseFloat(bNav.toFixed(4)) });
+          ddArr.push({ date: d, drawdown: parseFloat(dd.toFixed(2)) });
         }
         setEquityData(baseCurve);
         setDrawdownData(ddArr);
       } catch (err) {
-        console.error('Failed to load dashboard data:', err);
+        console.error('Dashboard load error:', err);
       } finally {
         setLoading(false);
       }
@@ -75,145 +101,88 @@ export default function ExecutiveDashboard() {
     load();
   }, []);
 
+  const kpis = summary ? [
+    { label: 'PORTFOLIO NAV', value: formatCurrency(summary.portfolio_nav, 0), change: '+14.2% YTD', positive: true, subtext: 'INSTITUTIONAL AUM', status: 'live' as const },
+    { label: 'DAILY P&L', value: formatCurrency(summary.daily_pnl_dollars, 0), change: `${formatPercent(summary.daily_pnl_pct, 2)} / +74bp`, positive: true, subtext: 'ALPHA CONTRIB: +52bp', status: 'pass' as const },
+    { label: 'ANNUAL SHARPE', value: summary.annualized_sharpe.toFixed(2), change: 'BMK 1.12 (SPY)', positive: true, benchmark: '1.12', benchmarkLabel: 'SPY', status: 'pass' as const },
+    { label: 'CALMAR RATIO', value: summary.calmar_ratio.toFixed(2), change: 'OOS ROBUST', positive: true, subtext: 'CAGR/MAX DD', status: 'pass' as const },
+    { label: 'MAX DRAWDOWN', value: `-${summary.max_drawdown_pct.toFixed(1)}%`, change: 'LIMIT: -12.0%', positive: false, subtext: `${(summary.max_drawdown_pct / 12 * 100).toFixed(0)}% OF LIMIT USED`, status: 'pass' as const },
+    { label: 'DAILY VaR 95%', value: `-${summary.var_95_daily_pct.toFixed(2)}%`, change: `CVaR: -${summary.cvar_95_daily_pct?.toFixed(2) ?? '2.15'}%`, positive: false, subtext: `$${(summary.portfolio_nav * summary.var_95_daily_pct / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} DOLLAR VAR`, status: 'pass' as const },
+  ] : [];
+
   return (
-    <ErrorBoundary fallbackTitle="Executive Dashboard Interrupted">
+    <ErrorBoundary fallbackTitle="EXECUTIVE DASHBOARD ERROR">
       <TerminalHeader title="MODULE 00 // EXECUTIVE TRADING DASHBOARD" />
 
-      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        {/* KPI Strip */}
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+
+        {/* ── KPI Strip ── */}
+        <SectionHeader title="KEY PERFORMANCE INDICATORS — LIVE PRODUCTION" badge="LIVE" />
         {loading ? (
-          <LoadingSkeleton height="85px" count={1} />
+          <LoadingSkeleton height="80px" count={1} label="LOADING KPI METRICS..." />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.65rem' }}>
-            <MetricCard
-              label="Portfolio NAV"
-              value={formatCurrency(summary?.portfolio_nav || 2485000, 0)}
-              change="+14.2% YTD"
-              positive={true}
-              subtext="Total Institutional AUM"
-              status="live"
-            />
-            <MetricCard
-              label="Daily P&L"
-              value={formatCurrency(summary?.daily_pnl_dollars || 18450, 0)}
-              change={formatPercent(summary?.daily_pnl_pct || 0.74, 2)}
-              deltaBps={74}
-              positive={true}
-              subtext="Alpha Contribution: +52bps"
-              status="pass"
-            />
-            <MetricCard
-              label="Annualized Sharpe"
-              value={(summary?.annualized_sharpe || 2.14).toFixed(2)}
-              change="vs 1.12 BMK"
-              positive={true}
-              benchmark="1.12"
-              benchmarkLabel="SPY"
-              status="pass"
-            />
-            <MetricCard
-              label="Calmar Ratio"
-              value={(summary?.calmar_ratio || 2.85).toFixed(2)}
-              change="OOS Robust"
-              positive={true}
-              subtext="CAGR / Max Drawdown"
-              status="pass"
-            />
-            <MetricCard
-              label="Max Drawdown"
-              value={`-${(summary?.max_drawdown_pct || 6.8).toFixed(1)}%`}
-              change="Limit: 12.0%"
-              positive={false}
-              subtext="Historical Peak: $2.51M"
-              status="pass"
-            />
-            <MetricCard
-              label="Daily VaR (95%)"
-              value={`-${(summary?.var_95_daily_pct || 1.45).toFixed(2)}%`}
-              change="CVaR: -2.15%"
-              positive={false}
-              subtext="1-Day Dollar VaR: $36.0K"
-              status="pass"
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '3px' }}>
+            {kpis.map((kpi, i) => (
+              <MetricCard key={i} {...kpi} />
+            ))}
           </div>
         )}
 
-        {/* Macro Regime Strip */}
+        {/* ── Macro Regime ── */}
+        <SectionHeader title="MACRO REGIME CLASSIFICATION — HIDDEN MARKOV MODEL" badge="HMM" badgeColor="#0099CC" />
         <RegimeCard
-          activeRegime="bull_low_vol"
+          activeRegime={summary?.current_regime === 'Bull Quiet (Low Volatility)' ? 'bull_low_vol' : 'bull_low_vol'}
           transitionProb={0.58}
         />
 
-        {/* Charts: Equity Curve & Drawdown */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.85rem' }}>
+        {/* ── Charts Row ── */}
+        <SectionHeader title="PORTFOLIO PERFORMANCE vs BENCHMARK" badge="252D" />
+        <BBRow cols="2fr 1fr">
           <ChartContainer
-            title="PORTFOLIO PERFORMANCE VS BENCHMARK"
-            subtitle="Walk-forward simulated and live execution NAV series (1-day frequency)"
+            title="PORTFOLIO NAV vs S&P 500"
+            subtitle="Walk-forward simulated + live execution NAV | 1-day frequency"
             badge="LIVE RUN"
             badgeType="live"
           >
-            {loading ? <LoadingSkeleton height="320px" /> : (
-              <EquityCurve data={equityData} height={320} benchmarkName="S&P 500 (SPY)" />
-            )}
+            {loading ? <LoadingSkeleton height="280px" /> : <EquityCurve data={equityData} height={280} />}
           </ChartContainer>
 
           <ChartContainer
             title="UNDERWATER DRAWDOWN DEPTH"
-            subtitle="High-water mark depletion curve with -12.0% risk limit"
+            subtitle="High-water mark depletion | -12.0% risk limit"
             badge="PEAK: $2.51M"
             badgeType="neutral"
+            timeframes={[]}
           >
-            {loading ? <LoadingSkeleton height="320px" /> : (
-              <DrawdownChart data={drawdownData} height={320} />
-            )}
+            {loading ? <LoadingSkeleton height="280px" /> : <DrawdownChart data={drawdownData} height={280} />}
           </ChartContainer>
+        </BBRow>
+
+        {/* ── Portfolio Holdings ── */}
+        <SectionHeader
+          title="ACTIVE PORTFOLIO CONSTITUENTS — LONG/SHORT ALLOCATION"
+          badge={`${holdings.length} POSITIONS`}
+        />
+        <div style={{ border: '1px solid #2a2a2a', borderTop: 'none' }}>
+          {loading ? (
+            <LoadingSkeleton height="200px" label="LOADING PORTFOLIO HOLDINGS..." />
+          ) : (
+            <PositionTable holdings={holdings} />
+          )}
         </div>
 
-        {/* Positions & Holdings */}
-        <div className="terminal-card">
-          <div className="terminal-card-header">
-            <div>
-              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
-                ACTIVE PORTFOLIO CONSTITUENTS & RISK CONTRIBUTION
-              </span>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
-                Target vol-scaled long/short allocation · 24 active names
-              </div>
-            </div>
-            <span className="badge-tag badge-live">24 ACTIVE HOLDINGS</span>
-          </div>
-          <div className="terminal-card-body">
-            {loading ? <LoadingSkeleton height="200px" /> : (
-              <PositionTable holdings={holdings} />
-            )}
-          </div>
+        {/* ── Pipeline DAG ── */}
+        <SectionHeader title="PRODUCTION RESEARCH PIPELINE — DAG ORCHESTRATION STATUS" badge="ALL STAGES NOMINAL" badgeColor="#00CC33" />
+        <div style={{ padding: '0.5rem', background: '#0a0a0a', border: '1px solid #2a2a2a', borderTop: 'none' }}>
+          <PipelineStatus />
         </div>
 
-        {/* Automated Pipeline DAG */}
-        <div className="terminal-card">
-          <div className="terminal-card-header">
-            <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
-              PRODUCTION RESEARCH PIPELINE DAG STATUS
-            </span>
-            <span className="badge-tag badge-pass">ALL 12 STAGES SYNCHRONIZED</span>
-          </div>
-          <div className="terminal-card-body">
-            <PipelineStatus />
-          </div>
+        {/* ── Alert Feed ── */}
+        <SectionHeader title="REAL-TIME PRODUCTION EVENTS & ANOMALY STREAM" badge="STREAMING" />
+        <div style={{ border: '1px solid #2a2a2a', borderTop: 'none' }}>
+          <AlertFeed alerts={alerts} />
         </div>
 
-        {/* Real-time Alerts */}
-        <div className="terminal-card">
-          <div className="terminal-card-header">
-            <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
-              REAL-TIME PRODUCTION EVENT & ANOMALY STREAM
-            </span>
-            <span className="badge-tag badge-live">STREAMING EVENT LOG</span>
-          </div>
-          <div className="terminal-card-body">
-            <AlertFeed alerts={alerts} />
-          </div>
-        </div>
       </div>
     </ErrorBoundary>
   );

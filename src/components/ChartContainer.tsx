@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Maximize2, Download } from 'lucide-react';
 
 interface ChartContainerProps {
   title: string;
@@ -13,6 +12,7 @@ interface ChartContainerProps {
   onTimeframeChange?: (tf: string) => void;
   children: React.ReactNode;
   actions?: React.ReactNode;
+  rightLabel?: string;
 }
 
 export default function ChartContainer({
@@ -24,7 +24,8 @@ export default function ChartContainer({
   activeTimeframe: controlledTf,
   onTimeframeChange,
   children,
-  actions
+  actions,
+  rightLabel,
 }: ChartContainerProps) {
   const [internalTf, setInternalTf] = useState('1Y');
   const currentTf = controlledTf || internalTf;
@@ -34,45 +35,57 @@ export default function ChartContainer({
     if (onTimeframeChange) onTimeframeChange(tf);
   };
 
+  const badgeColors: Record<string, string> = {
+    pass: '#00CC33',
+    warn: '#CC8800',
+    fail: '#CC2222',
+    live: '#FF6600',
+    paper: '#888800',
+    neutral: '#444444',
+  };
+
   return (
-    <div className="terminal-card">
-      <div className="terminal-card-header">
+    <div className="bb-panel">
+      {/* Bloomberg panel header */}
+      <div className="bb-panel-header">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc', letterSpacing: '0.04em' }}>
-              {title}
-            </span>
+            <span className="bb-panel-title">{title}</span>
             {badge && (
-              <span className={`badge-tag badge-${badgeType}`}>
+              <span style={{
+                background: badgeColors[badgeType] || '#444',
+                color: '#000',
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                padding: '0 0.35rem',
+                height: '16px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                letterSpacing: '0.06em',
+                fontFamily: 'var(--font-mono)',
+              }}>
                 {badge}
               </span>
             )}
           </div>
           {subtitle && (
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: '0.1rem' }}>
-              {subtitle}
-            </div>
+            <div className="bb-panel-subtitle" style={{ marginTop: '1px' }}>{subtitle}</div>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Right side: timeframe picker + extras */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {rightLabel && (
+            <span style={{ color: '#555', fontSize: '0.6rem', fontFamily: 'var(--font-mono)' }}>{rightLabel}</span>
+          )}
+
           {timeframes && timeframes.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', background: '#0a0d14', padding: '0.15rem', borderRadius: '3px', border: '1px solid var(--border-terminal)' }}>
+            <div className="bb-tf-bar">
               {timeframes.map((tf) => (
                 <button
                   key={tf}
                   onClick={() => handleTfSelect(tf)}
-                  style={{
-                    padding: '0.15rem 0.45rem',
-                    fontSize: '0.65rem',
-                    fontFamily: 'var(--font-mono)',
-                    fontWeight: 600,
-                    border: 'none',
-                    borderRadius: '2px',
-                    cursor: 'pointer',
-                    background: currentTf === tf ? '#1e293b' : 'transparent',
-                    color: currentTf === tf ? '#38bdf8' : '#64748b'
-                  }}
+                  className={`bb-tf-btn ${currentTf === tf ? 'active' : ''}`}
                 >
                   {tf}
                 </button>
@@ -84,7 +97,8 @@ export default function ChartContainer({
         </div>
       </div>
 
-      <div className="terminal-card-body" style={{ padding: '0.85rem' }}>
+      {/* Chart body */}
+      <div className="bb-panel-body" style={{ padding: '0.75rem' }}>
         {children}
       </div>
     </div>

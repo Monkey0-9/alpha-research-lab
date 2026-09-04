@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import BloombergTicker from "@/components/BloombergTicker";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ['400', '500', '600', '700', '800'],
+});
 
 export const metadata: Metadata = {
-  title: "QuantAlpha — Professional Alpha Research Platform",
-  description: "End-to-end quantitative alpha research platform: Data Infrastructure, Feature Engineering, Alpha Discovery, Statistical Validation, Portfolio Optimization, Risk Management, and Production Monitoring.",
+  title: "QuantAlpha Bloomberg Terminal — Institutional Alpha Research",
+  description: "Bloomberg-style institutional alpha research platform: Data Infrastructure, Feature Engineering, Alpha Discovery, Statistical Validation, Portfolio Optimization, Risk Management, Production Monitoring.",
 };
 
 export default function RootLayout({
@@ -17,12 +21,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className={inter.className} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={jetbrainsMono.variable}>
+      <body className={jetbrainsMono.className} suppressHydrationWarning>
         <div className="app-layout">
           <Sidebar />
           <main className="main-content">
             {children}
+            <BloombergTicker />
           </main>
         </div>
       </body>

@@ -1,21 +1,45 @@
 'use client';
-
 import React from 'react';
-import { getStatusBadgeClass } from '@/lib/utils';
 
-interface BadgeProps {
+export default function Badge({
+  label,
+  type = 'neutral',
+  size = 'md',
+}: {
   label: string;
-  type?: 'pass' | 'warn' | 'fail' | 'live' | 'paper' | 'neutral' | string;
-  size?: 'sm' | 'md';
-}
-
-export default function Badge({ label, type, size = 'md' }: BadgeProps) {
-  const badgeClass = type ? `badge-${type.toLowerCase()}` : getStatusBadgeClass(label);
-  const padding = size === 'sm' ? '0.1rem 0.35rem' : '0.15rem 0.5rem';
-  const fontSize = size === 'sm' ? '0.62rem' : '0.68rem';
+  type?: 'pass' | 'fail' | 'warn' | 'live' | 'paper' | 'neutral' | 'orange' | 'yellow' | 'cyan';
+  size?: 'sm' | 'md' | 'lg';
+}) {
+  const bg: Record<string, string> = {
+    pass:    '#00CC33',
+    fail:    '#CC2222',
+    warn:    '#CC8800',
+    live:    '#FF6600',
+    paper:   '#886600',
+    neutral: '#333333',
+    orange:  '#FF6600',
+    yellow:  '#CCCC00',
+    cyan:    '#0099CC',
+  };
+  const textColor = type === 'fail' ? '#ffffff' : '#000000';
+  const fontSize = size === 'sm' ? '0.55rem' : size === 'lg' ? '0.7rem' : '0.6rem';
+  const padding = size === 'sm' ? '0 0.25rem' : '0 0.4rem';
 
   return (
-    <span className={`badge-tag ${badgeClass}`} style={{ padding, fontSize }}>
+    <span style={{
+      background: bg[type] || '#333',
+      color: textColor,
+      fontSize,
+      fontWeight: 900,
+      padding,
+      height: size === 'lg' ? '18px' : '15px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      fontFamily: 'var(--font-mono)',
+      letterSpacing: '0.05em',
+      textTransform: 'uppercase' as const,
+      flexShrink: 0,
+    }}>
       {label}
     </span>
   );

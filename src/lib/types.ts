@@ -316,8 +316,9 @@ export interface AlphaHealthMetrics {
 export interface ProductionAlertItem {
   id: string;
   timestamp: string;
-  severity: 'CRITICAL' | 'WARNING' | 'INFO';
-  category: 'ALPHA_DECAY' | 'FEATURE_DRIFT' | 'RISK_BREACH' | 'EXECUTION_SLIPPAGE' | 'DATA_LATENCY';
+  severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'critical' | 'warning' | 'info' | 'success';
+  category?: 'ALPHA_DECAY' | 'FEATURE_DRIFT' | 'RISK_BREACH' | 'EXECUTION_SLIPPAGE' | 'DATA_LATENCY';
+  module?: string;
   message: string;
   acknowledged: boolean;
 }

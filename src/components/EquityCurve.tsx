@@ -1,99 +1,95 @@
 'use client';
-
 import React from 'react';
 import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Legend
+  ComposedChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine, Legend
 } from 'recharts';
-
-interface EquityPoint {
-  date: string;
-  nav: number;
-  benchmark?: number;
-  drawdown?: number;
-}
+import type { ChartTooltipProps } from '@/lib/types';
 
 interface EquityCurveProps {
-  data: EquityPoint[];
+  data: Array<{ date: string; nav: number; benchmark: number }>;
   height?: number;
   benchmarkName?: string;
 }
 
+function BBTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: '#0a0500', border: '1px solid #FF6600',
+      padding: '0.4rem 0.65rem', fontFamily: 'var(--font-mono)', fontSize: '0.65rem',
+    }}>
+      <div style={{ color: '#FF6600', fontWeight: 700, marginBottom: '0.3rem', borderBottom: '1px solid #2a1500', paddingBottom: '0.2rem' }}>
+        {label}
+      </div>
+      {payload.map((p: any, i: number) => (
+        <div key={i} style={{ display: 'flex', gap: '0.75rem', color: p.color || '#fff', justifyContent: 'space-between' }}>
+          <span style={{ color: '#888' }}>{p.name?.toUpperCase()}</span>
+          <span style={{ fontWeight: 700 }}>{typeof p.value === 'number' ? p.value.toFixed(4) : p.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function EquityCurve({
   data,
-  height = 320,
-  benchmarkName = 'S&P 500 (SPY)'
+  height = 280,
+  benchmarkName = 'S&P 500',
 }: EquityCurveProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}>
+        AWAITING NAV DATA STREAM...
+      </div>
+    );
+  }
+
   return (
-    <div style={{ width: '100%', height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
-          <XAxis
-            dataKey="date"
-            stroke="#64748b"
-            fontSize={10}
-            fontFamily="var(--font-mono)"
-            tickLine={false}
-            dy={5}
-          />
-          <YAxis
-            stroke="#64748b"
-            fontSize={10}
-            fontFamily="var(--font-mono)"
-            tickLine={false}
-            domain={['auto', 'auto']}
-            tickFormatter={(v) => v.toFixed(2)}
-          />
-          <Tooltip
-            contentStyle={{
-              background: '#0d1117',
-              border: '1px solid #1e293b',
-              borderRadius: '3px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              color: '#f8fafc'
-            }}
-            formatter={(value: any, name: any) => [
-              typeof value === 'number' ? value.toFixed(4) : value,
-              name === 'nav' ? 'QuantAlpha Portfolio' : name
-            ]}
-          />
-          <Legend
-            wrapperStyle={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              paddingTop: '8px'
-            }}
-          />
-          <Line
-            type="monotone"
-            dataKey="nav"
-            name="QuantAlpha Portfolio"
-            stroke="#38bdf8"
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4, stroke: '#38bdf8', strokeWidth: 1, fill: '#ffffff' }}
-          />
-          {data[0]?.benchmark !== undefined && (
-            <Line
-              type="monotone"
-              dataKey="benchmark"
-              name={benchmarkName}
-              stroke="#64748b"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              dot={false}
-            />
-          )}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height={height}>
+      <ComposedChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+        <CartesianGrid strokeDasharray="" stroke="#1a1a1a" vertical={false} />
+        <XAxis
+          dataKey="date"
+          tickLine={false}
+          axisLine={{ stroke: '#2a2a2a' }}
+          tick={{ fill: '#555', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+          tickFormatter={(v) => v.slice(5)}
+          interval="preserveStartEnd"
+        />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tick={{ fill: '#555', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+          tickFormatter={(v) => v.toFixed(2)}
+          width={50}
+        />
+        <Tooltip content={<BBTooltip />} />
+        <ReferenceLine y={1.0} stroke="#333333" strokeDasharray="4 2" />
+        <Legend
+          wrapperStyle={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: '#666', paddingTop: '0.3rem' }}
+          formatter={(value) => value.toUpperCase()}
+        />
+        <Line
+          type="monotone"
+          dataKey="nav"
+          name="Portfolio NAV"
+          stroke="#FF6600"
+          dot={false}
+          strokeWidth={1.5}
+          activeDot={{ r: 3, fill: '#FF6600', stroke: '#000', strokeWidth: 1 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="benchmark"
+          name={benchmarkName}
+          stroke="#444444"
+          dot={false}
+          strokeWidth={1}
+          strokeDasharray="4 2"
+          activeDot={{ r: 3, fill: '#444', stroke: '#000' }}
+        />
+      </ComposedChart>
+    </ResponsiveContainer>
   );
 }
