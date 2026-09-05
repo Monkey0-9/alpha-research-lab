@@ -92,6 +92,10 @@ class ExperimentManifest:
         }
         self.manifest_hash = compute_sha256(body)
 
+    @property
+    def experiment_id(self) -> str:
+        return self.spec.experiment_id
+
 
 class ExperimentRegistry:
     """Storage and governance registry for immutable quantitative research manifests."""

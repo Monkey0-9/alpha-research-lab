@@ -51,3 +51,7 @@ reports/
 
 # Rust target
 **/target/
+
+# Research run stores
+backend/experiments_store/
+data/alpha_registry/

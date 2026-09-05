@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import numpy as np
 import scipy.stats as ss
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Dict, Tuple
 
 
 
@@ -191,3 +191,111 @@ def alpha_decay_half_life(ic_series: Any) -> float:
         return 252.0  # infinite/no decay
     half_life = np.log(2.0) / decay_rate
     return float(np.clip(half_life, 5.0, 500.0))
+
+
+def hac_newey_west(
+    y: np.ndarray,
+    x: Optional[np.ndarray] = None,
+    max_lags: int = 5,
+) -> Dict[str, Any]:
+    """
+    Newey-West (1987) Heteroskedasticity and Autocorrelation Consistent (HAC) covariance.
+    Computes robust standard errors and t-statistics accounting for serially correlated errors.
+    """
+    y_arr = np.asarray(y, dtype=np.float64)
+    n = len(y_arr)
+    if n < max_lags + 2:
+        return {
+            "status": "INSUFFICIENT_DATA",
+            "beta": 0.0,
+            "se": 0.0,
+            "t_stat": 0.0,
+            "p_value": 1.0,
+        }
+
+    if x is None:
+        # Mean test: y = mu + e
+        X = np.ones((n, 1), dtype=np.float64)
+    else:
+        x_arr = np.asarray(x, dtype=np.float64)
+        if x_arr.ndim == 1:
+            X = np.column_stack([np.ones(n), x_arr])
+        else:
+            X = np.column_stack([np.ones(n), x_arr])
+
+    k = X.shape[1]
+    XtX_inv = np.linalg.pinv(X.T @ X)
+    beta = XtX_inv @ (X.T @ y_arr)
+    residuals = y_arr - X @ beta
+
+    # S_0: White contemporaneous covariance
+    S = np.zeros((k, k), dtype=np.float64)
+    for t in range(n):
+        xt = X[t : t + 1]
+        S += (residuals[t] ** 2) * (xt.T @ xt)
+
+    # Autocorrelation lags with Bartlett kernel weights
+    for lag in range(1, max_lags + 1):
+        weight = 1.0 - (lag / (max_lags + 1.0))
+        gamma = np.zeros((k, k), dtype=np.float64)
+        for t in range(lag, n):
+            xt = X[t : t + 1]
+            xt_lag = X[t - lag : t - lag + 1]
+            prod = residuals[t] * residuals[t - lag] * (xt.T @ xt_lag + xt_lag.T @ xt)
+            gamma += prod
+        S += weight * gamma
+
+    V_hac = XtX_inv @ S @ XtX_inv
+    se = np.sqrt(np.maximum(1e-12, np.diag(V_hac)))
+    t_stats = beta / se
+    p_values = 2.0 * (1.0 - ss.norm.cdf(np.abs(t_stats)))
+
+    target_idx = 1 if k > 1 else 0
+    return {
+        "status": "SUCCESS",
+        "beta": float(beta[target_idx]),
+        "se": float(se[target_idx]),
+        "t_stat": float(t_stats[target_idx]),
+        "p_value": float(p_values[target_idx]),
+        "all_betas": beta.tolist(),
+        "all_se": se.tolist(),
+        "all_t_stats": t_stats.tolist(),
+        "lags": max_lags,
+        "n_obs": n,
+    }
+
+
+def stationary_block_bootstrap(
+    data: np.ndarray,
+    mean_block_size: int = 10,
+    n_bootstraps: int = 1000,
+    seed: Optional[int] = 42,
+) -> np.ndarray:
+    """
+    Politis & Romano (1994) Stationary Bootstrap for dependent time-series.
+    Block lengths follow a geometric distribution with mean mean_block_size.
+    Wraps circularly around data boundaries to ensure stationarity.
+    Returns: 2D array of shape (n_bootstraps, n_obs).
+    """
+    arr = np.asarray(data, dtype=np.float64)
+    n = len(arr)
+    if n < 5:
+        return np.tile(arr, (n_bootstraps, 1))
+
+    rng = np.random.default_rng(seed)
+    p = 1.0 / max(1.0, float(mean_block_size))
+
+    bootstrapped = np.empty((n_bootstraps, n), dtype=np.float64)
+
+    for b in range(n_bootstraps):
+        idx = rng.integers(0, n)
+        bootstrapped[b, 0] = arr[idx]
+        for t in range(1, n):
+            # With probability p, start a new block at a random point
+            if rng.random() < p:
+                idx = rng.integers(0, n)
+            else:
+                idx = (idx + 1) % n  # Circular wrap
+            bootstrapped[b, t] = arr[idx]
+
+    return bootstrapped

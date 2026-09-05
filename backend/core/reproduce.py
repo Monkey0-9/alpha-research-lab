@@ -11,8 +11,12 @@ import sys
 from pathlib import Path
 from typing import Dict, Any
 import numpy as np
-from core.experiment import experiment_registry, ExperimentManifest, compute_sha256
-from core.dataset_registry import dataset_registry
+try:
+    from backend.core.experiment import experiment_registry, ExperimentManifest, compute_sha256
+    from backend.core.dataset_registry import dataset_registry
+except ImportError:
+    from core.experiment import experiment_registry, ExperimentManifest, compute_sha256
+    from core.dataset_registry import dataset_registry
 
 logger = logging.getLogger(__name__)
 
