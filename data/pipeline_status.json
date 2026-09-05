@@ -1,0 +1,12 @@
+{
+  "status": "COMPLETED",
+  "provider": "yfinance",
+  "last_sync": "2026-09-05T04:03:07.036777Z",
+  "records_count": 3780,
+  "tickers_count": 15,
+  "clean_pct": 98.97,
+  "quality_score": 98.58,
+  "elapsed_seconds": 13.9,
+  "outliers_count": 39,
+  "missing_count": 0
+}

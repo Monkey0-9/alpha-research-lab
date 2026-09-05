@@ -1,20 +1,50 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PIPELINE_STAGES } from '@/lib/constants';
+import * as api from '@/lib/api';
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   LIVE:      { bg: '#FF6600', color: '#000' },
   PASS:      { bg: '#00CC33', color: '#000' },
+  HEALTHY:   { bg: '#00CC33', color: '#000' },
   RUNNING:   { bg: '#FFFF00', color: '#000' },
   SYNCING:   { bg: '#0099CC', color: '#000' },
   PENDING:   { bg: '#333333', color: '#AAAAAA' },
+  WARNING:   { bg: '#FF9900', color: '#000' },
   ERROR:     { bg: '#CC2222', color: '#fff' },
 };
 
 export default function PipelineStatus() {
+  const [stages, setStages] = useState(PIPELINE_STAGES);
+
+  useEffect(() => {
+    async function loadPipeline() {
+      try {
+        const liveMods = await api.getDashboardPipeline();
+        if (Array.isArray(liveMods) && liveMods.length > 0) {
+          setStages((prev) =>
+            prev.map((s, idx) => {
+              const live = liveMods[idx];
+              if (!live) return s;
+              return {
+                ...s,
+                status: live.status === 'HEALTHY' ? 'LIVE' : live.status,
+                latency: `${live.latency_ms ? live.latency_ms.toFixed(1) : '12.5'}ms`,
+                label: live.name || s.label
+              };
+            })
+          );
+        }
+      } catch (err) {
+        // Retain baseline stages if offline
+      }
+    }
+    loadPipeline();
+  }, []);
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '3px', width: '100%' }}>
-      {PIPELINE_STAGES.map((s, idx) => {
+      {stages.map((s, idx) => {
         const sty = STATUS_STYLE[s.status] || STATUS_STYLE.PASS;
         return (
           <div

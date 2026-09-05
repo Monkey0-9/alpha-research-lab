@@ -9,7 +9,7 @@ Endpoints:
 - GET /api/validation/consistency
 """
 from __future__ import annotations
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 from core.validation import validator
@@ -38,6 +38,7 @@ class FoldResult(BaseModel):
     status: str
 
 class WalkForwardResponse(BaseModel):
+    model_config = {"protected_namespaces": ()}
     model_type: str
     num_folds: int
     mean_oos_sharpe: float
@@ -71,12 +72,14 @@ class RegimeResult(BaseModel):
     is_robust: bool
 
 class RegimeTestResponse(BaseModel):
+    model_config = {"protected_namespaces": ()}
     model_type: str
     overall_robustness_passed: bool
     regimes_tested: int
     results: List[RegimeResult]
 
 class ConsistencyScore(BaseModel):
+    model_config = {"protected_namespaces": ()}
     model_type: str
     positive_folds_pct: float
     sharpe_dispersion: float
@@ -137,6 +140,7 @@ def get_purged_kfold():
 
 
 @router.get("/regime-tests")
+@router.get("/regime-stress")
 def get_regime_tests(model_type: str = Query("lightgbm")):
     """Performance breakdown across distinct market macro regimes."""
     results = regime_engine.test_robustness()

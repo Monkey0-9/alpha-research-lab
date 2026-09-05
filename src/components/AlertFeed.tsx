@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ProductionAlertItem } from '@/lib/types';
 
 interface AlertFeedProps {
@@ -15,11 +15,11 @@ const SEVERITY_STYLE: Record<string, { color: string; label: string }> = {
 };
 
 const FALLBACK_ALERTS: ProductionAlertItem[] = [
-  { id: 'a1', timestamp: new Date().toISOString(), message: 'DSR GATE PASSED — MOMENTUM_REVERSAL v2.1 approved for staging deployment', severity: 'success', module: 'QUALITY GATE', acknowledged: false },
-  { id: 'a2', timestamp: new Date(Date.now() - 120000).toISOString(), message: 'ALPHA DECAY DETECTED — STATARB_SECTOR IC falling below 0.03 threshold, auto-refit queued', severity: 'warning', module: 'MONITORING', acknowledged: false },
-  { id: 'a3', timestamp: new Date(Date.now() - 300000).toISOString(), message: 'DRAWDOWN LIMIT BREACH — Portfolio equity at -6.8%, 56.7% of max DD limit consumed', severity: 'warning', module: 'RISK ENGINE', acknowledged: false },
-  { id: 'a4', timestamp: new Date(Date.now() - 600000).toISOString(), message: 'FFI ENGINE STATUS — Rust accelerator v1.8.2 compiled, C kernel loaded, memory mapped 384MB', severity: 'info', module: 'INFRASTRUCTURE', acknowledged: true },
-  { id: 'a5', timestamp: new Date(Date.now() - 900000).toISOString(), message: 'BACKTEST COMPLETE — Walk-forward Sharpe 2.14 > 1.50 threshold, promoted to paper trading', severity: 'success', module: 'BACKTESTER', acknowledged: true },
+  { id: 'a1', timestamp: '2026-09-05T08:00:00.000Z', message: 'DSR GATE PASSED — MOMENTUM_REVERSAL v2.1 approved for staging deployment', severity: 'success', module: 'QUALITY GATE', acknowledged: false },
+  { id: 'a2', timestamp: '2026-09-05T07:58:00.000Z', message: 'ALPHA DECAY DETECTED — STATARB_SECTOR IC falling below 0.03 threshold, auto-refit queued', severity: 'warning', module: 'MONITORING', acknowledged: false },
+  { id: 'a3', timestamp: '2026-09-05T07:55:00.000Z', message: 'DRAWDOWN LIMIT BREACH — Portfolio equity at -6.8%, 56.7% of max DD limit consumed', severity: 'warning', module: 'RISK ENGINE', acknowledged: false },
+  { id: 'a4', timestamp: '2026-09-05T07:50:00.000Z', message: 'FFI ENGINE STATUS — Rust accelerator v1.8.2 compiled, C kernel loaded, memory mapped 384MB', severity: 'info', module: 'INFRASTRUCTURE', acknowledged: true },
+  { id: 'a5', timestamp: '2026-09-05T07:45:00.000Z', message: 'BACKTEST COMPLETE — Walk-forward Sharpe 2.14 > 1.50 threshold, promoted to paper trading', severity: 'success', module: 'BACKTESTER', acknowledged: true },
 ];
 
 function fmtTime(iso: string) {
@@ -30,13 +30,23 @@ function fmtTime(iso: string) {
 }
 
 function timeDiff(iso: string) {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return `${diff}S AGO`;
-  if (diff < 3600) return `${Math.floor(diff/60)}M AGO`;
-  return `${Math.floor(diff/3600)}H AGO`;
+  try {
+    const diff = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+    if (diff < 60) return `${diff}S AGO`;
+    if (diff < 3600) return `${Math.floor(diff/60)}M AGO`;
+    return `${Math.floor(diff/3600)}H AGO`;
+  } catch {
+    return '--';
+  }
 }
 
 export default function AlertFeed({ alerts }: AlertFeedProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const items = (alerts && alerts.length > 0 ? alerts : FALLBACK_ALERTS);
 
   return (
@@ -79,8 +89,8 @@ export default function AlertFeed({ alerts }: AlertFeedProps) {
             </span>
 
             {/* Timestamp */}
-            <span className="bb-feed-time" style={{ flexShrink: 0, minWidth: '70px' }}>
-              {fmtTime(alert.timestamp)}
+            <span className="bb-feed-time" suppressHydrationWarning style={{ flexShrink: 0, minWidth: '70px' }}>
+              {mounted ? fmtTime(alert.timestamp) : (alert.timestamp ? (alert.timestamp.includes('T') ? alert.timestamp.slice(11, 19) : alert.timestamp.slice(0, 8)) : '--:--:--')}
             </span>
 
             {/* Module */}
@@ -97,8 +107,8 @@ export default function AlertFeed({ alerts }: AlertFeedProps) {
             </span>
 
             {/* Time diff */}
-            <span style={{ color: '#444', fontSize: '0.58rem', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
-              {timeDiff(alert.timestamp)}
+            <span suppressHydrationWarning style={{ color: '#444', fontSize: '0.58rem', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
+              {mounted ? timeDiff(alert.timestamp) : '1M AGO'}
             </span>
 
             {/* Ack */}

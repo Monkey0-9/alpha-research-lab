@@ -106,7 +106,7 @@ export default function FeatureFactoryPage() {
 
   return (
     <ErrorBoundary fallbackTitle="Feature Signal Factory Interrupted">
-      <TerminalHeader title="MODULE 02 // FEATURE & SIGNAL ENGINEERING FACTORY" />
+      <TerminalHeader title="FEATURE & SIGNAL ENGINEERING FACTORY" />
 
       <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* KPI Strip */}

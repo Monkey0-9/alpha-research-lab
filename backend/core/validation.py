@@ -9,11 +9,10 @@ Prevents information leakage in non-stationary financial data.
 from __future__ import annotations
 
 import logging
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
-from sklearn.metrics import mean_squared_error
 
 from core.data_loader import load_sp500_data
 from core.features import build_features
@@ -42,10 +41,10 @@ class TimeSeriesValidator:
             f = build_features(raw_sub)
             if "close" in raw_sub.columns:
                 f["close"] = raw_sub["close"]
-            l = generate_labels(f)
+            labels = generate_labels(f)
             for col in ["fwd_return_1d", "fwd_return_5d"]:
-                if col in l.columns:
-                    f[col] = l[col]
+                if col in labels.columns:
+                    f[col] = labels[col]
             self._df = f
 
     @property
@@ -60,12 +59,17 @@ class TimeSeriesValidator:
         """
         dates = pd.to_datetime(self.df.index.get_level_values("date").unique()).sort_values()
         total_days = len(dates)
-        if total_days < 500:
-            raise ValueError(f"Insufficient historical data ({total_days} days) for 12-fold validation.")
+        if total_days < 100:
+            raise ValueError(f"Insufficient historical data ({total_days} days) for validation.")
 
-        test_window = 63  # 3 months ~ 63 trading days
-        embargo = 21      # 1 month ~ 21 trading days
-        min_train = 504   # 2 years ~ 504 trading days
+        if total_days < 500:
+            min_train = max(40, int(total_days * 0.35))
+            embargo = 5
+            test_window = max(10, int((total_days - min_train - embargo) / num_folds))
+        else:
+            test_window = 63  # 3 months ~ 63 trading days
+            embargo = 21      # 1 month ~ 21 trading days
+            min_train = 504   # 2 years ~ 504 trading days
 
         folds: List[Dict[str, Any]] = []
         oos_sharpes: List[float] = []

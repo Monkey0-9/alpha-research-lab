@@ -74,24 +74,13 @@ export default function ExecutiveDashboard() {
         setHoldings(hld.holdings);
         setAlerts(tel.recent_alerts || []);
 
-        // 252-day equity + drawdown series
-        const baseCurve: any[] = [];
-        const ddArr: any[] = [];
-        let pNav = 1.0, bNav = 1.0, peak = 1.0;
-        const now = new Date();
-        for (let i = 252; i >= 0; i--) {
-          const d = new Date(now.getTime() - i * 86400000).toISOString().slice(0, 10);
-          const pRet = (Math.random() - 0.47) * 0.012 + 0.0007;
-          const bRet = (Math.random() - 0.48) * 0.014 + 0.0004;
-          pNav *= (1 + pRet);
-          bNav *= (1 + bRet);
-          peak = Math.max(peak, pNav);
-          const dd = ((pNav - peak) / peak) * 100;
-          baseCurve.push({ date: d, nav: parseFloat(pNav.toFixed(4)), benchmark: parseFloat(bNav.toFixed(4)) });
-          ddArr.push({ date: d, drawdown: parseFloat(dd.toFixed(2)) });
-        }
-        setEquityData(baseCurve);
-        setDrawdownData(ddArr);
+        // 252-day empirical equity + drawdown trajectories from Point-in-Time datastore
+        const [eqRes, ddRes] = await Promise.all([
+          api.getDashboardEquityCurve(),
+          api.getDashboardDrawdown()
+        ]);
+        setEquityData(eqRes);
+        setDrawdownData(ddRes);
       } catch (err) {
         console.error('Dashboard load error:', err);
       } finally {
@@ -112,7 +101,7 @@ export default function ExecutiveDashboard() {
 
   return (
     <ErrorBoundary fallbackTitle="EXECUTIVE DASHBOARD ERROR">
-      <TerminalHeader title="MODULE 00 // EXECUTIVE TRADING DASHBOARD" />
+      <TerminalHeader title="EXECUTIVE TRADING DASHBOARD" />
 
       <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
 

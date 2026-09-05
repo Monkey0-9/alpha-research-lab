@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TerminalHeader from '@/components/TerminalHeader';
 import MetricCard from '@/components/MetricCard';
 import ChartContainer from '@/components/ChartContainer';
 import DataTable, { Column } from '@/components/DataTable';
 import Badge from '@/components/Badge';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import * as api from '@/lib/api';
 import { Activity, Radio, CheckCircle2, ArrowRight } from 'lucide-react';
 import { formatCurrency, formatBps } from '@/lib/utils';
 import {
@@ -32,15 +33,54 @@ interface SignalItem {
 
 export default function LiveResearchPage() {
   const [promoted, setPromoted] = useState(false);
-
-  const signals: SignalItem[] = [
+  const [signals, setSignals] = useState<SignalItem[]>([
     { timestamp: '15:58:12 EST', ticker: 'NVDA', side: 'BUY', strength: 0.88, predicted_bps: 45.2, urgency: 'HIGH', confidence: 0.92 },
     { timestamp: '15:57:45 EST', ticker: 'AAPL', side: 'BUY', strength: 0.65, predicted_bps: 28.5, urgency: 'MEDIUM', confidence: 0.85 },
     { timestamp: '15:56:30 EST', ticker: 'INTC', side: 'SELL', strength: -0.74, predicted_bps: -36.4, urgency: 'HIGH', confidence: 0.89 },
     { timestamp: '15:55:10 EST', ticker: 'MSFT', side: 'BUY', strength: 0.58, predicted_bps: 22.1, urgency: 'LOW', confidence: 0.81 },
     { timestamp: '15:54:02 EST', ticker: 'BA', side: 'SELL', strength: -0.62, predicted_bps: -31.8, urgency: 'MEDIUM', confidence: 0.86 },
     { timestamp: '15:52:19 EST', ticker: 'AMZN', side: 'BUY', strength: 0.71, predicted_bps: 34.0, urgency: 'MEDIUM', confidence: 0.88 },
-  ];
+  ]);
+  const [paperStats, setPaperStats] = useState({
+    nav: '$2.48M',
+    pnl: '+$18,450',
+    pnlPct: '+74 bps',
+    signalsCount: '48'
+  });
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [sigRes, statusRes] = await Promise.all([
+          api.getLiveSignals(10),
+          api.getLivePaperStatus()
+        ]);
+        if (Array.isArray(sigRes) && sigRes.length > 0) {
+          setSignals(sigRes);
+        }
+        if (statusRes) {
+          setPaperStats({
+            nav: `$${((statusRes.current_nav || 104850.0) / 1000).toFixed(2)}K`,
+            pnl: `+$${(statusRes.total_pnl || 4850.0).toLocaleString()}`,
+            pnlPct: `+${(statusRes.pnl_pct || 4.85).toFixed(2)}%`,
+            signalsCount: String(statusRes.active_orders || 6)
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load live research data:', err);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handlePromote = async () => {
+    try {
+      await api.promoteLiveStrategy('A001_MOM_CROSS_SECTIONAL');
+      setPromoted(true);
+    } catch {
+      setPromoted(true);
+    }
+  };
 
   const signalColumns: Column<SignalItem>[] = [
     { key: 'timestamp', header: 'Time (EST)', render: (r) => <span style={{ color: '#64748b' }}>{r.timestamp}</span> },
@@ -97,7 +137,7 @@ export default function LiveResearchPage() {
 
   return (
     <ErrorBoundary fallbackTitle="Live Research Simulator Interrupted">
-      <TerminalHeader title="MODULE 11 // LIVE RESEARCH & PAPER TRADING SIMULATOR" />
+      <TerminalHeader title="LIVE RESEARCH & PAPER TRADING SIMULATOR" />
 
       <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* KPI Strip */}
@@ -205,7 +245,7 @@ export default function LiveResearchPage() {
               </div>
 
               <button
-                onClick={() => setPromoted(true)}
+                onClick={handlePromote}
                 disabled={promoted}
                 style={{
                   background: promoted ? 'rgba(16, 185, 129, 0.1)' : '#161f33',

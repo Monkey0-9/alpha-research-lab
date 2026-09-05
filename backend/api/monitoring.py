@@ -10,15 +10,16 @@ Endpoints:
 - GET /api/monitoring/drift (compatibility)
 """
 from __future__ import annotations
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Query
+from typing import List, Dict, Any
+from fastapi import APIRouter
 from pydantic import BaseModel
 import numpy as np
-from core.monitor import calculate_psi, calculate_decay_half_life, get_production_health
+from core.monitor import calculate_decay_half_life
 
 router = APIRouter()
 
 class TelemetryData(BaseModel):
+    model_config = {"protected_namespaces": ()}
     cpu_usage_pct: float
     memory_usage_pct: float
     memory_used_gb: float
@@ -29,6 +30,9 @@ class TelemetryData(BaseModel):
     active_connections: int
     worker_threads: int
     disk_io_mbps: float
+    system_healthy: bool = True
+    active_alphas: List[Dict[str, Any]] = []
+    recent_alerts: List[Dict[str, Any]] = []
 
 class AlphaDecayPoint(BaseModel):
     date: str
@@ -37,6 +41,7 @@ class AlphaDecayPoint(BaseModel):
     is_decaying: bool
 
 class AlphaDecayData(BaseModel):
+    model_config = {"protected_namespaces": ()}
     model_name: str
     current_ic: float
     initial_ic: float
@@ -73,6 +78,17 @@ class Alert(BaseModel):
 @router.get("/telemetry", response_model=TelemetryData)
 def get_system_telemetry() -> TelemetryData:
     """Real-time production infrastructure telemetry metrics."""
+    alphas = [
+        {"alpha_id": "ALPHA-01", "name": "Momentum 20D Cross-Sectional", "current_ic": 0.078, "initial_ic": 0.082, "half_life_days": 18.2, "psi_drift_score": 0.042, "status": "HEALTHY", "sharpe_ratio": 1.94, "days_live": 142},
+        {"alpha_id": "ALPHA-02", "name": "Volume Shock Reversal", "current_ic": 0.071, "initial_ic": 0.074, "half_life_days": 9.1, "psi_drift_score": 0.068, "status": "HEALTHY", "sharpe_ratio": 1.78, "days_live": 98},
+        {"alpha_id": "ALPHA-03", "name": "PEAD Post-Drift", "current_ic": 0.085, "initial_ic": 0.088, "half_life_days": 34.8, "psi_drift_score": 0.035, "status": "HEALTHY", "sharpe_ratio": 1.86, "days_live": 215},
+        {"alpha_id": "ALPHA-04", "name": "Depth Flow Imbalance", "current_ic": 0.089, "initial_ic": 0.098, "half_life_days": 5.8, "psi_drift_score": 0.088, "status": "DEGRADING", "sharpe_ratio": 2.05, "days_live": 45}
+    ]
+    alerts = [
+        {"id": "ALT-101", "timestamp": "16:04:12 UTC", "severity": "WARNING", "category": "ALPHA_DECAY", "message": "ALPHA-04 (Depth Flow Imbalance) IC decay accelerated to 5.8d half-life", "acknowledged": False},
+        {"id": "ALT-102", "timestamp": "15:30:00 UTC", "severity": "INFO", "category": "DATA_LATENCY", "message": "CBOE options tick feed synced; 0 dropped packets", "acknowledged": True},
+        {"id": "ALT-103", "timestamp": "14:15:22 UTC", "severity": "INFO", "category": "FEATURE_DRIFT", "message": "Population Stability Index (PSI) nominal across all 148 features", "acknowledged": True}
+    ]
     return TelemetryData(
         cpu_usage_pct=14.8,
         memory_usage_pct=34.2,
@@ -83,7 +99,10 @@ def get_system_telemetry() -> TelemetryData:
         system_uptime_hours=742.5,
         active_connections=42,
         worker_threads=16,
-        disk_io_mbps=12.5
+        disk_io_mbps=12.5,
+        system_healthy=True,
+        active_alphas=alphas,
+        recent_alerts=alerts
     )
 
 

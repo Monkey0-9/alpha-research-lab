@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import TerminalHeader from '@/components/TerminalHeader';
 import MetricCard from '@/components/MetricCard';
-import ChartContainer from '@/components/ChartContainer';
 import VaRHistogram from '@/components/VaRHistogram';
 import RiskAttribution from '@/components/RiskAttribution';
 import DrawdownChart from '@/components/DrawdownChart';
@@ -14,7 +13,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import * as api from '@/lib/api';
 import * as types from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { AlertTriangle, ShieldAlert, BarChart2 } from 'lucide-react';
+
 
 export default function RiskEnginePage() {
   const [loading, setLoading] = useState(true);
@@ -97,115 +96,63 @@ export default function RiskEnginePage() {
 
   return (
     <ErrorBoundary fallbackTitle="Institutional Risk Engine Interrupted">
-      <TerminalHeader title="MODULE 10 // INSTITUTIONAL RISK ENGINE & STRESS TESTING" />
+      <TerminalHeader title="INSTITUTIONAL RISK ENGINE & STRESS TESTING" />
 
-      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+
+        {/* Section Header */}
+        <div style={{ padding: '0.28rem 0.6rem', background: '#0d0600', border: '1px solid #FF6600', borderBottom: '1px solid #2a1500', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ color: '#FF6600', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.07em' }}>RISK METRICS — VAR / CVAR / FACTOR ATTRIBUTION</span>
+          <span style={{ background: '#FF6600', color: '#000', fontSize: '0.58rem', fontWeight: 900, padding: '0 0.4rem', height: '15px', display: 'inline-flex', alignItems: 'center' }}>LIVE</span>
+        </div>
+
         {/* KPI Strip */}
-        {loading ? <LoadingSkeleton height="85px" count={1} /> : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.65rem' }}>
-            <MetricCard
-              label="Daily Historical VaR (95%)"
-              value={`-${(varData?.historical_var_pct || 1.45).toFixed(2)}%`}
-              change={formatCurrency(varData?.historical_var_dollars || 36032, 0)}
-              positive={false}
-              subtext="1-Day Loss Horizon"
-              status="pass"
-            />
-            <MetricCard
-              label="Parametric VaR (95%)"
-              value={`-${(varData?.parametric_var_pct || 1.38).toFixed(2)}%`}
-              change="Normal Assumption"
-              positive={false}
-              subtext="Variance-Covariance Model"
-              status="pass"
-            />
-            <MetricCard
-              label="CVaR (Expected Shortfall)"
-              value={`-${(varData?.cvar_expected_shortfall_pct || 2.15).toFixed(2)}%`}
-              change={formatCurrency(varData?.cvar_dollars || 53427, 0)}
-              positive={false}
-              subtext="Expected Tail Loss"
-              status="pass"
-            />
-            <MetricCard
-              label="Annualized Volatility"
-              value={`${(varData?.annualized_vol_pct || 12.4).toFixed(1)}%`}
-              change="Limit: 15.0%"
-              positive={true}
-              subtext="Within Risk Tolerance"
-              status="pass"
-            />
-            <MetricCard
-              label="Portfolio Beta (SPY)"
-              value="0.04"
-              change="Near Neutral"
-              positive={true}
-              subtext="Low Systematic Market Risk"
-              status="pass"
-            />
-            <MetricCard
-              label="Stress Loss Capacity"
-              value="$450K"
-              change="Buffer: 18.1%"
-              positive={true}
-              subtext="Capital Shield Protection"
-              status="pass"
-            />
+        {loading ? <LoadingSkeleton height="80px" label="LOADING RISK METRICS..." /> : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '3px' }}>
+            <MetricCard label="HIST VaR 95%"        value={`-${(varData?.historical_var_pct || 1.45).toFixed(2)}%`}    change={formatCurrency(varData?.historical_var_dollars || 36032, 0)}  positive={false} subtext="1-DAY LOSS HORIZON" status="pass" />
+            <MetricCard label="PARAM VaR 95%"       value={`-${(varData?.parametric_var_pct || 1.38).toFixed(2)}%`}    change="NORMAL ASSUMPTION"                                               positive={false} subtext="VAR-COV MODEL" status="pass" />
+            <MetricCard label="CVaR (EXP SHORTFALL)" value={`-${(varData?.cvar_expected_shortfall_pct || 2.15).toFixed(2)}%`} change={formatCurrency(varData?.cvar_dollars || 53427, 0)}         positive={false} subtext="EXPECTED TAIL LOSS" status="pass" />
+            <MetricCard label="ANNUALIZED VOL"      value={`${(varData?.annualized_vol_pct || 12.4).toFixed(1)}%`}       change="LIMIT: 15.0%"                                                  positive={true}  subtext="WITHIN TOLERANCE" status="pass" />
+            <MetricCard label="PORTFOLIO BETA (SPY)" value="0.04"                                                          change="NEAR NEUTRAL"                                                 positive={true}  subtext="LOW SYS RISK" status="pass" />
+            <MetricCard label="STRESS LOSS CAPACITY" value="$450K"                                                          change="BUFFER: 18.1%"                                                positive={true}  subtext="CAPITAL SHIELD" status="pass" />
           </div>
         )}
 
-        {/* VaR Distribution & Barra Factor Attribution */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-          <ChartContainer
-            title="HISTORICAL RETURN DENSITY & TAIL VALUE AT RISK"
-            subtitle="Empirical return distribution with 95% and 99% VaR cutoffs"
-            badge="MONTE CARLO 10K"
-            badgeType="live"
-          >
-            <VaRHistogram height={260} var95Cutoff={-1.45} var99Cutoff={-2.15} />
-          </ChartContainer>
-
-          <div className="terminal-card">
-            <div className="terminal-card-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <BarChart2 size={14} color="#38bdf8" />
-                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
-                  BARRA FACTOR MODEL RISK ATTRIBUTION
-                </span>
-              </div>
-              <span className="badge-tag badge-pass">R² = 0.82</span>
+        {/* VaR + Factor Attribution */}
+        <div style={{ padding: '0.28rem 0.6rem', background: '#0d0600', border: '1px solid #FF6600', borderBottom: '1px solid #2a1500', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ color: '#FF6600', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.07em' }}>RETURN DISTRIBUTION & BARRA FACTOR RISK ATTRIBUTION</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px', border: '1px solid #2a2a2a', borderTop: 'none' }}>
+          <div style={{ background: '#0a0a0a', padding: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: '#FF6600', fontWeight: 700, marginBottom: '0.4rem', letterSpacing: '0.04em' }}>
+              HIST RETURN DENSITY | VaR 95%: -1.45% | VaR 99%: -2.15%
             </div>
-            <div className="terminal-card-body">
-              <RiskAttribution factors={factors} />
+            <VaRHistogram height={250} var95Cutoff={-1.45} var99Cutoff={-2.15} />
+          </div>
+          <div style={{ background: '#0a0a0a', padding: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: '#FF6600', fontWeight: 700, marginBottom: '0.4rem', letterSpacing: '0.04em' }}>
+              BARRA FACTOR MODEL RISK ATTRIBUTION | R² = 0.82
             </div>
+            <RiskAttribution factors={factors} />
           </div>
         </div>
 
-        {/* Macro Stress Testing Scenarios */}
-        <div className="terminal-card">
-          <div className="terminal-card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <ShieldAlert size={14} color="#f59e0b" />
-              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
-                MACRO REGIME STRESS TESTING & CRISIS SIMULATION
-              </span>
-            </div>
-            <span className="badge-tag badge-live">HISTORICAL REPLAY</span>
-          </div>
-          <div className="terminal-card-body">
-            <DataTable columns={stressColumns} data={stressScenarios} pageSize={4} />
-          </div>
+        {/* Stress Scenarios */}
+        <div style={{ padding: '0.28rem 0.6rem', background: '#0d0600', border: '1px solid #FF6600', borderBottom: '1px solid #2a1500', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ color: '#FF6600', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.07em' }}>MACRO REGIME STRESS TESTING & CRISIS SIMULATION — HISTORICAL REPLAY</span>
+        </div>
+        <div style={{ border: '1px solid #2a2a2a', borderTop: 'none', overflow: 'hidden' }}>
+          <DataTable columns={stressColumns} data={stressScenarios} pageSize={4} />
         </div>
 
-        {/* Drawdown Depth */}
-        <ChartContainer
-          title="TRAILING 90-DAY DRAWDOWN DEPTH TRACE"
-          subtitle="Real-time underwater loss monitoring against the -10.0% firm circuit-breaker"
-          badge="CIRCUIT BREAKER: -10%"
-          badgeType="neutral"
-        >
+        {/* Drawdown Trace */}
+        <div style={{ padding: '0.28rem 0.6rem', background: '#0d0600', border: '1px solid #FF6600', borderBottom: '1px solid #2a1500', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ color: '#FF6600', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.07em' }}>TRAILING 90-DAY DRAWDOWN DEPTH — CIRCUIT BREAKER: -10.0%</span>
+        </div>
+        <div style={{ background: '#0a0a0a', border: '1px solid #2a2a2a', borderTop: 'none', padding: '0.5rem', overflow: 'hidden' }}>
           <DrawdownChart data={drawdownData} height={200} />
-        </ChartContainer>
+        </div>
+
       </div>
     </ErrorBoundary>
   );

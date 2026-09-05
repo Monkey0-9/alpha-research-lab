@@ -5,19 +5,19 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 const MODULES = [
-  { href: '/',                  label: 'EXECUTIVE DASHBOARD',    code: '00', key: 'DASH' },
-  { href: '/data',              label: 'DATA INFRASTRUCTURE',     code: '01', key: 'DATA' },
-  { href: '/features',          label: 'FEATURE / SIGNAL FACTORY',code: '02', key: 'FEAT' },
-  { href: '/alpha-discovery',   label: 'ALPHA DISCOVERY LAB',     code: '03', key: 'ALPH' },
-  { href: '/statistical-engine',label: 'STATISTICAL ENGINE',      code: '04', key: 'STAT' },
-  { href: '/model-lab',         label: 'MODEL RESEARCH LAB',      code: '05', key: 'MODL' },
-  { href: '/validation',        label: 'TS VALIDATION ENGINE',    code: '06', key: 'VALD' },
-  { href: '/quality-gate',      label: 'ALPHA QUALITY GATE',      code: '07', key: 'QUAL' },
-  { href: '/portfolio',         label: 'PORTFOLIO CONSTRUCTION',  code: '08', key: 'PORT' },
-  { href: '/execution',         label: 'EXECUTION RESEARCH',      code: '09', key: 'EXEC' },
-  { href: '/risk',              label: 'INSTITUTIONAL RISK',      code: '10', key: 'RISK' },
-  { href: '/live-research',     label: 'LIVE PAPER TRADING',      code: '11', key: 'LIVE' },
-  { href: '/monitoring',        label: 'PRODUCTION TELEMETRY',    code: '12', key: 'TELE' },
+  { href: '/',                  label: 'EXECUTIVE DASHBOARD',    key: 'DASH' },
+  { href: '/data',              label: 'DATA INFRASTRUCTURE',     key: 'DATA' },
+  { href: '/features',          label: 'FEATURE / SIGNAL FACTORY',key: 'FEAT' },
+  { href: '/alpha-discovery',   label: 'ALPHA DISCOVERY LAB',     key: 'ALPH' },
+  { href: '/statistical-engine',label: 'STATISTICAL ENGINE',      key: 'STAT' },
+  { href: '/model-lab',         label: 'MODEL RESEARCH LAB',      key: 'MODL' },
+  { href: '/validation',        label: 'TS VALIDATION ENGINE',    key: 'VALD' },
+  { href: '/quality-gate',      label: 'ALPHA QUALITY GATE',      key: 'QUAL' },
+  { href: '/portfolio',         label: 'PORTFOLIO CONSTRUCTION',  key: 'PORT' },
+  { href: '/execution',         label: 'EXECUTION RESEARCH',      key: 'EXEC' },
+  { href: '/risk',              label: 'INSTITUTIONAL RISK',      key: 'RISK' },
+  { href: '/live-research',     label: 'LIVE PAPER TRADING',      key: 'LIVE' },
+  { href: '/monitoring',        label: 'PRODUCTION TELEMETRY',    key: 'TELE' },
 ];
 
 export default function Sidebar() {
@@ -103,35 +103,30 @@ export default function Sidebar() {
               href={mod.href}
               className={`nav-link ${isActive ? 'active' : ''}`}
             >
-              {/* Function key code box */}
-              <span className="nav-code">{mod.code}</span>
               {/* Module label */}
               <span style={{
                 flex: 1,
-                paddingLeft: '0.55rem',
-                fontSize: '0.65rem',
+                fontSize: '0.68rem',
                 fontFamily: 'var(--font-mono)',
                 fontWeight: isActive ? 700 : 500,
-                letterSpacing: '0.01em',
+                letterSpacing: '0.02em',
                 textOverflow: 'ellipsis',
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
               }}>
                 {mod.label}
               </span>
-              {/* Right shortcut */}
+              {/* Active indicator */}
               {isActive && (
                 <span style={{
-                  fontSize: '0.55rem',
+                  fontSize: '0.6rem',
                   fontFamily: 'var(--font-mono)',
-                  color: '#000',
-                  background: '#FFFF00',
-                  padding: '0 0.25rem',
+                  color: '#FFFF00',
                   fontWeight: 900,
-                  marginRight: '0.25rem',
                   flexShrink: 0,
+                  marginLeft: '0.25rem',
                 }}>
-                  ●
+                  ◄
                 </span>
               )}
             </Link>

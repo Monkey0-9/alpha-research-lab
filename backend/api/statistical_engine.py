@@ -9,12 +9,13 @@ Endpoints:
 - GET /api/statistical-engine/distribution
 """
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel
+from typing import List, Optional
 import numpy as np
 from core import statistics
 
 router = APIRouter()
+
 
 class MTCFeatureItem(BaseModel):
     feature: str
@@ -25,12 +26,14 @@ class MTCFeatureItem(BaseModel):
     bh_fdr_pass: bool
     t_stat: float
 
+
 class MTCResult(BaseModel):
     alpha_nominal: float
     total_tested: int
     bonferroni_significant: int
     bh_fdr_significant: int
     results: List[MTCFeatureItem]
+
 
 class DSRRequest(BaseModel):
     sharpe: float = 1.65
@@ -39,6 +42,7 @@ class DSRRequest(BaseModel):
     kurt: float = 4.2
     n_obs: int = 1260
 
+
 class DSRResult(BaseModel):
     nominal_sharpe: float
     deflated_sharpe: float
@@ -46,6 +50,12 @@ class DSRResult(BaseModel):
     significant_at_05: bool
     expected_max_sharpe: float
     variance_penalty: float
+    observed_sharpe: Optional[float] = None
+    dsr_probability: Optional[float] = None
+    passed_haircut: Optional[bool] = None
+    benchmark_sharpe: Optional[float] = None
+    n_independent_trials: Optional[int] = None
+
 
 class AlphaDecay(BaseModel):
     alpha_id: str
@@ -55,11 +65,13 @@ class AlphaDecay(BaseModel):
     decay_rate_pct_month: float
     status: str  # "STABLE", "DECAYING", "CRITICAL"
 
+
 class AutocorrPoint(BaseModel):
     lag: int
     acf: float
     pacf: float
     confidence_bound: float
+
 
 class AutocorrResult(BaseModel):
     ticker: str
@@ -67,6 +79,7 @@ class AutocorrResult(BaseModel):
     acf_points: List[AutocorrPoint]
     ljung_box_p_value: float
     is_white_noise: bool
+
 
 class DistTestResult(BaseModel):
     metric: str
@@ -153,7 +166,12 @@ def calculate_dsr(request: DSRRequest) -> DSRResult:
         p_value=round(1.0 - dsr_val, 4),
         significant_at_05=dsr_val >= 0.95,
         expected_max_sharpe=exp_max_sr,
-        variance_penalty=round(request.sharpe - dsr_val, 4)
+        variance_penalty=round(request.sharpe - dsr_val, 4),
+        observed_sharpe=request.sharpe,
+        dsr_probability=round(dsr_val, 4),
+        passed_haircut=dsr_val >= 0.95,
+        benchmark_sharpe=exp_max_sr,
+        n_independent_trials=request.n_trials
     )
 
 

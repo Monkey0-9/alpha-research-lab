@@ -30,15 +30,46 @@ export default function StatisticalEnginePage() {
   const [trialsInput, setTrialsInput] = useState(100);
   const [dsrResult, setDsrResult] = useState<types.DeflatedSharpeRatioResult | null>(null);
 
+  const [decayData, setDecayData] = useState<types.AlphaDecayPoint[]>([
+    { lag: 1, ic: 0.082 },
+    { lag: 2, ic: 0.076 },
+    { lag: 3, ic: 0.071 },
+    { lag: 4, ic: 0.065 },
+    { lag: 5, ic: 0.059 },
+    { lag: 7, ic: 0.048 },
+    { lag: 10, ic: 0.038 },
+    { lag: 14, ic: 0.027 },
+    { lag: 21, ic: 0.015 },
+    { lag: 30, ic: 0.008 }
+  ]);
+
+  const [autocorrData, setAutocorrData] = useState<types.AutocorrItem[]>([
+    { lag: 1, rho: 0.042 },
+    { lag: 2, rho: -0.018 },
+    { lag: 3, rho: 0.012 },
+    { lag: 4, rho: -0.008 },
+    { lag: 5, rho: 0.015 },
+    { lag: 10, rho: 0.004 },
+    { lag: 20, rho: -0.002 }
+  ]);
+
   useEffect(() => {
     async function load() {
       try {
-        const [mtcRes, dsrRes] = await Promise.all([
+        const [mtcRes, dsrRes, decayRes, autocorrRes] = await Promise.all([
           api.getStatisticalMTC(),
-          api.calculateDSR(1.85, 100)
+          api.calculateDSR(1.85, 100),
+          api.getAlphaDecay().catch(() => null),
+          api.getAutocorrelation().catch(() => null)
         ]);
         setMtc(mtcRes);
         setDsrResult(dsrRes);
+        if (decayRes && decayRes.length > 0) {
+          setDecayData(decayRes);
+        }
+        if (autocorrRes && autocorrRes.length > 0) {
+          setAutocorrData(autocorrRes);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -57,34 +88,9 @@ export default function StatisticalEnginePage() {
     }
   };
 
-  // Alpha decay curve
-  const decayData = [
-    { lag: 1, ic: 0.082 },
-    { lag: 2, ic: 0.076 },
-    { lag: 3, ic: 0.071 },
-    { lag: 4, ic: 0.065 },
-    { lag: 5, ic: 0.059 },
-    { lag: 7, ic: 0.048 },
-    { lag: 10, ic: 0.038 },
-    { lag: 14, ic: 0.027 },
-    { lag: 21, ic: 0.015 },
-    { lag: 30, ic: 0.008 }
-  ];
-
-  // Autocorrelation Lags
-  const autocorrData = [
-    { lag: 1, rho: 0.042 },
-    { lag: 2, rho: -0.018 },
-    { lag: 3, rho: 0.012 },
-    { lag: 4, rho: -0.008 },
-    { lag: 5, rho: 0.015 },
-    { lag: 10, rho: 0.004 },
-    { lag: 20, rho: -0.002 }
-  ];
-
   return (
     <ErrorBoundary fallbackTitle="Statistical Engine Interrupted">
-      <TerminalHeader title="MODULE 04 // STATISTICAL ENGINE & MULTIPLE TESTING HAIRCUT" />
+      <TerminalHeader title="STATISTICAL ENGINE & MULTIPLE TESTING HAIRCUT" />
 
       <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* KPI Strip */}

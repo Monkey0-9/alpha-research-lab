@@ -63,6 +63,57 @@ export interface DataQualityReport {
   last_audit_timestamp: string;
 }
 
+export interface PipelineSyncRequest {
+  provider?: 'yfinance' | 'robinhood' | 'hybrid';
+  tickers?: string[];
+  start?: string;
+  end?: string;
+  force_update?: boolean;
+}
+
+export interface PipelineSyncResponse {
+  status: string;
+  provider: string;
+  last_sync: string;
+  records_count: number;
+  tickers_count: number;
+  clean_pct: number;
+  quality_score: number;
+  elapsed_seconds: number;
+}
+
+export interface LiveMarketQuote {
+  ticker: string;
+  provider: string;
+  price: number;
+  previous_close: number;
+  change: number;
+  pct_change: number;
+  volume?: number;
+  market_cap?: number;
+  bid?: number;
+  ask?: number;
+  spread?: number;
+  timestamp: string;
+  status: string;
+}
+
+export interface MarketIndexItem {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  pct_change: number;
+  status: string;
+}
+
+export interface MarketOverview {
+  timestamp: string;
+  provider: string;
+  market_status: string;
+  indices: MarketIndexItem[];
+}
+
 // 02 — Feature Factory
 export interface FeatureItem {
   id: string;
@@ -338,4 +389,26 @@ export interface ExecutiveDashboardSummary {
   open_positions_count: number;
   var_95_daily_pct: number;
   cvar_95_daily_pct: number;
+}
+
+export interface RegimeTestItem {
+  regime: string;
+  sharpe: number;
+  ic: number;
+  max_dd: number;
+  win_rate: number;
+  status: string;
+}
+
+export interface AlphaDecayPoint {
+  lag: number;
+  ic: number;
+}
+
+export interface AutocorrItem {
+  lag: number;
+  rho?: number;
+  acf?: number;
+  pacf?: number;
+  confidence_bound?: number;
 }

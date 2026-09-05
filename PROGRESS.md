@@ -10,20 +10,22 @@
 
 | Test Suite | File / Scope | Total Tests | Status | Execution Time |
 |---|---|---|---|---|
-| **Backend Test Suite** | `backend/tests/test_api.py` | 13 | **PASS (100%)** | ~12s |
+| **Real Market Pipeline** | `backend/tests/test_real_market_pipeline.py` | 8 | **PASS (100%)** | ~8s |
+| **Backend Test Suite** | `backend/tests/test_api.py` | 16 | **PASS (100%)** | ~18s |
 | **Comprehensive API** | `backend/tests/test_api_comprehensive.py` | 12 | **PASS (100%)** | ~8s |
 | **Core Accelerators** | `backend/tests/test_core.py` | 7 | **PASS (100%)** | ~3s |
 | **Advanced Quant** | `backend/tests/test_core_advanced.py` | 16 | **PASS (100%)** | ~9s |
-| **Data Loader & PIT** | `backend/tests/test_data_loader.py` | 3 | **PASS (100%)** | ~2s |
+| **Data Loader & PIT** | `backend/tests/test_data_loader.py` | 3 | **PASS (100%)** | ~1s |
 | **Feature Engine** | `backend/tests/test_features.py` | 3 | **PASS (100%)** | ~2s |
 | **Model Research** | `backend/tests/test_models.py` | 2 | **PASS (100%)** | ~3s |
 | **Portfolio Opt** | `backend/tests/test_portfolio.py` | 2 | **PASS (100%)** | ~2s |
 | **Risk Engine** | `backend/tests/test_risk.py` | 2 | **PASS (100%)** | ~1s |
 | **Validation Engine** | `backend/tests/test_validation.py` | 2 | **PASS (100%)** | ~2s |
-| **Backtester Core** | `backend/tests/test_backtester.py` | 3 | **PASS (100%)** | ~6s |
-| **Backend Total** | **`pytest backend/tests/ -v`** | **68** | **68 PASSED / 0 FAILED** | **~44.9s** |
-| **Frontend Test Suite**| `src/lib/data.test.ts` | 11 | **11 PASSED / 0 FAILED** | **~0.12s** |
-| **TypeScript Typecheck**| `tsc --noEmit` | All | **0 ERRORS** | **~1.8s** |
+| **Backtester Core** | `backend/tests/test_backtester.py` | 3 | **PASS (100%)** | ~5s |
+| **Backend Total** | **`pytest backend/tests/ -v`** | **76** | **76 PASSED / 0 FAILED** | **~70.4s** |
+| **Frontend Test Suite**| `src/lib/data.test.ts` | 11 | **11 PASSED / 0 FAILED** | **~0.13s** |
+| **TypeScript Typecheck**| `tsc --noEmit` | All | **0 ERRORS** | **~2.1s** |
+| **Production Build**   | `npm run build` | 14 Routes | **14 PRERENDERED (0 ERRORS)**| **~28.0s** |
 
 ---
 
@@ -34,10 +36,11 @@
 - **Frontend Components**: `TerminalHeader`, `MetricCard` (6 KPIs), `RegimeCard` (HMM regime classifier), `EquityCurve` (Portfolio vs S&P 500), `DrawdownChart` (Underwater trace), `PositionTable`, `PipelineStatus` (12 DAG stages), `AlertFeed`.
 - **Status**: Complete.
 
-### Module 01: Data Infrastructure & PIT Store (`/data`)
-- **Backend API**: `GET /api/data/sources`, `/universe`, `/ohlcv`, `/quality`, `/lineage`, `/pit`, `/metadata`
-- **Frontend Components**: Top PIT metrics, Data Sources & Feed Connectivity table, Point-In-Time Historical Inspector with zero lookahead verification, Intraday Volume Profile chart, Corporate Actions & Adjustment Audit log, Data Lineage DAG.
-- **Status**: Complete.
+### Module 01: Data Infrastructure & Real Market Pipeline (`/data`)
+- **Backend API**: `POST /api/data/pipeline/sync`, `GET /pipeline/status`, `GET /live-quote`, `GET /market-overview`, `GET /sources`, `/universe`, `/ohlcv`, `/quality`, `/lineage`, `/pit`, `/metadata`
+- **Core Market Engine**: `YFinanceClient` (`backend/core/yfinance_client.py`), `RobinhoodClient` (`backend/core/robinhood_client.py`), `MarketDataPipeline` (`backend/core/data_pipeline.py`).
+- **Frontend Components**: Real-Market Ingestion Synchronizer (Yahoo Finance, Robinhood, Hybrid modes), Live Market Quote Inspector with real-time bid/ask/spread, Benchmark Indices Ticker Strip (SPY, QQQ, DIA, VIX), Top PIT metrics, Data Sources & Feed Connectivity table, Point-In-Time Historical Inspector with zero lookahead verification, Intraday Volume Profile chart, Corporate Actions & Adjustment Audit log, Data Lineage DAG.
+- **Status**: Complete with Real Market Data Integration.
 
 ### Module 02: Feature / Signal Factory (`/features`)
 - **Backend API**: `GET /api/features/list`, `/ic`, `/ic-rolling`, `/correlation`, `/tune`, `/distribution`

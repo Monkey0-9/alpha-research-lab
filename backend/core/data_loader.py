@@ -6,14 +6,14 @@ All data is cached in memory after first load.
 from __future__ import annotations
 
 import logging
-import os
-from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Any, Dict
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
+
+from core.yfinance_client import yfinance_client
+from core.robinhood_client import robinhood_client
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +38,43 @@ SP500_TICKERS: List[str] = [
 _cache: Optional[pd.DataFrame] = None
 
 
-def download_sp500_data(start: str = "2020-01-01", end: str = "2024-12-31", cache_dir: str = "data/raw") -> pd.DataFrame:
+def fetch_live_market_data(ticker: str, provider: str = "yfinance") -> Dict[str, Any]:
+    """Fetch real-time market quote using Yahoo Finance or Robinhood."""
+    if provider == "robinhood":
+        return robinhood_client.get_realtime_quote(ticker)
+    return yfinance_client.fetch_live_quote(ticker)
+
+
+def fetch_market_overview() -> Dict[str, Any]:
+    """Fetch benchmark market index snapshot."""
+    return yfinance_client.fetch_market_overview()
+
+
+def download_sp500_data(
+    start: str = "2020-01-01",
+    end: str = "2024-12-31",
+    cache_dir: str = "data/raw",
+    use_real_market: bool = False
+) -> pd.DataFrame:
     """Download S&P 500 OHLCV from Yahoo Finance or generate verified offline multi-asset dataset."""
     p_cache = Path(cache_dir)
     p_cache.mkdir(parents=True, exist_ok=True)
     cache_file = p_cache / f"sp500_{start}_{end}.parquet"
     if cache_file.exists():
         return pd.read_parquet(cache_file)
+
+    if use_real_market:
+        try:
+            real_df = yfinance_client.fetch_multi_ohlcv(
+                symbols=SP500_TICKERS,
+                start=start,
+                end=end
+            )
+            if not real_df.empty:
+                real_df.to_parquet(cache_file)
+                return real_df
+        except Exception as e:
+            logger.warning(f"Live market download failed, falling back to deterministic dataset: {e}")
 
     dates = pd.date_range(start, end, freq="B")
     frames = []
@@ -90,6 +120,10 @@ def load_sp500_data(
 
     if PARQUET_PATH.exists() and not force_download:
         df = pd.read_parquet(PARQUET_PATH)
+        if df.index.get_level_values("date").tz is not None:
+            dates = df.index.get_level_values("date").tz_localize(None)
+            tickers = df.index.get_level_values("ticker")
+            df.index = pd.MultiIndex.from_arrays([dates, tickers], names=["date", "ticker"])
         if "XRX" not in df.index.get_level_values("ticker"):
             dates = df.index.get_level_values("date").unique()
             xrx_df = pd.DataFrame({
@@ -101,6 +135,10 @@ def load_sp500_data(
         return df
 
     df = download_sp500_data(start=start, end=end, cache_dir=str(RAW_DATA_DIR))
+    if df.index.get_level_values("date").tz is not None:
+        dates = df.index.get_level_values("date").tz_localize(None)
+        tickers = df.index.get_level_values("ticker")
+        df.index = pd.MultiIndex.from_arrays([dates, tickers], names=["date", "ticker"])
     df.to_parquet(PARQUET_PATH)
     _cache = df
     return df
@@ -121,11 +159,19 @@ def get_data(
         return sub
     if as_of_date:
         cut = pd.Timestamp(as_of_date)
+        if cut.tzinfo is not None:
+            cut = cut.tz_localize(None)
         sub = sub[sub.index <= cut]
     if start:
-        sub = sub[sub.index >= pd.Timestamp(start)]
+        st = pd.Timestamp(start)
+        if st.tzinfo is not None:
+            st = st.tz_localize(None)
+        sub = sub[sub.index >= st]
     if end:
-        sub = sub[sub.index <= pd.Timestamp(end)]
+        ed = pd.Timestamp(end)
+        if ed.tzinfo is not None:
+            ed = ed.tz_localize(None)
+        sub = sub[sub.index <= ed]
     return sub
 
 
@@ -146,8 +192,18 @@ def get_universe_as_of(date: pd.Timestamp) -> List[str]:
 
 def get_pit_data(ticker: str, as_of: pd.Timestamp, fields: Optional[List[str]] = None) -> pd.Series:
     """Return data known at exactly `as_of` date. No future data allowed."""
-    df = get_data(ticker=ticker, as_of_date=str(as_of.date()))
+    as_of_naive = as_of.tz_localize(None) if as_of.tzinfo is not None else as_of
+    df = get_data(ticker=ticker, as_of_date=str(as_of_naive.date()))
     if df.empty:
+        df_ext = download_sp500_data(start="2020-01-01", end=str(as_of_naive.date()))
+        if not df_ext.empty and ticker in df_ext.index.get_level_values("ticker"):
+            sub = df_ext.xs(ticker, level="ticker")
+            sub = sub[sub.index <= as_of_naive]
+            if not sub.empty:
+                latest_row = sub.iloc[-1]
+                if fields:
+                    return latest_row[[f for f in fields if f in latest_row]]
+                return latest_row
         return pd.Series(dtype=float)
     latest_row = df.iloc[-1]
     if fields:

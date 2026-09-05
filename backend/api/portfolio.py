@@ -10,8 +10,8 @@ Endpoints:
 - GET /api/portfolio/allocations (compatibility)
 """
 from __future__ import annotations
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Query
+from typing import List, Optional
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 import numpy as np
 from core.portfolio import mean_variance_optimization, hierarchical_risk_parity, cvar_optimization
@@ -56,6 +56,7 @@ class PortfolioResult(BaseModel):
     allocations: List[AllocationItem]
 
 class Holding(BaseModel):
+    model_config = {"protected_namespaces": ()}
     ticker: str
     name: str
     sector: str
@@ -67,6 +68,10 @@ class Holding(BaseModel):
     unrealized_pnl: float
     pnl_pct: float
     beta: float
+    weight_pct: Optional[float] = None
+    entry_price: Optional[float] = None
+    market_price: Optional[float] = None
+    marginal_risk_pct: Optional[float] = None
 
 class HoldingsResponse(BaseModel):
     total_aum: float
@@ -86,6 +91,7 @@ class FactorBar(BaseModel):
     t_stat: float
 
 class FactorExposure(BaseModel):
+    model_config = {"protected_namespaces": ()}
     model_name: str
     as_of: str
     r_squared: float
@@ -188,18 +194,42 @@ def optimize_portfolio(req: OptimizeRequest) -> PortfolioResult:
 @router.get("/holdings", response_model=HoldingsResponse)
 def get_current_holdings() -> HoldingsResponse:
     """Current live portfolio holdings, market values, and sector breakdowns."""
-    items = [
-        Holding(ticker="NVDA", name="NVIDIA Corp", sector="Technology", shares=2400, price=124.50, market_value=298800.0, weight=0.124, side="LONG", unrealized_pnl=42800.0, pnl_pct=16.7, beta=1.45),
-        Holding(ticker="MSFT", name="Microsoft Corp", sector="Technology", shares=700, price=448.20, market_value=313740.0, weight=0.130, side="LONG", unrealized_pnl=28900.0, pnl_pct=10.1, beta=1.05),
-        Holding(ticker="AAPL", name="Apple Inc", sector="Technology", shares=1200, price=225.80, market_value=270960.0, weight=0.112, side="LONG", unrealized_pnl=18500.0, pnl_pct=7.3, beta=0.98),
-        Holding(ticker="AMZN", name="Amazon.com Inc", sector="Consumer Discretionary", shares=1400, price=186.40, market_value=260960.0, weight=0.108, side="LONG", unrealized_pnl=21200.0, pnl_pct=8.8, beta=1.18),
-        Holding(ticker="GOOGL", name="Alphabet Inc", sector="Communication", shares=1500, price=168.10, market_value=252150.0, weight=0.105, side="LONG", unrealized_pnl=14200.0, pnl_pct=5.9, beta=1.12),
-        Holding(ticker="JPM", name="JPMorgan Chase", sector="Financials", shares=1100, price=218.40, market_value=240240.0, weight=0.100, side="LONG", unrealized_pnl=19800.0, pnl_pct=8.9, beta=0.92),
-        Holding(ticker="LLY", name="Eli Lilly & Co", sector="Healthcare", shares=250, price=940.00, market_value=235000.0, weight=0.098, side="LONG", unrealized_pnl=31200.0, pnl_pct=15.3, beta=0.68),
-        Holding(ticker="XOM", name="Exxon Mobil Corp", sector="Energy", shares=1800, price=118.50, market_value=213300.0, weight=0.089, side="LONG", unrealized_pnl=-4500.0, pnl_pct=-2.1, beta=0.74),
-        Holding(ticker="INTC", name="Intel Corp", sector="Technology", shares=-3500, price=20.40, market_value=-71400.0, weight=-0.030, side="SHORT", unrealized_pnl=8900.0, pnl_pct=11.1, beta=1.10),
-        Holding(ticker="TSLA", name="Tesla Inc", sector="Consumer Discretionary", shares=-400, price=210.50, market_value=-84200.0, weight=-0.035, side="SHORT", unrealized_pnl=6400.0, pnl_pct=7.1, beta=1.65)
+    raw_specs = [
+        ("NVDA", "NVIDIA Corp", "Technology", 2400, 124.50, 298800.0, 0.124, "LONG", 42800.0, 16.7, 1.45),
+        ("MSFT", "Microsoft Corp", "Technology", 700, 448.20, 313740.0, 0.130, "LONG", 28900.0, 10.1, 1.05),
+        ("AAPL", "Apple Inc", "Technology", 1200, 225.80, 270960.0, 0.112, "LONG", 18500.0, 7.3, 0.98),
+        ("AMZN", "Amazon.com Inc", "Consumer Discretionary", 1400, 186.40, 260960.0, 0.108, "LONG", 21200.0, 8.8, 1.18),
+        ("GOOGL", "Alphabet Inc", "Communication", 1500, 168.10, 252150.0, 0.105, "LONG", 14200.0, 5.9, 1.12),
+        ("JPM", "JPMorgan Chase", "Financials", 1100, 218.40, 240240.0, 0.100, "LONG", 19800.0, 8.9, 0.92),
+        ("LLY", "Eli Lilly & Co", "Healthcare", 250, 940.00, 235000.0, 0.098, "LONG", 31200.0, 15.3, 0.68),
+        ("XOM", "Exxon Mobil Corp", "Energy", 1800, 118.50, 213300.0, 0.089, "LONG", -4500.0, -2.1, 0.74),
+        ("INTC", "Intel Corp", "Technology", -3500, 20.40, -71400.0, -0.030, "SHORT", 8900.0, 11.1, 1.10),
+        ("TSLA", "Tesla Inc", "Consumer Discretionary", -400, 210.50, -84200.0, -0.035, "SHORT", 6400.0, 7.1, 1.65)
     ]
+
+    items = []
+    for ticker, name, sec, shares, px, mv, wt, side, pnl, pnl_pct, beta in raw_specs:
+        entry_px = round(px / (1.0 + (pnl_pct / 100.0)), 2)
+        items.append(
+            Holding(
+                ticker=ticker,
+                name=name,
+                sector=sec,
+                shares=shares,
+                price=px,
+                market_price=px,
+                entry_price=entry_px,
+                market_value=mv,
+                weight=wt,
+                weight_pct=round(wt * 100.0, 1),
+                side=side,
+                unrealized_pnl=pnl,
+                pnl_pct=pnl_pct,
+                beta=beta,
+                marginal_risk_pct=round(abs(wt) * 100.0 * beta / 1.2, 1)
+            )
+        )
+
     tot_mv = sum(abs(h.market_value) for h in items)
     return HoldingsResponse(
         total_aum=2500000.0,

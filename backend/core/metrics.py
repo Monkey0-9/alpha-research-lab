@@ -6,9 +6,12 @@ Win Rate, Profit Factor, Annualized Return, Annualized Volatility.
 """
 from __future__ import annotations
 
+import logging
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, Union, Optional
+
+logger = logging.getLogger(__name__)
 
 
 def annualized_return(returns: Union[pd.Series, np.ndarray], periods_per_year: int = 252) -> float:
@@ -40,11 +43,19 @@ def sharpe_ratio(
     risk_free_rate: float = 0.0,
     periods_per_year: int = 252
 ) -> float:
-    """Annualized Sharpe ratio."""
-    ret = np.asarray(returns)
+    """Annualized Sharpe ratio with native SIMD/Rust acceleration when available."""
+    ret = np.asarray(returns, dtype=np.float64)
     ret = ret[~np.isnan(ret)]
     if len(ret) < 2:
         return 0.0
+    if risk_free_rate == 0.0 and periods_per_year == 252:
+        try:
+            from native.native_bridge import accelerator
+            fast_val = accelerator.fast_sharpe(ret)
+            if not np.isnan(fast_val):
+                return float(fast_val)
+        except Exception as e:
+            logger.debug(f"Fast Sharpe accelerator unavailable: {e}")
     rf_daily = (1.0 + risk_free_rate) ** (1.0 / periods_per_year) - 1.0
     excess = ret - rf_daily
     vol = np.std(ret, ddof=1)
@@ -138,7 +149,7 @@ def calculate_full_metrics(
     ann_ret = annualized_return(ret)
     vol = annualized_volatility(ret)
     wr = win_rate(ret)
-    
+
     ic = 0.0
     if predictions is not None and targets is not None:
         ic = information_coefficient(predictions, targets)

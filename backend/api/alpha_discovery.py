@@ -9,7 +9,7 @@ Endpoints:
 - POST /api/alpha-discovery/build
 """
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import numpy as np
 import math
@@ -52,12 +52,15 @@ class FeatureImportance(BaseModel):
 class Hypothesis(BaseModel):
     id: str
     title: str
+    name: Optional[str] = None
     economic_rationale: str
     author: str
+    category: str = "Cross-Sectional Momentum"
     created_date: str
+    created_at: Optional[str] = None
     p_value: float
     fdr_adjusted_p: float
-    status: str  # "ACCEPTED", "REJECTED", "TESTING"
+    status: str  # "ACCEPTED", "REJECTED", "TESTING", "PROMOTED"
     tested_sharpe: float
     tested_ic: float
 
@@ -165,9 +168,12 @@ def get_hypotheses() -> List[Hypothesis]:
         Hypothesis(
             id="HYP-2026-001",
             title="Post-Earnings Drift with Volatility Squeeze",
+            name="Post-Earnings Drift with Volatility Squeeze",
+            category="Event Driven",
             economic_rationale="Under-reaction to earnings surprise accentuated when prior 20d volatility is in bottom decile.",
             author="Quantitative Research Lab",
             created_date="2026-08-12",
+            created_at="2026-08-12",
             p_value=0.0028,
             fdr_adjusted_p=0.0140,
             status="ACCEPTED",
@@ -177,9 +183,12 @@ def get_hypotheses() -> List[Hypothesis]:
         Hypothesis(
             id="HYP-2026-002",
             title="Cross-Sectional Idiosyncratic Momentum",
+            name="Cross-Sectional Idiosyncratic Momentum",
+            category="Cross-Sectional Momentum",
             economic_rationale="Residual returns purged of Fama-French 5-factor exposures exhibit higher persistent autocorrelation.",
             author="Quantitative Research Lab",
             created_date="2026-08-18",
+            created_at="2026-08-18",
             p_value=0.0064,
             fdr_adjusted_p=0.0210,
             status="ACCEPTED",
@@ -189,9 +198,12 @@ def get_hypotheses() -> List[Hypothesis]:
         Hypothesis(
             id="HYP-2026-003",
             title="Intraday Volume Acceleration at Market Open",
+            name="Intraday Volume Acceleration at Market Open",
+            category="Market Microstructure",
             economic_rationale="Institutional order flow rebalancing creates mean-reversion anomalies between 9:30 and 10:15 EST.",
             author="Execution & Alpha Desk",
             created_date="2026-08-25",
+            created_at="2026-08-25",
             p_value=0.0410,
             fdr_adjusted_p=0.0820,
             status="TESTING",
@@ -201,9 +213,12 @@ def get_hypotheses() -> List[Hypothesis]:
         Hypothesis(
             id="HYP-2026-004",
             title="Naive 5-Day Mean Reversion in Megacap Tech",
+            name="Naive 5-Day Mean Reversion in Megacap Tech",
+            category="Mean Reversion",
             economic_rationale="Short-term price reversal caused by retail retail retail noise trading.",
             author="Quantitative Research Lab",
             created_date="2026-08-01",
+            created_at="2026-08-01",
             p_value=0.2100,
             fdr_adjusted_p=0.3400,
             status="REJECTED",

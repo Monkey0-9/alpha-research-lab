@@ -63,12 +63,15 @@ class BacktestResults(dict):
 
 
 def _safe_freq(freq: str) -> str:
+    # Normalize legacy pandas Month-End and other aliases
+    if freq == "M":
+        return "ME"
     try:
         pd.date_range("2020-01-01", "2020-02-01", freq=freq)
         return freq
     except Exception:
         fallback_map = {"ME": "M", "M": "ME", "QE": "Q", "Q": "QE", "YE": "Y", "Y": "YE", "W": "W-SUN"}
-        return fallback_map.get(freq, "M")
+        return fallback_map.get(freq, "ME")
 
 
 class EventDrivenBacktester:
@@ -77,7 +80,7 @@ class EventDrivenBacktester:
         features_df: Optional[pd.DataFrame] = None,
         target_col: str = "fwd_return_1d",
         signal_col: Optional[str] = None,
-        rebalance_freq: str = "M",
+        rebalance_freq: str = "ME",
         train_window_min: int = 252,
         transaction_cost: Optional[float] = None,
         transaction_cost_bps: float = 5.0,

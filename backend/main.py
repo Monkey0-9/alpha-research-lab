@@ -2,6 +2,9 @@
 QuantAlpha Research Lab - FastAPI Backend
 Production-Grade Quantitative Alpha Research Platform
 """
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import (
@@ -11,15 +14,56 @@ from api import (
     backtest
 )
 
+logger = logging.getLogger("quantalpha")
+
+
+async def eod_market_sync_daemon():
+    """Background asynchronous daemon for automated EOD market ingestion."""
+    logger.info("QuantAlpha automated EOD market ingestion daemon initialized.")
+    while True:
+        try:
+            # Check every 6 hours in background
+            await asyncio.sleep(21600)
+            from core.data_pipeline import data_pipeline
+            logger.info("Executing scheduled EOD market data sync...")
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, lambda: data_pipeline.run_sync(provider="auto", persist=True))
+            logger.info("Scheduled EOD market sync completed.")
+        except asyncio.CancelledError:
+            logger.info("EOD market ingestion daemon stopped gracefully.")
+            break
+        except Exception as exc:
+            logger.error(f"EOD market sync daemon error: {exc}")
+            await asyncio.sleep(60)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    daemon_task = asyncio.create_task(eod_market_sync_daemon())
+    yield
+    daemon_task.cancel()
+    try:
+        await daemon_task
+    except asyncio.CancelledError:
+        pass
+
+
 app = FastAPI(
     title="Alpha Research Lab API",
     version="2.0.0",
     description="Tier-1 Institutional Quantitative Alpha Research Backend Engine",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000"
+    ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

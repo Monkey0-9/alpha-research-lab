@@ -44,7 +44,7 @@ export default function ModelLabPage() {
 
   return (
     <ErrorBoundary fallbackTitle="Model Research Lab Interrupted">
-      <TerminalHeader title="MODULE 05 // MODEL RESEARCH & ML ENSEMBLE LAB" />
+      <TerminalHeader title="MODEL RESEARCH & ML ENSEMBLE LAB" />
 
       <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* KPI Strip */}

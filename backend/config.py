@@ -15,13 +15,22 @@ MODELS_DIR = Path(os.getenv("MODELS_DIR", str(BASE_DIR / "models")))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-# API Keys
+# API Keys & Data Providers
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY", "")
 FRED_API_KEY = os.getenv("FRED_API_KEY", "")
 
+# Real Market Providers (Robinhood & Yahoo Finance)
+DATA_PROVIDER_PRIMARY = os.getenv("DATA_PROVIDER_PRIMARY", "hybrid")  # yfinance | robinhood | hybrid
+ROBINHOOD_USERNAME = os.getenv("ROBINHOOD_USERNAME", "")
+ROBINHOOD_PASSWORD = os.getenv("ROBINHOOD_PASSWORD", "")
+ROBINHOOD_MFA_CODE = os.getenv("ROBINHOOD_MFA_CODE", "")
+ROBINHOOD_DEVICE_TOKEN = os.getenv("ROBINHOOD_DEVICE_TOKEN", "")
+REAL_DATA_AUTO_SYNC = os.getenv("REAL_DATA_AUTO_SYNC", "false").lower() in ("true", "1", "yes")
+MARKET_DATA_CACHE_TTL_SEC = int(os.getenv("MARKET_DATA_CACHE_TTL_SEC", "300"))
+
 # Backtest Defaults
 DEFAULT_UNIVERSE = os.getenv("DEFAULT_UNIVERSE", "sp500")
-DEFAULT_REBALANCE_FREQ = os.getenv("DEFAULT_REBALANCE_FREQ", "M")
+DEFAULT_REBALANCE_FREQ = os.getenv("DEFAULT_REBALANCE_FREQ", "ME")
 DEFAULT_TRANSACTION_COST = float(os.getenv("DEFAULT_TRANSACTION_COST", "0.001"))
 
 # Risk & Quality Gate Defaults

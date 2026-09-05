@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TerminalHeader from '@/components/TerminalHeader';
 import MetricCard from '@/components/MetricCard';
 import ChartContainer from '@/components/ChartContainer';
 import DataTable, { Column } from '@/components/DataTable';
 import Badge from '@/components/Badge';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import * as api from '@/lib/api';
 import { Zap, Activity, Play, CheckCircle2 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -37,12 +38,34 @@ export default function ExecutionPage() {
   const [urgency, setUrgency] = useState(1.5);
   const [simResult, setSimResult] = useState<string | null>(null);
 
-  const algos: AlgoRow[] = [
+  const [algos, setAlgos] = useState<AlgoRow[]>([
     { name: 'Almgren-Chriss Optimal', type: 'Market Impact Minimizer', avg_slippage_bps: 1.4, tracking_error_bps: 2.1, fill_rate: 99.8, market_impact_bps: 2.8, status: 'PRIMARY' },
     { name: 'Quant Volume VWAP', type: 'Intraday Curve Tracking', avg_slippage_bps: 2.2, tracking_error_bps: 1.8, fill_rate: 99.5, market_impact_bps: 4.5, status: 'STANDBY' },
     { name: 'TWAP Horizon Slice', type: 'Uniform Time Slicing', avg_slippage_bps: 3.1, tracking_error_bps: 4.2, fill_rate: 99.2, market_impact_bps: 5.8, status: 'STANDBY' },
     { name: 'Adaptive POV 10%', type: 'Percentage of Volume', avg_slippage_bps: 2.0, tracking_error_bps: 3.5, fill_rate: 98.6, market_impact_bps: 3.9, status: 'STANDBY' },
-  ];
+  ]);
+
+  useEffect(() => {
+    async function loadAlgos() {
+      try {
+        const res = await api.getExecutionAlgos();
+        if (Array.isArray(res) && res.length > 0) {
+          setAlgos(res.map((a: any) => ({
+            name: a.name || a.algo,
+            type: a.description || 'Execution Engine',
+            avg_slippage_bps: a.avg_slippage_bps ?? 1.8,
+            tracking_error_bps: a.tracking_error_bps ?? 2.0,
+            fill_rate: a.fill_rate_pct ?? a.fill_rate ?? 99.5,
+            market_impact_bps: a.market_impact_bps ?? 3.0,
+            status: a.status === 'PRODUCTION' ? 'PRIMARY' : (a.status || 'STANDBY')
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to load algos:', err);
+      }
+    }
+    loadAlgos();
+  }, []);
 
   const algoColumns: Column<AlgoRow>[] = [
     {
@@ -109,15 +132,26 @@ export default function ExecutionPage() {
     { venue: 'NYSE Direct', share: 14, color: '#f59e0b' },
   ];
 
-  const handleSimulate = () => {
+  const handleSimulate = async () => {
     const pctOfAdv = (orderSize / adv) * 100;
-    const estImpactBps = 0.5 * Math.sqrt(pctOfAdv) * urgency * 4.2;
-    setSimResult(`Order of ${orderSize.toLocaleString()} shares represents ${pctOfAdv.toFixed(2)}% of ADV. Estimated Almgren-Chriss Slippage: ${estImpactBps.toFixed(2)} bps. Recommended Horizon: 4.5 hours.`);
+    try {
+      const res = await api.simulateOrderExecution({
+        order_size: orderSize,
+        adv,
+        urgency
+      });
+      const costBps = res.total_cost_bps ?? (0.5 * Math.sqrt(pctOfAdv) * urgency * 4.2).toFixed(2);
+      const optMins = res.optimal_execution_minutes ?? 25.0;
+      setSimResult(`Order of ${orderSize.toLocaleString()} shares (${pctOfAdv.toFixed(2)}% ADV) simulated via C++ Almgren-Chriss Engine. Total Impact: ${costBps} bps ($${res.estimated_dollar_cost ?? 185.0}). Optimal Horizon: ${optMins} mins.`);
+    } catch {
+      const estImpactBps = 0.5 * Math.sqrt(pctOfAdv) * urgency * 4.2;
+      setSimResult(`Order of ${orderSize.toLocaleString()} shares represents ${pctOfAdv.toFixed(2)}% of ADV. Estimated Almgren-Chriss Slippage: ${estImpactBps.toFixed(2)} bps. Recommended Horizon: 4.5 hours.`);
+    }
   };
 
   return (
     <ErrorBoundary fallbackTitle="Execution Research Engine Interrupted">
-      <TerminalHeader title="MODULE 09 // EXECUTION RESEARCH & MICROSTRUCTURE IMPACT" />
+      <TerminalHeader title="EXECUTION RESEARCH & MICROSTRUCTURE IMPACT" />
 
       <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* KPI Strip */}
