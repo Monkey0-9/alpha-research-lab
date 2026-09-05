@@ -240,7 +240,6 @@ def get_rolling_ic(feature: str = "momentum_20d", window: int = 60) -> List[Roll
         from core.data_loader import load_sp500_data
         from core.features import build_features
         from core.labels import generate_labels
-        import pandas as pd
         from scipy.stats import spearmanr
 
         raw = load_sp500_data()

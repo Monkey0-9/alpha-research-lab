@@ -8,7 +8,8 @@ from __future__ import annotations
 from typing import List, Dict, Any
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-from core.validation import validator, walk_forward_cv, purged_kfold_cv
+import numpy as np
+from core.validation import validator, purged_kfold_cv
 from core.regime import regime_engine
 
 router = APIRouter()

@@ -7,11 +7,8 @@ Verifies:
 - Walk-forward non-overlapping temporal constraints
 - Quality gate pass/fail criteria
 """
-import pytest
 import numpy as np
-import pandas as pd
-from core.metrics import sharpe_ratio, sortino_ratio, max_drawdown, information_coefficient
-from core.features import validate_no_lookahead
+from core.metrics import sharpe_ratio, sortino_ratio, max_drawdown
 from core.statistics import deflated_sharpe_ratio, benjamini_hochberg_fdr
 from core.quality_gate import run_quality_gate
 from native.native_bridge import accelerator
@@ -22,7 +19,7 @@ def test_metrics_consistency():
     sr = sharpe_ratio(returns)
     sort = sortino_ratio(returns)
     mdd = max_drawdown(returns)
-    
+
     assert sr > 0
     assert sort > 0
     assert 0 <= mdd <= 1.0

@@ -1,7 +1,6 @@
 """
 Unit and Integration Tests for CPCV (Combinatorial Purged CV) and PBO (Probability of Backtest Overfitting).
 """
-import pytest
 import numpy as np
 import pandas as pd
 

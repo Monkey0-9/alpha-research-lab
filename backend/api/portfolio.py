@@ -314,7 +314,6 @@ def get_factor_exposure() -> FactorExposure:
 
         returns_df = returns_df[available]
         portfolio_returns = returns_df.mean(axis=1).values
-        market_returns = portfolio_returns
 
         factors_out = []
         factor_names = ["Momentum (12-1m)", "Quality (ROE/Accruals)", "Value (B/P, E/P)", "Low Volatility", "Size (Log Cap)", "Market Beta"]

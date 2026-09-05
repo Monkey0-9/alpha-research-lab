@@ -17,7 +17,6 @@ Verifies HTTP contract for all 12 modules:
 - /api/monitoring/drift
 - /api/dashboard/summary
 """
-import pytest
 from fastapi.testclient import TestClient
 from main import app
 

@@ -72,7 +72,6 @@ class Alert(BaseModel):
 @router.get("/telemetry", response_model=TelemetryData)
 def get_system_telemetry() -> TelemetryData:
     """Real-time system telemetry — computed from actual system state."""
-    import os
     import time as _time
 
     try:
@@ -140,7 +139,6 @@ def get_alpha_decay(alpha_id: str = "default"):
 
         ic_series = []
         for i in range(window, len(dates)):
-            dt = dates[i]
             window_dates = dates[i - window:i]
             mask = f.index.get_level_values("date").isin(window_dates)
             sub = f[mask]

@@ -13,11 +13,10 @@ Covers:
 - López de Prado Meta-Labeling System
 - Paper Trading Execution Engine
 """
-import pytest
 import numpy as np
 import pandas as pd
 
-from core.pit_store import PointInTimeStore, get_pit_store
+from core.pit_store import PointInTimeStore
 from core.labels import generate_labels
 from core.sizing import vol_target_sizing, kelly_criterion_sizing
 from core.risk import (

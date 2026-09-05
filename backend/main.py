@@ -12,9 +12,9 @@ BACKEND_DIR = Path(__file__).resolve().parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from api import (
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from api import (  # noqa: E402
     data, features, alpha_discovery, statistical_engine,
     model_lab, validation, quality_gate, portfolio,
     execution, risk, live_research, monitoring, dashboard,

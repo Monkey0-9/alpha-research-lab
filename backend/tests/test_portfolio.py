@@ -3,7 +3,6 @@ Tests for core.portfolio
 Validates HRP weight normalization and Mean-Variance optimization constraints.
 """
 import numpy as np
-import pytest
 from core.portfolio import hierarchical_risk_parity, mean_variance_optimization
 
 

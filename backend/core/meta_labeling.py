@@ -9,7 +9,7 @@ Maximizes precision, eliminates low-conviction churn, and reduces turnover.
 """
 from __future__ import annotations
 
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import lightgbm as lgb
@@ -58,6 +58,7 @@ class MetaLabelingSystem:
             "primary_direction": primary_direction.tolist(),
             "confidence_probabilities": prob_correct.tolist(),
             "filtered_signals": filtered_signals.tolist(),
+            "filtered_sizes": filtered_sizes.tolist(),
             "trade_execution_rate": round(trade_fraction, 3),
             "average_confidence": round(mean_confidence, 3),
             "confidence_threshold": self.threshold

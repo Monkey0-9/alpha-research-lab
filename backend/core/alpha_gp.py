@@ -10,17 +10,13 @@ from __future__ import annotations
 import ast
 import copy
 import logging
-import math
 import random
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Dict, Any, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import scipy.stats as ss
 
-from core.data_loader import load_sp500_data
-from core.features import build_features
-from core.labels import generate_labels
 from core.metrics import sharpe_ratio, max_drawdown, calmar_ratio
 
 logger = logging.getLogger(__name__)
@@ -486,6 +482,9 @@ def evaluate_alpha(
     # 1. Period-by-period Spearman rank IC
     daily_ics: List[float] = []
     dates = eval_df.index.get_level_values("date").unique().sort_values()
+    if len(dates) > 60:
+        eval_dates = set(dates[-60:])
+        eval_df = eval_df[eval_df.index.get_level_values("date").isin(eval_dates)]
 
     # 2. Daily Long/Short portfolio returns
     daily_port_rets: List[float] = []
@@ -493,8 +492,7 @@ def evaluate_alpha(
     turnovers: List[float] = []
     num_trades = 0
 
-    for d in dates:
-        d_slice = eval_df.xs(d, level="date")
+    for _, d_slice in eval_df.groupby(level="date"):
         if len(d_slice) >= 6:
             s_rank = d_slice["signal"].rank()
             t_rank = d_slice["target"].rank()
@@ -551,7 +549,7 @@ def evaluate_alpha(
     equity_curve = []
     nav = 1000.0
     bm_nav = 1000.0
-    for idx, (d, ret) in enumerate(zip(dates[-len(daily_port_rets):], daily_port_rets)):
+    for idx, (d, ret) in enumerate(zip(dates[-len(daily_port_rets):], daily_port_rets, strict=False)):
         nav *= (1.0 + ret)
         # S&P 500 average daily return (~10% annual)
         bm_nav *= (1.0 + 0.10 / 252.0)

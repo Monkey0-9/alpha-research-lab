@@ -15,7 +15,6 @@ Verifies all 12 modules, HTTP schemas, query parameters, payloads, and response 
 - /api/monitoring (drift, alpha-decay, health)
 - /api/dashboard (summary)
 """
-import pytest
 from fastapi.testclient import TestClient
 from main import app
 

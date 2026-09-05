@@ -72,6 +72,7 @@ def test_benchmark_dataset_b_rejects_pure_noise():
 
     # In pure noise, Bonferroni / conservative FDR must not falsely discover signals
     assert bonf_res.meta["significant_count"] == 0
+    assert fdr_res.meta["significant_count"] == 0
 
 
 # ===========================================================================

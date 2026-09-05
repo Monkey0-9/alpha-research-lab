@@ -227,7 +227,6 @@ def get_hypotheses(force_refresh: bool = False) -> List[Dict[str, Any]]:
         logger.warning("hypothesis_store: no IC records computed; returning empty list.")
         return []
 
-    today = date.today().isoformat()
     hypotheses: List[Dict[str, Any]] = []
 
     for i, rec in enumerate(ic_records):

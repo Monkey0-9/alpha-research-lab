@@ -12,7 +12,7 @@ from typing import Tuple, Dict, Any
 import numpy as np
 import pandas as pd
 
-from core.integrity_guard import detect_future_leakage, validate_no_label_leakage, FutureLeakageError
+from core.integrity_guard import detect_future_leakage, FutureLeakageError
 
 
 def generate_dataset_a_known_signal(

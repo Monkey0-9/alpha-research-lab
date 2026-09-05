@@ -7,7 +7,6 @@ No hardcoded alphas, no fake GP evolution, no synthetic results.
 
 from typing import Any, Dict, List, Optional
 
-import numpy as np
 import pandas as pd
 from core.hypothesis_store import get_hypotheses as fetch_hypotheses
 from fastapi import APIRouter
@@ -127,6 +126,10 @@ def run_genetic_programming(request: GPRequest) -> GPResult:
     from core.alpha_gp import GeneticAlphaEngine
 
     df = _get_panel_data()
+    if len(df) > 600:
+        recent_dates = df.index.get_level_values("date").unique().sort_values()[-60:]
+        df = df[df.index.get_level_values("date").isin(recent_dates)]
+
     pop_size = max(10, min(request.population_size, 30))
     generations = max(1, min(request.generations, 3))
 

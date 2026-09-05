@@ -5,7 +5,7 @@ WORKDIR /app
 # Install build dependencies for C/C++/Rust
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential=12.9 \
+    build-essential \
     gcc \
     g++ \
     curl \

@@ -4,7 +4,6 @@ Validates zero lookahead bias, indicator bounds, and Information Coefficients.
 """
 import numpy as np
 import pandas as pd
-import pytest
 from core.features import compute_all_features, compute_rsi
 
 
@@ -30,7 +29,8 @@ def load_sample_data() -> pd.DataFrame:
 def test_no_lookahead_bias():
     df = load_sample_data()
     features = compute_all_features(df)
-    # Feature at time t must shift(1) so first 20 observations cannot have 20d momentum
+    # Feature at time t must shift(1) so first 20 observations cannot
+    # have 20d momentum
     assert features["momentum_20d"].iloc[:20].isna().all()
 
 

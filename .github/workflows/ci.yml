@@ -13,7 +13,7 @@ env:
 jobs:
   # ── Backend Quality Gate ──────────────────────────────────────────────────
   backend-test:
-    name: "Backend — Python Tests & Lint"
+    name: Backend — Python Tests & Lint
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -65,7 +65,7 @@ jobs:
 
   # ── Frontend Quality Gate ─────────────────────────────────────────────────
   frontend-test:
-    name: "Frontend — TypeScript, Tests & Build"
+    name: Frontend — TypeScript, Tests & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -106,7 +106,7 @@ jobs:
 
   # ── Security Scan ─────────────────────────────────────────────────────────
   security-scan:
-    name: "Security — Dependency Audit"
+    name: Security — Dependency Audit
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test]
 
@@ -138,7 +138,7 @@ jobs:
 
   # ── Docker Build ──────────────────────────────────────────────────────────
   docker-build:
-    name: "Docker — Build & Validate Image"
+    name: Docker — Build & Validate Image
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test]
     if: github.ref == 'refs/heads/main'
@@ -153,8 +153,8 @@ jobs:
       - name: Build backend Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: false
           tags: quant-alpha-backend:${{ github.sha }}
           cache-from: type=gha
@@ -173,7 +173,7 @@ jobs:
 
   # ── Integration Test ──────────────────────────────────────────────────────
   integration-test:
-    name: "Integration — API End-to-End"
+    name: Integration — API End-to-End
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test]
 
@@ -234,7 +234,7 @@ jobs:
 
   # ── Deploy (main branch only) ─────────────────────────────────────────────
   deploy-staging:
-    name: "Deploy — Staging Environment"
+    name: Deploy — Staging Environment
     runs-on: ubuntu-latest
     needs: [integration-test, security-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'

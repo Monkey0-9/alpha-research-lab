@@ -81,7 +81,7 @@ def get_paper_trading_status() -> PaperStatus:
         pnl = nav - initial
         pnl_pct = (nav / max(initial, 1) - 1.0) * 100
 
-        from datetime import datetime, timedelta
+        from datetime import datetime
         start = datetime(2026, 8, 1)
         now = datetime.now()
         days = (now - start).days
@@ -111,7 +111,6 @@ def get_paper_pnl() -> List[PNLPoint]:
     """Daily P&L curve — computed from REAL paper trading positions."""
     try:
         state = paper_trader.get_live_portfolio_state()
-        positions = state.get("positions", [])
         nav = state.get("current_nav", 0)
 
         from datetime import datetime, timedelta

@@ -42,7 +42,7 @@ class RegimeEngine:
         vol_means = [gmm.means_[i][1] for i in range(3)]
         order = np.argsort(vol_means)
         mapping = {order[0]: 0, order[1]: 1, order[2]: 2}
-        final_labels = [mapping[l] for l in labels]
+        final_labels = [mapping[lbl] for lbl in labels]
 
         out_df = pd.DataFrame(index=common_idx)
         out_df["return"] = clean_ret.loc[common_idx]

@@ -10,11 +10,11 @@ Implements:
 from __future__ import annotations
 
 import logging
-from typing import Dict, Any, List
+from typing import List, Optional
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import squareform
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def mean_variance_optimization(
     expected_returns: np.ndarray,
     cov_matrix: np.ndarray,
-    target_return: float = None,
+    target_return: Optional[float] = None,
     risk_aversion: float = 1.0,
     max_weight: float = 0.20
 ) -> np.ndarray:

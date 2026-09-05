@@ -214,7 +214,6 @@ def get_alpha_decay(ticker: str = "SPY"):
 
         ic_series = []
         for i in range(window, len(dates)):
-            dt = dates[i]
             window_dates = dates[i - window:i]
             mask = f.index.get_level_values("date").isin(window_dates)
             sub = f[mask]

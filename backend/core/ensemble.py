@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 import numpy as np
 
@@ -60,7 +60,7 @@ class EnsembleEngine:
             ]
 
             models = []
-            for name, model_type, train_fn in model_configs:
+            for name, _model_type, train_fn in model_configs:
                 t0 = time.time()
                 try:
                     model = train_fn(X_train, y_train)

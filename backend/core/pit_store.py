@@ -7,7 +7,7 @@ and published at or before date `t`. Prevents restatement leakage and lookahead 
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
+from typing import List, Optional
 import pandas as pd
 from core.data_loader import load_sp500_data
 

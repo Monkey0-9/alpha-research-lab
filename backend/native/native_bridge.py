@@ -7,8 +7,12 @@ from __future__ import annotations
 import ctypes
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, Optional
 import numpy as np
+
+from native.q_engine.q_service import q_engine
+from native.r_engine.r_service import r_engine
+from native.ocaml_engine.ocaml_service import ocaml_engine
 
 logger = logging.getLogger(__name__)
 
@@ -81,11 +85,6 @@ if RUST_LIB_PATH and RUST_LIB_PATH.exists():
         logger.info("Rust Native Engine loaded successfully.")
     except Exception as e:
         logger.warning("Could not load Rust engine: %s", e)
-
-# Import R, Q, OCaml services
-from native.q_engine.q_service import q_engine
-from native.r_engine.r_service import r_engine
-from native.ocaml_engine.ocaml_service import ocaml_engine
 
 
 class NativeAccelerator:

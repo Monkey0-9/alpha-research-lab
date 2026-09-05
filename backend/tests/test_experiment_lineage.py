@@ -9,7 +9,6 @@ from core.experiment import (
     PreRegistrationSpec,
     ExperimentRegistry,
     ExperimentImmutableError,
-    ExperimentIntegrityError,
 )
 
 

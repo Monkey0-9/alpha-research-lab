@@ -9,8 +9,7 @@ Implements:
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 
 def calculate_psi(expected: np.ndarray, actual: np.ndarray, num_buckets: int = 10) -> float:

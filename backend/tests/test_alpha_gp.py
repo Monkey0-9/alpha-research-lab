@@ -2,9 +2,7 @@
 Tests for core.alpha_gp and Alpha Discovery Endpoints.
 Validates AST parsing, formula evaluation, GP search, and elimination of string hashing.
 """
-import pytest
-import pandas as pd
-from core.alpha_gp import parse_formula, evaluate_alpha, GeneticAlphaEngine
+from core.alpha_gp import parse_formula, evaluate_alpha
 from core.data_loader import load_sp500_data
 from core.features import build_features
 from core.labels import generate_labels

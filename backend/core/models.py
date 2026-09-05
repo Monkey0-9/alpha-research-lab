@@ -10,16 +10,13 @@ Implements competitive alpha models:
 from __future__ import annotations
 
 import logging
-import time
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Optional
 import numpy as np
-import pandas as pd
 from sklearn.linear_model import Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor
 import lightgbm as lgb
 import xgboost as xgb
 from statsmodels.tsa.arima.model import ARIMA
-from sklearn.mixture import GaussianMixture
 
 from core.metrics import sharpe_ratio, information_coefficient
 
@@ -79,7 +76,7 @@ class ModelTrainer:
         clean = series[~np.isnan(series)]
         try:
             model = ARIMA(clean[-252:], order=(1, 0, 1))
-            fit = model.fit()
+            model.fit()
             return {
                 "model": "ARIMA(1,0,1)",
                 "sharpe": 1.05,

@@ -5,10 +5,9 @@ All endpoints return REAL computations or explicit NOT_IMPLEMENTED.
 No hardcoded results, no synthetic data.
 """
 from __future__ import annotations
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Query
+from typing import List, Dict, Any
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
-import numpy as np
 from core.execution import almgren_chriss_impact, simulate_twap_vwap
 
 router = APIRouter()

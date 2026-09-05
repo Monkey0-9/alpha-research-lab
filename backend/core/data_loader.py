@@ -31,7 +31,7 @@ SP500_TICKERS: List[str] = [
     "JPM", "V", "UNH", "XOM", "MA", "JNJ", "PG", "COST", "HD", "MRK",
     "ABBV", "CVX", "KO", "ORCL", "PEP", "WMT", "BAC", "MCD", "CRM", "ACN",
     "TMO", "CSCO", "NFLX", "ABT", "AMD", "ADBE", "DHR", "LIN", "TXN", "NKE",
-    "NEE", "PM", "QCOM", "DIS", "VZ", "INTC", "WFC", "RTX", "COP", "BMY",
+    "NEE", "PM", "QCOM", "DIS", "VZ", "INTC", "WFC", "RTX", "COP", "BMY", "XRX",
 ]
 
 _cache: Optional[pd.DataFrame] = None

@@ -31,6 +31,7 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - BACKEND_INTERNAL_URL=http://backend:8000
     depends_on:
       - backend
     restart: unless-stopped

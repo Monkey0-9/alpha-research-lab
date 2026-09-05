@@ -9,7 +9,6 @@ Endpoints:
 from __future__ import annotations
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from typing import Dict, Any
 from core.quality_gate import run_quality_gate, evaluate_alpha, CRITERIA_DEFINITIONS
 
 router = APIRouter()

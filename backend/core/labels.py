@@ -9,7 +9,6 @@ from t onwards, but this label is NEVER used as a feature.
 from __future__ import annotations
 
 import pandas as pd
-import numpy as np
 
 
 def generate_labels(df: pd.DataFrame) -> pd.DataFrame:

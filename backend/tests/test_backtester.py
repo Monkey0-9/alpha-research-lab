@@ -2,7 +2,6 @@
 Tests for core.backtester
 Validates walk-forward backtest execution, lack of leakage, and fee deduction.
 """
-import pytest
 from core.backtester import EventDrivenBacktester
 
 
@@ -38,7 +37,7 @@ def test_trade_pnl_deterministic_and_turnover_exact():
 
     # Trades must be deterministic (not np.random.normal)
     assert len(res1.trades) == len(res2.trades)
-    for t1, t2 in zip(res1.trades, res2.trades):
+    for t1, t2 in zip(res1.trades, res2.trades, strict=True):
         assert t1["ticker"] == t2["ticker"]
         assert t1["action"] == t2["action"]
         assert t1["pnl"] == t2["pnl"]

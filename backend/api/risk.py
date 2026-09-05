@@ -5,11 +5,11 @@ All endpoints return REAL computations from actual market data.
 No hardcoded results, no synthetic data.
 """
 from __future__ import annotations
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Query
+from typing import List, Dict
+from fastapi import APIRouter
 from pydantic import BaseModel
 import numpy as np
-from core.risk import historical_var, parametric_var, cvar_expected_shortfall, factor_attribution
+from core.risk import historical_var, parametric_var, cvar_expected_shortfall
 
 router = APIRouter()
 

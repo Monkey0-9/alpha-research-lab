@@ -4,7 +4,7 @@ POST /api/backtest/run: Runs temporal walk-forward backtest and returns equity c
 """
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from core.backtester import backtester_engine

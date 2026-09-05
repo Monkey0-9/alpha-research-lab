@@ -4,7 +4,7 @@ Enforces typed rule validation and quality gate guarantees inspired by OCaml sem
 """
 from __future__ import annotations
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 
 class OCamlQualityRulesEngine:

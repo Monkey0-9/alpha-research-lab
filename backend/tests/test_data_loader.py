@@ -3,8 +3,12 @@ Tests for core.data_loader
 Validates data ingestion, survivorship-bias prevention, and PIT queries.
 """
 import pandas as pd
-import pytest
-from core.data_loader import download_sp500_data, load_sp500_data, get_pit_data, validate_data_quality
+from core.data_loader import (
+    download_sp500_data,
+    load_sp500_data,
+    get_pit_data,
+    validate_data_quality
+)
 
 
 def test_download_sp500_data():

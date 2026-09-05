@@ -12,7 +12,7 @@ Implements institutional validation gates that actively detect and reject:
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 import numpy as np
 import pandas as pd
 

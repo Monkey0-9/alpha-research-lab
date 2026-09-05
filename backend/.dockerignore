@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+.pytest_cache
+.venv
+.git
+*.log
+native/**/target
+native/**/*.o
+native/**/*.so
+native/**/*.dylib
+native/**/*.dll

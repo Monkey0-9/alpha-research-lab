@@ -2,7 +2,6 @@
 Tests for core.validation
 Validates temporal ordering in walk-forward and purge/embargo isolation in Purged K-Fold.
 """
-import pandas as pd
 import pytest
 from core.validation import walk_forward_cv, purged_kfold_cv
 

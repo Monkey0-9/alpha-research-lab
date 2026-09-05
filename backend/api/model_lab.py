@@ -5,8 +5,8 @@ All endpoints return REAL computations from actual model training.
 No hardcoded results, no synthetic data.
 """
 from __future__ import annotations
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Query
+from typing import List, Dict
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 import numpy as np
 from core.ensemble import ensemble_engine
@@ -269,7 +269,7 @@ def get_prediction_distribution(model: str = "lightgbm"):
 
         split = int(len(X) * 0.7)
         X_train, X_test = X[:split], X[split:]
-        y_train, y_test = y[:split], y[split:]
+        y_train = y[:split]
 
         train_fn = {
             "lightgbm": trainer.train_lightgbm,
@@ -307,7 +307,7 @@ def toggle_meta_labeling(request: MetaLabelRequest) -> MetaLabelResult:
         from core.data_loader import load_sp500_data
         from core.features import build_features
         from core.labels import generate_labels
-        from core.metrics import sharpe_ratio, information_coefficient
+        from core.metrics import sharpe_ratio
         from core.meta_labeling import MetaLabelingSystem
 
         raw = load_sp500_data()
@@ -340,9 +340,10 @@ def toggle_meta_labeling(request: MetaLabelRequest) -> MetaLabelResult:
         X_train, X_test = X[:split], X[split:]
         y_train, y_test = y[:split], y[split:]
 
-        ml_system = MetaLabelingSystem()
+        ml_system = MetaLabelingSystem(confidence_threshold=request.confidence_threshold)
         ml_system.fit(X_train, y_train)
-        signals = ml_system.generate_signals(X_test, confidence_threshold=request.confidence_threshold)
+        meta_res = ml_system.generate_signals(X_test)
+        signals = meta_res["filtered_signals"]
 
         unfiltered_sr = float(sharpe_ratio(y_test)) if len(y_test) > 5 else 0.0
         unfiltered_wr = float(np.mean(y_test > 0)) * 100 if len(y_test) > 0 else 0.0
@@ -389,7 +390,6 @@ def train_model(req: TrainRequest):
         from core.data_loader import load_sp500_data
         from core.features import build_features
         from core.labels import generate_labels
-        from core.metrics import sharpe_ratio, information_coefficient
         from core.models import trainer
         import time
 

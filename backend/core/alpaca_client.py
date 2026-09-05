@@ -60,7 +60,7 @@ class AlpacaClient:
             method=method,
         )
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as he:
             err_body = he.read().decode("utf-8", errors="ignore")

@@ -10,9 +10,8 @@ Evaluates candidate performance matrices across combinatorial splits to quantify
 from __future__ import annotations
 
 import logging
-from typing import Dict, Any, Sequence, Optional
+from typing import Dict, Any, Optional
 import numpy as np
-import scipy.stats as ss
 
 logger = logging.getLogger(__name__)
 

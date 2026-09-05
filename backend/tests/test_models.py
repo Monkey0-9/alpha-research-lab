@@ -3,7 +3,6 @@ Tests for core.models and ensemble
 Validates ML model training, out-of-sample evaluation, and ensemble weighting.
 """
 import numpy as np
-import pytest
 from core.models import ModelTrainer
 from core.ensemble import ensemble_engine
 

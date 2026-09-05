@@ -9,7 +9,7 @@ Implements:
 from __future__ import annotations
 
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 import numpy as np
 
 from native.native_bridge import accelerator

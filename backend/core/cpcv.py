@@ -10,7 +10,7 @@ from __future__ import annotations
 import itertools
 import logging
 from dataclasses import dataclass
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Dict, Any
 import numpy as np
 import pandas as pd
 
@@ -132,7 +132,7 @@ def run_cpcv_evaluation(
     Run full Combinatorial Purged Cross-Validation with actual model training and out-of-sample testing.
     """
     import lightgbm as lgb
-    from core.metrics import sharpe_ratio, information_coefficient
+    from core.metrics import information_coefficient
 
     dates = pd.to_datetime(features_df.index.get_level_values("date").unique()).sort_values()
     cpcv = CombinatorialPurgedCV(

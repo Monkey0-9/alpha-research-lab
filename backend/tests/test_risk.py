@@ -1,10 +1,14 @@
 """
 Tests for core.risk
-Validates Historical VaR, Parametric VaR, CVaR, and factor attribution consistency.
+Validates Historical VaR, Parametric VaR, CVaR, and factor attribution.
 """
 import numpy as np
-import pytest
-from core.risk import historical_var, parametric_var, cvar_expected_shortfall, factor_attribution
+from core.risk import (
+    historical_var,
+    parametric_var,
+    cvar_expected_shortfall,
+    factor_attribution
+)
 
 
 def test_var_and_cvar_bounds():
@@ -17,7 +21,7 @@ def test_var_and_cvar_bounds():
 
     assert h_var_95 > 0
     assert p_var_95 > 0
-    # CVaR (Expected Shortfall) is strictly greater than or equal to VaR for continuous distributions
+    # CVaR (Expected Shortfall) >= VaR for continuous distributions
     assert cvar_95 >= h_var_95 * 0.95
 
 
