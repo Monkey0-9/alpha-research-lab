@@ -48,7 +48,6 @@ DEFAULT_TICKERS: List[str] = [
     "ADBE", "DHR", "LIN", "TXN", "NKE",
     "NEE", "PM", "QCOM", "DIS", "VZ",
     "INTC", "WFC", "RTX", "COP", "BMY",
-    "XRX"  # Historical constituent for survivorship testing
 ]
 
 
@@ -131,16 +130,18 @@ class MarketDataPipeline:
             sub = df.xs(t, level="ticker").copy()
             sub = sub[~sub.index.duplicated(keep="first")].sort_index()
 
-            # Count and forward fill missing prices
+            # Count missing prices — do NOT auto-impute
             missing_count += int(sub["close"].isna().sum())
-            sub["close"] = sub["close"].ffill().bfill()
+            # Mark missing close prices instead of imputing
+            sub["close_missing"] = sub["close"].isna()
             for col in ["open", "high", "low"]:
                 if col in sub.columns:
                     sub[col] = sub[col].fillna(sub["close"])
                 else:
                     sub[col] = sub["close"]
             if "volume" in sub.columns:
-                sub["volume"] = sub["volume"].fillna(1_000_000).astype(int)
+                # Do NOT manufacture volume — mark as missing instead
+                sub["volume"] = sub["volume"].where(sub["volume"] > 0, np.nan)
 
             # High/Low consistency check
             sub["high"] = np.maximum(
@@ -234,25 +235,6 @@ class MarketDataPipeline:
                     logger.debug(f"Robinhood bar query for {sym} skipped: {e}")
             if rh_frames:
                 df = pd.concat(rh_frames).sort_index()
-
-        # Ensure historical constituent XRX exists for survivorship tests
-        if not df.empty and (
-            "XRX" not in df.index.get_level_values("ticker")
-        ):
-            dates = df.index.get_level_values("date").unique()
-            xrx_index = pd.MultiIndex.from_tuples(
-                [(d, "XRX") for d in dates],
-                names=["date", "ticker"],
-            )
-            xrx_df = pd.DataFrame(
-                {
-                    "open": 25.0, "high": 25.5, "low": 24.5,
-                    "close": 25.0, "volume": 1_000_000,
-                    "return_1d": 0.0005,
-                },
-                index=xrx_index,
-            )
-            df = pd.concat([df, xrx_df]).sort_index()
 
         return df
 

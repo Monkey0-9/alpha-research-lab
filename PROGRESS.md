@@ -15,14 +15,19 @@
 | **Comprehensive API** | `backend/tests/test_api_comprehensive.py` | 12 | **PASS (100%)** | ~8s |
 | **Core Accelerators** | `backend/tests/test_core.py` | 7 | **PASS (100%)** | ~3s |
 | **Advanced Quant** | `backend/tests/test_core_advanced.py` | 16 | **PASS (100%)** | ~9s |
+| **CPCV & PBO Engine** | `backend/tests/test_cpcv_pbo.py` | 3 | **PASS (100%)** | ~2s |
+| **Alpha GP Evolution** | `backend/tests/test_alpha_gp.py` | 2 | **PASS (100%)** | ~2s |
+| **Adversarial Integrity**| `backend/tests/test_adversarial_attacks.py` | 7 | **PASS (100%)** | ~4s |
+| **Experiment Lineage** | `backend/tests/test_experiment_lineage.py` | 1 | **PASS (100%)** | ~1s |
+| **Benchmark Datasets** | `backend/tests/test_benchmark_datasets.py` | 3 | **PASS (100%)** | ~1s |
 | **Data Loader & PIT** | `backend/tests/test_data_loader.py` | 3 | **PASS (100%)** | ~1s |
 | **Feature Engine** | `backend/tests/test_features.py` | 3 | **PASS (100%)** | ~2s |
 | **Model Research** | `backend/tests/test_models.py` | 2 | **PASS (100%)** | ~3s |
 | **Portfolio Opt** | `backend/tests/test_portfolio.py` | 2 | **PASS (100%)** | ~2s |
 | **Risk Engine** | `backend/tests/test_risk.py` | 2 | **PASS (100%)** | ~1s |
 | **Validation Engine** | `backend/tests/test_validation.py` | 2 | **PASS (100%)** | ~2s |
-| **Backtester Core** | `backend/tests/test_backtester.py` | 3 | **PASS (100%)** | ~5s |
-| **Backend Total** | **`pytest backend/tests/ -v`** | **76** | **76 PASSED / 0 FAILED** | **~70.4s** |
+| **Backtester Core** | `backend/tests/test_backtester.py` | 4 | **PASS (100%)** | ~5s |
+| **Backend Total** | **`pytest backend/tests/ -v`** | **93** | **93 PASSED / 0 FAILED** | **~118s** |
 | **Frontend Test Suite**| `src/lib/data.test.ts` | 11 | **11 PASSED / 0 FAILED** | **~0.13s** |
 | **TypeScript Typecheck**| `tsc --noEmit` | All | **0 ERRORS** | **~2.1s** |
 | **Production Build**   | `npm run build` | 14 Routes | **14 PRERENDERED (0 ERRORS)**| **~28.0s** |

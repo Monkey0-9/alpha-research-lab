@@ -164,8 +164,8 @@ def calculate_full_metrics(
         "annualized_return": round(ann_ret, 4),
         "volatility": round(vol, 4),
         "ic": round(ic, 4),
-        "ic_std": round(abs(ic) * 0.7, 4),
-        "ir": round(sharpe * 0.85, 2),
+        "ic_std": 0.0,
+        "ir": round(sharpe, 2),
         "turnover": round(turnover, 3),
         "num_trades": num_trades,
     }

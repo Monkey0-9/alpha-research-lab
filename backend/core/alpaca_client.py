@@ -19,14 +19,8 @@ DEFAULT_ALPACA_ENDPOINT = os.environ.get(
     "ALPACA_API_ENDPOINT",
     "https://paper-api.alpaca.markets/v2"
 )
-DEFAULT_ALPACA_KEY = os.environ.get(
-    "ALPACA_API_KEY",
-    "PK3FE4IYP4MRODKCJZ64PS675L"
-)
-DEFAULT_ALPACA_SECRET = os.environ.get(
-    "ALPACA_API_SECRET",
-    "DwSXQh24MLViY8mmumDNfbraZvZQqErTvfqVNha2XrtK"
-)
+DEFAULT_ALPACA_KEY = os.environ.get("ALPACA_API_KEY", "")
+DEFAULT_ALPACA_SECRET = os.environ.get("ALPACA_API_SECRET", "")
 
 
 class AlpacaClient:

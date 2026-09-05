@@ -116,9 +116,9 @@ class TimeSeriesValidator:
                     s_ret = d_slice[d_slice["pred"] <= q_low][self.target_col].mean()
                     daily_rets.append(0.5 * (np.nan_to_num(l_ret, 0.0) - np.nan_to_num(s_ret, 0.0)))
 
-            fold_sr = sharpe_ratio(daily_rets) if len(daily_rets) > 5 else 1.15
+            fold_sr = sharpe_ratio(daily_rets) if len(daily_rets) > 5 else 0.0
             fold_ic = information_coefficient(preds, y_te)
-            fold_ret = float(np.prod(1.0 + np.array(daily_rets)) - 1.0) if len(daily_rets) > 0 else 0.045
+            fold_ret = float(np.prod(1.0 + np.array(daily_rets)) - 1.0) if len(daily_rets) > 0 else 0.0
 
             oos_sharpes.append(fold_sr)
             folds.append({
@@ -134,9 +134,9 @@ class TimeSeriesValidator:
                 "num_test": len(test_dates)
             })
 
-        mean_sr = float(np.mean(oos_sharpes)) if oos_sharpes else 1.32
-        sr_std = float(np.std(oos_sharpes, ddof=1)) if len(oos_sharpes) > 1 else 0.18
-        consistency = float(np.mean(np.array(oos_sharpes) > 0.5)) if oos_sharpes else 0.85
+        mean_sr = float(np.mean(oos_sharpes)) if oos_sharpes else 0.0
+        sr_std = float(np.std(oos_sharpes, ddof=1)) if len(oos_sharpes) > 1 else 0.0
+        consistency = float(np.mean(np.array(oos_sharpes) > 0.5)) if oos_sharpes else 0.0
 
         return {
             "folds": folds,
@@ -172,7 +172,7 @@ class TimeSeriesValidator:
                 "train_samples": len(train_dates),
                 "test_samples": len(test_dates),
                 "purged_samples": purge_window + embargo,
-                "score": round(0.045 + (i * 0.008) % 0.03, 3)
+                "score": None  # Must be computed from actual model evaluation
             })
 
         return {
@@ -216,25 +216,84 @@ def walk_forward_cv(features=None, target=None, model_type="lightgbm", n_folds=1
 
 
 def purged_kfold_cv(features=None, target=None, model_type="lightgbm", n_splits=5, purge_window=21, embargo_days=5) -> List[CVFoldResult]:
-    """Execute purged K-fold cross-validation with purge and embargo buffers."""
+    """Execute purged K-fold cross-validation with actual model training and evaluation."""
+    validator_instance = TimeSeriesValidator()
+    validator_instance._ensure_data()
+    df = validator_instance.df
+
+    dates = pd.to_datetime(df.index.get_level_values("date").unique()).sort_values()
+    if len(dates) < n_splits * 50:
+        # Insufficient data — return empty rather than synthetic results
+        return []
+
+    fold_size = len(dates) // n_splits
     fold_objs = []
-    base_date = pd.Timestamp("2020-01-01")
+
+    feature_cols = validator_instance.feature_cols
+    target_col = validator_instance.target_col
+
     for i in range(n_splits):
-        t_start = base_date + pd.Timedelta(days=i * 250)
-        t_end = t_start + pd.Timedelta(days=200)
-        purge_st = t_end - pd.Timedelta(days=purge_window)
-        te_start = t_end + pd.Timedelta(days=1)
-        te_end = te_start + pd.Timedelta(days=40)
-        emb_end = te_end + pd.Timedelta(days=embargo_days)
+        test_start = i * fold_size
+        test_end = (i + 1) * fold_size if i < n_splits - 1 else len(dates)
+        test_dates_fold = dates[test_start:test_end]
+
+        # Purge + embargo
+        train_mask = np.ones(len(dates), dtype=bool)
+        purge_start = max(0, test_start - purge_window)
+        embargo_end = min(len(dates), test_end + embargo_days)
+        train_mask[purge_start:embargo_end] = False
+        train_dates_fold = dates[train_mask]
+
+        if len(train_dates_fold) < 100 or len(test_dates_fold) < 10:
+            continue
+
+        train_sub = df[df.index.get_level_values("date").isin(train_dates_fold)].dropna(subset=feature_cols + [target_col])
+        test_sub = df[df.index.get_level_values("date").isin(test_dates_fold)].dropna(subset=feature_cols + [target_col])
+
+        if train_sub.empty or test_sub.empty:
+            continue
+
+        X_tr = train_sub[feature_cols].values
+        y_tr = train_sub[target_col].values
+        X_te = test_sub[feature_cols].values
+        y_te = test_sub[target_col].values
+
+        model = lgb.LGBMRegressor(n_estimators=30, max_depth=3, learning_rate=0.05, random_state=42, verbose=-1)
+        model.fit(X_tr, y_tr)
+        preds = model.predict(X_te)
+
+        # Compute real metrics
+        fold_ic = information_coefficient(preds, y_te)
+
+        # Strategy return: long top 30%, short bottom 30%
+        test_copy = test_sub.copy()
+        test_copy["pred"] = preds
+        daily_rets = []
+        for d in test_dates_fold:
+            d_slice = test_copy.xs(d, level="date") if d in test_copy.index.get_level_values("date") else pd.DataFrame()
+            if len(d_slice) >= 4:
+                q_high = d_slice["pred"].quantile(0.7)
+                q_low = d_slice["pred"].quantile(0.3)
+                l_ret = d_slice[d_slice["pred"] >= q_high][target_col].mean()
+                s_ret = d_slice[d_slice["pred"] <= q_low][target_col].mean()
+                daily_rets.append(0.5 * (np.nan_to_num(l_ret, 0.0) - np.nan_to_num(s_ret, 0.0)))
+
+        fold_sr = sharpe_ratio(daily_rets) if len(daily_rets) > 5 else 0.0
+
+        purge_dt = test_dates_fold[0] - pd.Timedelta(days=purge_window)
+        embargo_dt = test_dates_fold[-1] + pd.Timedelta(days=embargo_days)
+
         fold_objs.append(CVFoldResult(
             fold=i + 1,
-            train_start=t_start,
-            train_end=t_end,
-            purge_start=purge_st,
-            test_start=te_start,
-            test_end=te_end,
-            embargo_end=emb_end,
-            oos_sharpe=1.55 + 0.05 * i
+            train_start=train_dates_fold[0],
+            train_end=train_dates_fold[-1],
+            test_start=test_dates_fold[0],
+            test_end=test_dates_fold[-1],
+            purge_start=purge_dt,
+            embargo_end=embargo_dt,
+            oos_sharpe=fold_sr,
+            oos_ic=fold_ic,
+            oos_return=float(np.prod(1.0 + np.array(daily_rets)) - 1.0) if daily_rets else 0.0
         ))
     return fold_objs
 

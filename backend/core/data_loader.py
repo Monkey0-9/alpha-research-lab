@@ -32,7 +32,6 @@ SP500_TICKERS: List[str] = [
     "ABBV", "CVX", "KO", "ORCL", "PEP", "WMT", "BAC", "MCD", "CRM", "ACN",
     "TMO", "CSCO", "NFLX", "ABT", "AMD", "ADBE", "DHR", "LIN", "TXN", "NKE",
     "NEE", "PM", "QCOM", "DIS", "VZ", "INTC", "WFC", "RTX", "COP", "BMY",
-    "XRX"  # Historical constituent for survivorship testing
 ]
 
 _cache: Optional[pd.DataFrame] = None
@@ -124,13 +123,6 @@ def load_sp500_data(
             dates = df.index.get_level_values("date").tz_localize(None)
             tickers = df.index.get_level_values("ticker")
             df.index = pd.MultiIndex.from_arrays([dates, tickers], names=["date", "ticker"])
-        if "XRX" not in df.index.get_level_values("ticker"):
-            dates = df.index.get_level_values("date").unique()
-            xrx_df = pd.DataFrame({
-                "open": 25.0, "high": 25.5, "low": 24.5, "close": 25.0, "volume": 1000000, "return_1d": 0.001
-            }, index=pd.MultiIndex.from_tuples([(d, "XRX") for d in dates], names=["date", "ticker"]))
-            df = pd.concat([df, xrx_df]).sort_index()
-            df.to_parquet(PARQUET_PATH)
         _cache = df
         return df
 

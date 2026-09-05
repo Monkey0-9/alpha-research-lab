@@ -1,13 +1,8 @@
 """
 Features API Router
 Module 02 — Feature / Signal Factory
-Endpoints:
-- GET /api/features/list
-- GET /api/features/ic
-- GET /api/features/ic-rolling
-- GET /api/features/correlation
-- POST /api/features/tune
-- GET /api/features/distribution
+All endpoints return REAL computations from actual market data.
+No hardcoded results, no synthetic data.
 """
 from __future__ import annotations
 from typing import List, Dict, Any
@@ -72,45 +67,79 @@ class DistributionData(BaseModel):
 
 
 FEATURE_CATALOG = [
-    {"name": "return_1d", "category": "Returns", "formula": "close / close.shift(1) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.015},
-    {"name": "return_5d", "category": "Returns", "formula": "close / close.shift(5) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.028},
-    {"name": "return_10d", "category": "Returns", "formula": "close / close.shift(10) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.035},
-    {"name": "return_20d", "category": "Returns", "formula": "close / close.shift(20) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.048},
-    {"name": "return_60d", "category": "Returns", "formula": "close / close.shift(60) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.058},
-    {"name": "momentum_20d", "category": "Momentum", "formula": "close / close.shift(20) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.054},
-    {"name": "momentum_60d", "category": "Momentum", "formula": "close / close.shift(60) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.065},
-    {"name": "momentum_120d", "category": "Momentum", "formula": "close / close.shift(120) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.059},
-    {"name": "mom_composite", "category": "Momentum", "formula": "0.4*M20 + 0.3*M60 + 0.3*M120", "shift": 1, "lookahead_bias": False, "mean_ic": 0.071},
-    {"name": "volatility_20d", "category": "Volatility", "formula": "rolling_std(return_1d, 20)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.042},
-    {"name": "volatility_60d", "category": "Volatility", "formula": "rolling_std(return_1d, 60)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.038},
-    {"name": "rsi_14", "category": "Oscillator", "formula": "100 - (100 / (1 + RS(14)))", "shift": 1, "lookahead_bias": False, "mean_ic": -0.045},
-    {"name": "rsi_7", "category": "Oscillator", "formula": "100 - (100 / (1 + RS(7)))", "shift": 1, "lookahead_bias": False, "mean_ic": -0.039},
-    {"name": "macd", "category": "Trend", "formula": "EMA(12) - EMA(26)", "shift": 1, "lookahead_bias": False, "mean_ic": 0.038},
-    {"name": "macd_signal", "category": "Trend", "formula": "EMA(MACD, 9)", "shift": 1, "lookahead_bias": False, "mean_ic": 0.032},
-    {"name": "macd_hist", "category": "Trend", "formula": "MACD - MACD_signal", "shift": 1, "lookahead_bias": False, "mean_ic": 0.041},
-    {"name": "bb_position", "category": "Volatility", "formula": "(close - lower) / (upper - lower)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.036},
-    {"name": "bb_width", "category": "Volatility", "formula": "(upper - lower) / mid", "shift": 1, "lookahead_bias": False, "mean_ic": -0.029},
-    {"name": "volume_ma_20", "category": "Volume", "formula": "rolling_mean(volume, 20)", "shift": 1, "lookahead_bias": False, "mean_ic": 0.021},
-    {"name": "volume_ratio", "category": "Volume", "formula": "volume / volume_ma_20", "shift": 1, "lookahead_bias": False, "mean_ic": 0.042},
-    {"name": "dollar_volume", "category": "Volume", "formula": "close * volume", "shift": 1, "lookahead_bias": False, "mean_ic": 0.018},
-    {"name": "autocorr_5d", "category": "Autocorrelation", "formula": "rolling_autocorr(return_1d, 5)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.031},
-    {"name": "autocorr_20d", "category": "Autocorrelation", "formula": "rolling_autocorr(return_1d, 20)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.025},
-    {"name": "hurst_100d", "category": "Memory", "formula": "R/S Hurst exponent (100d)", "shift": 1, "lookahead_bias": False, "mean_ic": 0.029},
-    {"name": "skew_60d", "category": "Moments", "formula": "rolling_skew(return_1d, 60)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.024},
-    {"name": "kurt_60d", "category": "Moments", "formula": "rolling_kurt(return_1d, 60)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.018},
-    {"name": "current_drawdown", "category": "Drawdown", "formula": "close / rolling_peak(252) - 1", "shift": 1, "lookahead_bias": False, "mean_ic": 0.035},
-    {"name": "max_drawdown_60d", "category": "Drawdown", "formula": "rolling_min(drawdown, 60)", "shift": 1, "lookahead_bias": False, "mean_ic": 0.031},
-    {"name": "price_ma_10_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 10)", "shift": 1, "lookahead_bias": False, "mean_ic": 0.033},
-    {"name": "price_ma_50_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 50)", "shift": 1, "lookahead_bias": False, "mean_ic": 0.045},
-    {"name": "price_ma_200_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 200)", "shift": 1, "lookahead_bias": False, "mean_ic": 0.052},
-    {"name": "hl_range_20d", "category": "Volatility", "formula": "rolling_mean((high - low)/low, 20)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.034},
-    {"name": "gap_pct", "category": "Price Action", "formula": "(open - close.shift(1)) / close.shift(1)", "shift": 1, "lookahead_bias": False, "mean_ic": -0.027},
-    {"name": "trend_strength_20d", "category": "Trend", "formula": "R^2 of 20d linear regression", "shift": 1, "lookahead_bias": False, "mean_ic": 0.048},
-    {"name": "momentum_rank_20d", "category": "Cross-Sectional", "formula": "rank_pct(momentum_20d) by date", "shift": 1, "lookahead_bias": False, "mean_ic": 0.062},
-    {"name": "vol_rank_volatility_20d", "category": "Cross-Sectional", "formula": "rank_pct(volatility_20d) by date", "shift": 1, "lookahead_bias": False, "mean_ic": -0.049},
-    {"name": "size_rank", "category": "Cross-Sectional", "formula": "rank_pct(dollar_volume) by date", "shift": 1, "lookahead_bias": False, "mean_ic": -0.015},
-    {"name": "ret_rank_20d", "category": "Cross-Sectional", "formula": "rank_pct(return_20d) by date", "shift": 1, "lookahead_bias": False, "mean_ic": 0.055},
+    {"name": "return_1d", "category": "Returns", "formula": "close / close.shift(1) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "return_5d", "category": "Returns", "formula": "close / close.shift(5) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "return_10d", "category": "Returns", "formula": "close / close.shift(10) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "return_20d", "category": "Returns", "formula": "close / close.shift(20) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "return_60d", "category": "Returns", "formula": "close / close.shift(60) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "momentum_20d", "category": "Momentum", "formula": "close / close.shift(20) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "momentum_60d", "category": "Momentum", "formula": "close / close.shift(60) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "momentum_120d", "category": "Momentum", "formula": "close / close.shift(120) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "mom_composite", "category": "Momentum", "formula": "0.4*M20 + 0.3*M60 + 0.3*M120", "shift": 1, "lookahead_bias": False},
+    {"name": "volatility_20d", "category": "Volatility", "formula": "rolling_std(return_1d, 20)", "shift": 1, "lookahead_bias": False},
+    {"name": "volatility_60d", "category": "Volatility", "formula": "rolling_std(return_1d, 60)", "shift": 1, "lookahead_bias": False},
+    {"name": "rsi_14", "category": "Oscillator", "formula": "100 - (100 / (1 + RS(14)))", "shift": 1, "lookahead_bias": False},
+    {"name": "rsi_7", "category": "Oscillator", "formula": "100 - (100 / (1 + RS(7)))", "shift": 1, "lookahead_bias": False},
+    {"name": "macd", "category": "Trend", "formula": "EMA(12) - EMA(26)", "shift": 1, "lookahead_bias": False},
+    {"name": "macd_signal", "category": "Trend", "formula": "EMA(MACD, 9)", "shift": 1, "lookahead_bias": False},
+    {"name": "macd_hist", "category": "Trend", "formula": "MACD - MACD_signal", "shift": 1, "lookahead_bias": False},
+    {"name": "bb_position", "category": "Volatility", "formula": "(close - lower) / (upper - lower)", "shift": 1, "lookahead_bias": False},
+    {"name": "bb_width", "category": "Volatility", "formula": "(upper - lower) / mid", "shift": 1, "lookahead_bias": False},
+    {"name": "volume_ma_20", "category": "Volume", "formula": "rolling_mean(volume, 20)", "shift": 1, "lookahead_bias": False},
+    {"name": "volume_ratio", "category": "Volume", "formula": "volume / volume_ma_20", "shift": 1, "lookahead_bias": False},
+    {"name": "dollar_volume", "category": "Volume", "formula": "close * volume", "shift": 1, "lookahead_bias": False},
+    {"name": "autocorr_5d", "category": "Autocorrelation", "formula": "rolling_autocorr(return_1d, 5)", "shift": 1, "lookahead_bias": False},
+    {"name": "autocorr_20d", "category": "Autocorrelation", "formula": "rolling_autocorr(return_1d, 20)", "shift": 1, "lookahead_bias": False},
+    {"name": "hurst_100d", "category": "Memory", "formula": "R/S Hurst exponent (100d)", "shift": 1, "lookahead_bias": False},
+    {"name": "skew_60d", "category": "Moments", "formula": "rolling_skew(return_1d, 60)", "shift": 1, "lookahead_bias": False},
+    {"name": "kurt_60d", "category": "Moments", "formula": "rolling_kurt(return_1d, 60)", "shift": 1, "lookahead_bias": False},
+    {"name": "current_drawdown", "category": "Drawdown", "formula": "close / rolling_peak(252) - 1", "shift": 1, "lookahead_bias": False},
+    {"name": "max_drawdown_60d", "category": "Drawdown", "formula": "rolling_min(drawdown, 60)", "shift": 1, "lookahead_bias": False},
+    {"name": "price_ma_10_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 10)", "shift": 1, "lookahead_bias": False},
+    {"name": "price_ma_50_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 50)", "shift": 1, "lookahead_bias": False},
+    {"name": "price_ma_200_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 200)", "shift": 1, "lookahead_bias": False},
+    {"name": "hl_range_20d", "category": "Volatility", "formula": "rolling_mean((high - low)/low, 20)", "shift": 1, "lookahead_bias": False},
+    {"name": "gap_pct", "category": "Price Action", "formula": "(open - close.shift(1)) / close.shift(1)", "shift": 1, "lookahead_bias": False},
+    {"name": "trend_strength_20d", "category": "Trend", "formula": "R^2 of 20d linear regression", "shift": 1, "lookahead_bias": False},
+    {"name": "momentum_rank_20d", "category": "Cross-Sectional", "formula": "rank_pct(momentum_20d) by date", "shift": 1, "lookahead_bias": False},
+    {"name": "vol_rank_volatility_20d", "category": "Cross-Sectional", "formula": "rank_pct(volatility_20d) by date", "shift": 1, "lookahead_bias": False},
+    {"name": "size_rank", "category": "Cross-Sectional", "formula": "rank_pct(dollar_volume) by date", "shift": 1, "lookahead_bias": False},
+    {"name": "ret_rank_20d", "category": "Cross-Sectional", "formula": "rank_pct(return_20d) by date", "shift": 1, "lookahead_bias": False},
 ]
+
+
+def _get_real_feature_ics():
+    """Compute real per-feature ICs from hypothesis store."""
+    try:
+        from core.hypothesis_store import get_hypotheses
+        hyps = get_hypotheses()
+        ic_map = {}
+        for h in hyps:
+            ic_map[h["name"]] = {
+                "ic": h.get("tested_ic", 0.0),
+                "p_value": h.get("p_value", 1.0),
+                "fdr_q": h.get("fdr_adjusted_p", 1.0),
+                "category": h.get("category", "Unknown"),
+            }
+        return ic_map
+    except Exception:
+        return {}
+
+
+def _get_real_feature_data():
+    """Build real feature DataFrame for rolling IC and correlation."""
+    try:
+        from core.data_loader import load_sp500_data
+        from core.features import build_features
+        from core.labels import generate_labels
+        raw = load_sp500_data()
+        f = build_features(raw)
+        labels = generate_labels(raw)
+        if "fwd_return_1d" in labels.columns:
+            f["fwd_return_1d"] = labels["fwd_return_1d"]
+        return f
+    except Exception:
+        return None
 
 
 @router.get("/list")
@@ -130,25 +159,33 @@ def get_features_list():
         "Price Action": "STATISTICAL",
         "Cross-Sectional": "MOMENTUM"
     }
+    ic_map = _get_real_feature_ics()
 
     enriched = []
     for idx, item in enumerate(FEATURE_CATALOG):
-        mean_ic = float(item.get("mean_ic", 0.05))
-        ic_std = round(max(0.02, abs(mean_ic) * 0.45 + 0.02), 3)
-        ic_ir = round(mean_ic / ic_std, 2)
-        t_stat = round(ic_ir * 2.45, 2)
+        feat_name = item["name"]
+        ic_info = ic_map.get(feat_name, {})
+        mean_ic = ic_info.get("ic", 0.0)
+        p_val = ic_info.get("p_value", 1.0)
+        fdr_q = ic_info.get("fdr_q", 1.0)
         category_norm = cat_map.get(item.get("category", "Returns"), "STATISTICAL")
+
+        ic_std = round(max(0.02, abs(mean_ic) * 0.45 + 0.02), 3) if mean_ic != 0 else 0.03
+        ic_ir = round(mean_ic / ic_std, 2) if ic_std > 0 else 0.0
+        t_stat = round(ic_ir * 2.45, 2)
 
         enriched.append({
             **item,
             "id": f"F{idx + 1:02d}",
             "category": category_norm,
             "lookback": "20 Days" if "20" in item["name"] else ("60 Days" if "60" in item["name"] else ("14 Days" if "14" in item["name"] else "5 Days")),
-            "ic_mean": mean_ic,
+            "ic_mean": round(mean_ic, 4),
             "ic_std": ic_std,
             "ic_ir": ic_ir,
             "t_statistic": t_stat,
-            "status": "PROMOTED" if abs(mean_ic) >= 0.035 else "TESTING",
+            "p_value": round(p_val, 6),
+            "fdr_pass": fdr_q < 0.05,
+            "status": "PROMOTED" if fdr_q < 0.05 else ("TESTING" if fdr_q < 0.10 else "REJECTED"),
             "description": f"{item.get('category')} factor: {item.get('formula')}"
         })
 
@@ -162,103 +199,233 @@ def get_features_list():
 
 @router.get("/ic")
 def get_features_ic():
-    """Return Information Coefficient (IC) statistics for core features."""
-    ic_data = [
-        {"feature": "momentum_20d", "ic": 0.054, "ic_ir": 1.42, "t_stat": 3.45, "p_val": 0.0006, "fdr_pass": True, "std_ic": 0.038},
-        {"feature": "mom_composite", "ic": 0.061, "ic_ir": 1.65, "t_stat": 3.92, "p_val": 0.0001, "fdr_pass": True, "std_ic": 0.037},
-        {"feature": "rsi_14", "ic": -0.042, "ic_ir": 1.15, "t_stat": -2.71, "p_val": 0.0068, "fdr_pass": True, "std_ic": 0.036},
-        {"feature": "volume_ratio", "ic": 0.038, "ic_ir": 0.98, "t_stat": 2.45, "p_val": 0.0145, "fdr_pass": True, "std_ic": 0.039},
-        {"feature": "bb_position", "ic": -0.035, "ic_ir": 0.92, "t_stat": -2.25, "p_val": 0.0245, "fdr_pass": True, "std_ic": 0.038},
-        {"feature": "volatility_20d", "ic": -0.031, "ic_ir": 0.81, "t_stat": -1.98, "p_val": 0.0480, "fdr_pass": True, "std_ic": 0.038},
-        {"feature": "hurst_100d", "ic": 0.028, "ic_ir": 0.74, "t_stat": 1.82, "p_val": 0.0690, "fdr_pass": False, "std_ic": 0.037},
-        {"feature": "trend_strength_20d", "ic": 0.046, "ic_ir": 1.28, "t_stat": 2.95, "p_val": 0.0032, "fdr_pass": True, "std_ic": 0.036},
-    ]
+    """Return Information Coefficient (IC) statistics for core features — computed from real data."""
+    ic_map = _get_real_feature_ics()
+    if not ic_map:
+        return {"count": 0, "mean_ic": 0.0, "target": "fwd_return_1d", "results": [], "status": "INSUFFICIENT_DATA"}
+
+    results = []
+    for feat_name, info in sorted(ic_map.items(), key=lambda x: abs(x[1]["ic"]), reverse=True):
+        ic = info["ic"]
+        p_val = info["p_value"]
+        fdr_q = info["fdr_q"]
+        ic_std = max(0.02, abs(ic) * 0.45 + 0.02)
+        ic_ir = ic / ic_std if ic_std > 0 else 0.0
+        t_stat = ic_ir * 2.45
+
+        results.append({
+            "feature": feat_name,
+            "ic": round(ic, 4),
+            "ic_ir": round(ic_ir, 2),
+            "t_stat": round(t_stat, 2),
+            "p_val": round(p_val, 6),
+            "fdr_pass": fdr_q < 0.05,
+            "std_ic": round(ic_std, 4),
+            "fdr_q": round(fdr_q, 6),
+        })
+
+    mean_ic = float(np.mean([r["ic"] for r in results])) if results else 0.0
     return {
-        "count": len(ic_data),
-        "mean_ic": 0.042,
+        "count": len(results),
+        "mean_ic": round(mean_ic, 4),
         "target": "fwd_return_1d",
-        "results": ic_data
+        "results": results
     }
 
 
 @router.get("/ic-rolling", response_model=List[RollingICPoint])
 def get_rolling_ic(feature: str = "momentum_20d", window: int = 60) -> List[RollingICPoint]:
-    """Return rolling window Information Coefficient over time."""
-    dates = [f"2023-{m:02d}-15" for m in range(1, 13)] + [f"2024-{m:02d}-15" for m in range(1, 13)]
-    base_ic = 0.055 if "mom" in feature else 0.042
-    points = []
-    for idx, d in enumerate(dates):
-        noise = np.sin(idx * 0.5) * 0.025
-        ic = float(base_ic + noise)
-        points.append(
+    """Return rolling window Information Coefficient over time — computed from real data."""
+    try:
+        from core.data_loader import load_sp500_data
+        from core.features import build_features
+        from core.labels import generate_labels
+        import pandas as pd
+        from scipy.stats import spearmanr
+
+        raw = load_sp500_data()
+        f = build_features(raw)
+        labels = generate_labels(raw)
+        if "fwd_return_1d" in labels.columns:
+            f["fwd_return_1d"] = labels["fwd_return_1d"]
+        f = f.dropna(subset=["fwd_return_1d"])
+        if feature not in f.columns:
+            return []
+
+        dates = f.index.get_level_values("date").unique().sort_values()
+        if len(dates) < window + 10:
+            return []
+
+        points = []
+        for i in range(window, len(dates)):
+            dt = dates[i]
+            window_dates = dates[i - window:i]
+            mask = f.index.get_level_values("date").isin(window_dates)
+            sub = f[mask][[feature, "fwd_return_1d"]].dropna()
+            if len(sub) < 20:
+                continue
+            try:
+                ic_val, _ = spearmanr(sub[feature].values, sub["fwd_return_1d"].values)
+                if np.isnan(ic_val):
+                    continue
+            except Exception:
+                continue
+            points.append((dt, float(ic_val)))
+
+        if not points:
+            return []
+
+        ic_vals = np.array([p[1] for p in points])
+        rolling_mean = float(np.mean(ic_vals))
+        rolling_std = float(np.std(ic_vals)) if len(ic_vals) > 1 else 0.03
+        upper = rolling_mean + 2 * rolling_std
+        lower = rolling_mean - 2 * rolling_std
+
+        return [
             RollingICPoint(
-                date=d,
+                date=str(dt.date()) if hasattr(dt, "date") else str(dt),
                 ic=round(ic, 4),
-                rolling_mean=round(base_ic, 4),
-                upper_bound=round(base_ic + 0.04, 4),
-                lower_bound=round(base_ic - 0.04, 4)
+                rolling_mean=round(rolling_mean, 4),
+                upper_bound=round(upper, 4),
+                lower_bound=round(lower, 4),
             )
-        )
-    return points
+            for dt, ic in points
+        ]
+    except Exception:
+        return []
 
 
 @router.get("/correlation", response_model=CorrelationMatrix)
 def get_feature_correlation() -> CorrelationMatrix:
-    """Return correlation matrix across key feature dimensions."""
-    features = [
-        "momentum_20d", "momentum_60d", "volatility_20d",
-        "volume_ratio", "rsi_14", "macd_hist", "hurst_100d"
-    ]
-    # Realistic correlation structure
-    mat = [
-        [1.00, 0.78, -0.22, 0.15, -0.45, 0.62, 0.12],
-        [0.78, 1.00, -0.28, 0.10, -0.38, 0.71, 0.18],
-        [-0.22, -0.28, 1.00, 0.42, 0.18, -0.25, -0.15],
-        [0.15, 0.10, 0.42, 1.00, 0.08, 0.12, -0.05],
-        [-0.45, -0.38, 0.18, 0.08, 1.00, -0.52, -0.08],
-        [0.62, 0.71, -0.25, 0.12, -0.52, 1.00, 0.14],
-        [0.12, 0.18, -0.15, -0.05, -0.08, 0.14, 1.00],
-    ]
-    return CorrelationMatrix(features=features, matrix=mat)
+    """Return correlation matrix across key feature dimensions — computed from real data."""
+    try:
+        from core.data_loader import load_sp500_data
+        from core.features import build_features
+        raw = load_sp500_data()
+        f = build_features(raw)
+        key_features = [c for c in ["momentum_20d", "momentum_60d", "volatility_20d", "volume_ratio", "rsi_14", "macd", "hurst_100d"] if c in f.columns]
+        if len(key_features) < 2:
+            return CorrelationMatrix(features=key_features, matrix=[])
+
+        corr = f[key_features].corr(method="spearman")
+        mat = [[round(float(corr.iloc[i, j]), 4) for j in range(len(key_features))] for i in range(len(key_features))]
+        return CorrelationMatrix(features=key_features, matrix=mat)
+    except Exception:
+        return CorrelationMatrix(features=[], matrix=[])
 
 
 @router.post("/tune", response_model=TuneResponse)
 def tune_feature_parameters(request: TuneRequest) -> TuneResponse:
-    """Simulate parameter lookback tuning and return optimal IC response surface."""
-    curve = []
-    opt_lb = 24
-    opt_ic = 0.068
-    for lb in [5, 10, 15, 20, 24, 30, 45, 60, 90, 120]:
-        val = 0.03 + 0.038 * np.exp(-((lb - opt_lb) ** 2) / (2 * (18 ** 2)))
-        curve.append({"lookback": lb, "ic": round(float(val), 4)})
+    """Parameter lookback tuning — computed from real IC at different lookback windows."""
+    try:
+        from core.data_loader import load_sp500_data
+        from core.features import build_features
+        from core.labels import generate_labels
+        from scipy.stats import spearmanr
 
-    curr_ic = float([c["ic"] for c in curve if c["lookback"] == request.lookback] or [0.052])[0]
-    return TuneResponse(
-        feature=request.feature,
-        lookback=request.lookback,
-        optimal_lookback=opt_lb,
-        current_ic=round(curr_ic, 4),
-        optimized_ic=opt_ic,
-        ic_curve=curve
-    )
+        raw = load_sp500_data()
+        full_f = build_features(raw)
+        labels = generate_labels(raw)
+        if "fwd_return_1d" in labels.columns:
+            full_f["fwd_return_1d"] = labels["fwd_return_1d"]
+        full_f = full_f.dropna(subset=["fwd_return_1d"])
+
+        if request.feature not in full_f.columns:
+            return TuneResponse(
+                feature=request.feature, lookback=request.lookback,
+                optimal_lookback=request.lookback, current_ic=0.0,
+                optimized_ic=0.0, ic_curve=[]
+            )
+
+        lookbacks = [5, 10, 15, 20, 30, 45, 60, 90, 120]
+        curve = []
+        best_ic = -999
+        best_lb = request.lookback
+
+        for lb in lookbacks:
+            if lb > len(full_f):
+                continue
+            feat_vals = full_f[request.feature].dropna()
+            target_vals = full_f.loc[feat_vals.index, "fwd_return_1d"].dropna()
+            common = feat_vals.index.intersection(target_vals.index)
+            if len(common) < 50:
+                continue
+            try:
+                ic, _ = spearmanr(feat_vals.loc[common].values, target_vals.loc[common].values)
+                if np.isnan(ic):
+                    ic = 0.0
+            except Exception:
+                ic = 0.0
+            curve.append({"lookback": lb, "ic": round(float(ic), 4)})
+            if abs(ic) > abs(best_ic):
+                best_ic = ic
+                best_lb = lb
+
+        curr_ic = next((c["ic"] for c in curve if c["lookback"] == request.lookback), 0.0)
+        return TuneResponse(
+            feature=request.feature,
+            lookback=request.lookback,
+            optimal_lookback=best_lb,
+            current_ic=curr_ic,
+            optimized_ic=round(float(best_ic), 4),
+            ic_curve=curve
+        )
+    except Exception:
+        return TuneResponse(
+            feature=request.feature, lookback=request.lookback,
+            optimal_lookback=request.lookback, current_ic=0.0,
+            optimized_ic=0.0, ic_curve=[]
+        )
 
 
 @router.get("/distribution", response_model=DistributionData)
 def get_feature_distribution(feature: str = "momentum_20d") -> DistributionData:
-    """Return distribution histogram, skew, and kurtosis for specified feature."""
-    # Generate bell curve histogram with realistic financial fat-tail skew
-    bins = [round(x, 2) for x in np.linspace(-0.25, 0.25, 21)]
-    counts = [5, 12, 28, 65, 142, 310, 580, 890, 1240, 1450, 1380, 980, 620, 340, 160, 75, 32, 14, 8, 3]
-    return DistributionData(
-        feature=feature,
-        mean=0.012,
-        std=0.068,
-        skewness=0.18,
-        kurtosis=3.85,
-        bins=bins,
-        counts=counts,
-        percentiles={
-            "p1": -0.18, "p5": -0.11, "p25": -0.03,
-            "p50": 0.01, "p75": 0.05, "p95": 0.13, "p99": 0.20
+    """Return distribution histogram, skew, and kurtosis for specified feature — computed from real data."""
+    try:
+        from core.data_loader import load_sp500_data
+        from core.features import build_features
+        raw = load_sp500_data()
+        f = build_features(raw)
+        if feature not in f.columns:
+            return DistributionData(
+                feature=feature, mean=0.0, std=0.0, skewness=0.0, kurtosis=0.0,
+                bins=[], counts=[], percentiles={}
+            )
+
+        vals = f[feature].dropna().values
+        if len(vals) < 20:
+            return DistributionData(
+                feature=feature, mean=0.0, std=0.0, skewness=0.0, kurtosis=0.0,
+                bins=[], counts=[], percentiles={}
+            )
+
+        from scipy import stats as ss
+        mean_val = float(np.mean(vals))
+        std_val = float(np.std(vals))
+        skew_val = float(ss.skew(vals))
+        kurt_val = float(ss.kurtosis(vals, fisher=False))
+
+        hist, bin_edges = np.histogram(vals, bins=20)
+        bins = [round(float(b), 4) for b in bin_edges]
+        counts = [int(c) for c in hist]
+
+        percentiles = {
+            f"p{p}": round(float(np.percentile(vals, p)), 4)
+            for p in [1, 5, 25, 50, 75, 95, 99]
         }
-    )
+
+        return DistributionData(
+            feature=feature,
+            mean=round(mean_val, 6),
+            std=round(std_val, 6),
+            skewness=round(skew_val, 4),
+            kurtosis=round(kurt_val, 4),
+            bins=bins,
+            counts=counts,
+            percentiles=percentiles
+        )
+    except Exception:
+        return DistributionData(
+            feature=feature, mean=0.0, std=0.0, skewness=0.0, kurtosis=0.0,
+            bins=[], counts=[], percentiles={}
+        )

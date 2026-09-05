@@ -29,3 +29,23 @@ def test_transaction_costs_applied():
     results_no_tc = bt_no_tc.run("2021-01-01", "2023-12-31")
 
     assert results_with_tc.sharpe <= results_no_tc.sharpe
+
+
+def test_trade_pnl_deterministic_and_turnover_exact():
+    bt = EventDrivenBacktester()
+    res1 = bt.run("2021-01-01", "2023-12-31")
+    res2 = bt.run("2021-01-01", "2023-12-31")
+
+    # Trades must be deterministic (not np.random.normal)
+    assert len(res1.trades) == len(res2.trades)
+    for t1, t2 in zip(res1.trades, res2.trades):
+        assert t1["ticker"] == t2["ticker"]
+        assert t1["action"] == t2["action"]
+        assert t1["pnl"] == t2["pnl"]
+        assert "exit_date" in t1
+        assert "return" in t1
+
+    # Turnover must be dynamically calculated, not hardcoded 0.25
+    assert isinstance(res1.turnover, float)
+    assert 0.0 < res1.turnover <= 1.0
+

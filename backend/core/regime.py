@@ -69,10 +69,10 @@ class RegimeEngine:
         for r_id in [0, 1, 2]:
             r_name = self.regime_names[r_id]
             sub = regime_df[regime_df["regime_id"] == r_id]["strategy"]
-            sr = sharpe_ratio(sub.values) if len(sub) > 10 else 0.8
-            ann_ret = float(sub.mean() * 252) if len(sub) > 0 else 0.08
-            vol = float(sub.std() * np.sqrt(252)) if len(sub) > 1 else 0.12
-            win = float(np.mean(sub.values > 0.0)) if len(sub) > 0 else 0.52
+            sr = sharpe_ratio(sub.values) if len(sub) > 10 else 0.0
+            ann_ret = float(sub.mean() * 252) if len(sub) > 0 else 0.0
+            vol = float(sub.std() * np.sqrt(252)) if len(sub) > 1 else 0.0
+            win = float(np.mean(sub.values > 0.0)) if len(sub) > 0 else 0.0
 
             results.append({
                 "regime_id": r_id,

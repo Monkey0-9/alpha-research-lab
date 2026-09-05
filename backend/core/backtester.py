@@ -31,23 +31,38 @@ class BacktestResults(dict):
 
     @property
     def sharpe(self) -> float:
-        return float(self.get("annualized_sharpe", self.get("sharpe", 1.5)))
+        val = self.get("annualized_sharpe", self.get("sharpe"))
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return 0.0
+        return float(val)
 
     @property
     def max_drawdown(self) -> float:
-        return float(self.get("max_drawdown", 0.08))
+        val = self.get("max_drawdown")
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return 0.0
+        return float(val)
 
     @property
     def calmar(self) -> float:
-        return float(self.get("calmar_ratio", 2.0))
+        val = self.get("calmar_ratio", self.get("calmar"))
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return 0.0
+        return float(val)
 
     @property
     def ic(self) -> float:
-        return float(self.get("mean_ic", 0.06))
+        val = self.get("mean_ic", self.get("ic"))
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return 0.0
+        return float(val)
 
     @property
     def turnover(self) -> float:
-        return float(self.get("turnover", 0.25))
+        val = self.get("turnover")
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return 0.0
+        return float(val)
 
     @property
     def equity_curve(self) -> Any:
@@ -64,14 +79,31 @@ class BacktestResults(dict):
 
 def _safe_freq(freq: str) -> str:
     # Normalize legacy pandas Month-End and other aliases
-    if freq == "M":
-        return "ME"
+    # Try the freq directly first
     try:
         pd.date_range("2020-01-01", "2020-02-01", freq=freq)
         return freq
     except Exception:
-        fallback_map = {"ME": "M", "M": "ME", "QE": "Q", "Q": "QE", "YE": "Y", "Y": "YE", "W": "W-SUN"}
-        return fallback_map.get(freq, "ME")
+        pass
+    # Map old aliases to new ones (pandas 2.x)
+    alias_map = {"M": "ME", "Q": "QE", "Y": "YE", "ME": "ME", "QE": "QE", "YE": "YE"}
+    mapped = alias_map.get(freq)
+    if mapped:
+        try:
+            pd.date_range("2020-01-01", "2020-02-01", freq=mapped)
+            return mapped
+        except Exception:
+            pass
+    # Try old-style aliases as fallback
+    fallback_map = {"ME": "M", "QE": "Q", "YE": "Y", "W-SUN": "W"}
+    fb = fallback_map.get(freq)
+    if fb:
+        try:
+            pd.date_range("2020-01-01", "2020-02-01", freq=fb)
+            return fb
+        except Exception:
+            pass
+    return "MS"  # Month Start as safe default
 
 
 class EventDrivenBacktester:
@@ -145,10 +177,12 @@ class EventDrivenBacktester:
 
         curr_nav = 1.0
         peak_nav = 1.0
+        prev_weights: Dict[str, float] = {}
+        rebalance_turnovers: List[float] = []
 
         rebal_points = [d for d in rebal_dates if d in dates or (dates.min() <= d <= dates.max())]
         if len(rebal_points) < 2:
-            rebal_points = dates[::21] # fallback to roughly monthly
+            rebal_points = dates[::21]  # fallback to roughly monthly
 
         logger.info("Executing backtest over %d rebalance intervals with model %s", len(rebal_points), model_type)
 
@@ -204,26 +238,59 @@ class EventDrivenBacktester:
             longs = ranked.head(n_select).index.get_level_values("ticker").tolist()
             shorts = ranked.tail(n_select).index.get_level_values("ticker").tolist()
 
-            # Record trades
-            for ticker in longs:
-                trades.append({
-                    "date": t_train_end.strftime("%Y-%m-%d"),
-                    "ticker": ticker,
-                    "action": "LONG",
-                    "size": round(1.0 / (2 * n_select), 4),
-                    "pnl": round(float(np.random.normal(0.012, 0.02)), 4)
-                })
-            for ticker in shorts:
-                trades.append({
-                    "date": t_train_end.strftime("%Y-%m-%d"),
-                    "ticker": ticker,
-                    "action": "SHORT",
-                    "size": round(1.0 / (2 * n_select), 4),
-                    "pnl": round(float(np.random.normal(0.008, 0.02)), 4)
-                })
+            target_weights: Dict[str, float] = {}
+            w_long = 0.5 / max(1, len(longs))
+            w_short = -0.5 / max(1, len(shorts))
+            for t in longs:
+                target_weights[t] = w_long
+            for t in shorts:
+                target_weights[t] = w_short
+
+            # Actual two-sided portfolio turnover: 0.5 * sum(|w_t - w_{t-1}|)
+            all_syms = set(prev_weights.keys()).union(target_weights.keys())
+            delta_w = sum(abs(target_weights.get(k, 0.0) - prev_weights.get(k, 0.0)) for k in all_syms)
+            rebal_turnover = 0.5 * delta_w
+            rebalance_turnovers.append(rebal_turnover)
+            prev_weights = target_weights.copy()
 
             # 5. Daily P&L simulation across test interval
             test_dates = test_data.index.get_level_values("date").unique().sort_values()
+            half_spread_fee = self.tc_bps / 10000.0
+
+            # Record actual trades based on true asset returns over holding period
+            for ticker in longs:
+                t_slice = df.loc[(df.index.get_level_values("ticker") == ticker) & (df.index.get_level_values("date").isin(test_dates))]
+                if not t_slice.empty and "return_1d" in t_slice.columns:
+                    cum_ret = float(np.prod(1.0 + np.nan_to_num(t_slice["return_1d"].values, 0.0)) - 1.0)
+                else:
+                    cum_ret = 0.0
+                net_ret = cum_ret - 2.0 * half_spread_fee
+                trades.append({
+                    "date": t_train_end.strftime("%Y-%m-%d"),
+                    "exit_date": t_test_end.strftime("%Y-%m-%d"),
+                    "ticker": ticker,
+                    "action": "LONG",
+                    "size": round(w_long, 4),
+                    "return": round(net_ret, 4),
+                    "pnl": round(float(net_ret * w_long), 5)
+                })
+            for ticker in shorts:
+                t_slice = df.loc[(df.index.get_level_values("ticker") == ticker) & (df.index.get_level_values("date").isin(test_dates))]
+                if not t_slice.empty and "return_1d" in t_slice.columns:
+                    cum_ret = float(np.prod(1.0 + np.nan_to_num(t_slice["return_1d"].values, 0.0)) - 1.0)
+                else:
+                    cum_ret = 0.0
+                net_ret = -cum_ret - 2.0 * half_spread_fee
+                trades.append({
+                    "date": t_train_end.strftime("%Y-%m-%d"),
+                    "exit_date": t_test_end.strftime("%Y-%m-%d"),
+                    "ticker": ticker,
+                    "action": "SHORT",
+                    "size": round(abs(w_short), 4),
+                    "return": round(net_ret, 4),
+                    "pnl": round(float(net_ret * abs(w_short)), 5)
+                })
+
             interval_returns = []
 
             for d in test_dates:
@@ -263,10 +330,13 @@ class EventDrivenBacktester:
                 "return": round(m_ret, 4)
             })
 
+        # Compute real turnover across all rebalances
+        avg_turnover = float(np.mean(rebalance_turnovers)) if rebalance_turnovers else 0.0
+
         # Compute full metrics
         metrics = calculate_full_metrics(
             daily_returns=np.array(all_daily_returns),
-            turnover=0.25,
+            turnover=round(avg_turnover, 4),
             num_trades=len(trades)
         )
 

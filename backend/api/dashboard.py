@@ -101,56 +101,136 @@ class RegimeInfo(BaseModel):
 
 @router.get("/summary")
 def get_dashboard_summary():
-    """Aggregated portfolio summary, metrics, and real-time telemetry."""
+    """Aggregated portfolio summary computed from real paper trading state and metrics."""
     paper_state = paper_trader.get_live_portfolio_state()
     health = get_production_health()
-    return {
-        # Flat top-level fields for ExecutiveDashboardSummary frontend contract
-        "portfolio_nav": float(paper_state.get("current_nav", 50_000_000.0)),
-        "daily_pnl_dollars": float(paper_state.get("pnl_dollar", 18450.0)),
-        "daily_pnl_pct": float(paper_state.get("pnl_pct", 0.74)),
-        "annualized_sharpe": 1.67,
-        "calmar_ratio": 2.24,
-        "information_ratio": 1.45,
-        "max_drawdown_pct": 8.2,
-        "annualized_vol_pct": 10.2,
-        "current_regime": "Bull Quiet (Low Volatility)",
-        "active_alphas_count": 8,
-        "open_positions_count": len(paper_state.get("positions", [])) or 24,
-        "var_95_daily_pct": 1.45,
-        "cvar_95_daily_pct": 2.15,
 
-        # Structured dictionaries for backend test backward-compatibility
+    positions = paper_state.get("positions", [])
+    current_nav = float(paper_state.get("current_nav", 0.0))
+    pnl_dollar = float(paper_state.get("pnl_dollar", 0.0))
+    pnl_pct = float(paper_state.get("pnl_pct", 0.0))
+
+    # Compute portfolio metrics from real equity curve if available
+    curves = _get_real_market_curves()
+    equity_pts = curves.get("equity", [])
+    portfolio_metrics = _compute_metrics_from_equity(equity_pts)
+
+    # Get real regime if available
+    regime_info = _get_real_regime()
+
+    return {
+        "portfolio_nav": current_nav,
+        "daily_pnl_dollars": pnl_dollar,
+        "daily_pnl_pct": pnl_pct,
+        "annualized_sharpe": portfolio_metrics.get("annualized_sharpe", 0.0),
+        "calmar_ratio": portfolio_metrics.get("calmar_ratio", 0.0),
+        "information_ratio": portfolio_metrics.get("information_ratio", 0.0),
+        "max_drawdown_pct": portfolio_metrics.get("max_drawdown_pct", 0.0),
+        "annualized_vol_pct": portfolio_metrics.get("annualized_vol_pct", 0.0),
+        "current_regime": regime_info.get("current_regime", "UNKNOWN"),
+        "active_alphas_count": 0,
+        "open_positions_count": len(positions),
+        "var_95_daily_pct": portfolio_metrics.get("var_95_daily_pct", 0.0),
+        "cvar_95_daily_pct": portfolio_metrics.get("cvar_95_daily_pct", 0.0),
+
         "portfolio": {
-            "aum": 50_000_000,
-            "ytd_return_pct": 18.4,
-            "annualized_sharpe": 1.67,
-            "max_drawdown_pct": 8.2,
-            "information_ratio": 1.45,
-            "current_drawdown_pct": 1.8,
-            "win_rate_pct": 56.4,
-            "volatility_pct": 10.2,
-            "calmar_ratio": 2.24,
-            "sortino_ratio": 2.38
+            "aum": current_nav,
+            "ytd_return_pct": pnl_pct,
+            "annualized_sharpe": portfolio_metrics.get("annualized_sharpe", 0.0),
+            "max_drawdown_pct": portfolio_metrics.get("max_drawdown_pct", 0.0),
+            "information_ratio": portfolio_metrics.get("information_ratio", 0.0),
+            "current_drawdown_pct": portfolio_metrics.get("current_drawdown_pct", 0.0),
+            "win_rate_pct": portfolio_metrics.get("win_rate_pct", 0.0),
+            "volatility_pct": portfolio_metrics.get("annualized_vol_pct", 0.0),
+            "calmar_ratio": portfolio_metrics.get("calmar_ratio", 0.0),
+            "sortino_ratio": portfolio_metrics.get("sortino_ratio", 0.0),
         },
         "live_paper_pnl": {
-            "current_nav": paper_state.get("current_nav", 104850.0),
-            "pnl_dollar": paper_state.get("pnl_dollar", 4850.0),
-            "pnl_pct": paper_state.get("pnl_pct", 4.85)
+            "current_nav": current_nav,
+            "pnl_dollar": pnl_dollar,
+            "pnl_pct": pnl_pct,
         },
-        "active_models": [
-            {"name": "A001 Cross-Sectional Momentum", "weight": 0.40, "status": "ACTIVE", "ic": 0.082},
-            {"name": "A002 Low-Volatility Idiosyncratic", "weight": 0.35, "status": "ACTIVE", "ic": 0.058},
-            {"name": "A004 Order Flow Microstructure", "weight": 0.25, "status": "ACTIVE", "ic": 0.091}
-        ],
+        "active_models": [],
         "system_health": health,
-        "recent_alerts": [
-            {"id": "ALT-1", "timestamp": "17:15:00", "type": "INFO", "severity": "INFO", "text": "Regime detector confirmed low-volatility expansion trend.", "module": "Regime Engine"},
-            {"id": "ALT-2", "timestamp": "15:45:00", "type": "SUCCESS", "severity": "INFO", "text": "A001_MOM cleared all 9/9 Alpha Quality Gate criteria.", "module": "Quality Gate"},
-            {"id": "ALT-3", "timestamp": "14:30:00", "type": "WARNING", "severity": "WARNING", "text": "Feature 'volume_ratio' PSI = 0.124 (Moderate drift).", "module": "Feature Factory"},
-            {"id": "ALT-4", "timestamp": "12:00:00", "type": "SUCCESS", "severity": "INFO", "text": "12-Fold Walk-Forward Cross-Validation completed (OOS Sharpe: 1.68).", "module": "Validation Engine"}
-        ]
+        "recent_alerts": [],
     }
+
+
+def _compute_metrics_from_equity(equity_pts: List[EquityPoint]) -> Dict[str, Any]:
+    """Compute portfolio metrics from real equity curve data."""
+    if not equity_pts or len(equity_pts) < 2:
+        return {}
+
+    try:
+        navs = np.array([p.nav for p in equity_pts])
+        returns = np.diff(navs) / navs[:-1]
+        returns = returns[~np.isnan(returns)]
+        if len(returns) < 2:
+            return {}
+
+        from core.metrics import (
+            sharpe_ratio, sortino_ratio, max_drawdown,
+            calmar_ratio, annualized_return, annualized_volatility, win_rate
+        )
+
+        ann_ret = annualized_return(returns)
+        vol = annualized_volatility(returns)
+        sr = sharpe_ratio(returns)
+        sort_r = sortino_ratio(returns)
+        mdd = max_drawdown(returns)
+        cal = calmar_ratio(returns)
+        wr = win_rate(returns)
+
+        # Current drawdown from peak
+        peak = np.maximum.accumulate(navs)
+        current_dd = float((peak[-1] - navs[-1]) / peak[-1]) if peak[-1] > 0 else 0.0
+
+        # VaR / CVaR from empirical distribution
+        var_95 = float(-np.percentile(returns, 5)) * 100.0 if len(returns) >= 20 else 0.0
+        cvar_95 = float(-np.mean(returns[returns <= np.percentile(returns, 5)])) * 100.0 if len(returns) >= 20 else 0.0
+
+        # Information ratio (simplified: mean return / tracking error vs 0 benchmark)
+        te = float(np.std(returns, ddof=1)) * np.sqrt(252) if len(returns) > 1 else 1.0
+        ir = float((ann_ret / te)) if te > 0 else 0.0
+
+        return {
+            "annualized_sharpe": round(sr, 2),
+            "sortino_ratio": round(sort_r, 2),
+            "calmar_ratio": round(cal, 2),
+            "max_drawdown_pct": round(mdd * 100, 1),
+            "current_drawdown_pct": round(current_dd * 100, 1),
+            "annualized_vol_pct": round(vol * 100, 1),
+            "annualized_return_pct": round(ann_ret * 100, 1),
+            "win_rate_pct": round(wr * 100, 1),
+            "information_ratio": round(ir, 2),
+            "var_95_daily_pct": round(var_95, 2),
+            "cvar_95_daily_pct": round(cvar_95, 2),
+        }
+    except Exception as e:
+        logger.debug(f"Could not compute metrics from equity curve: {e}")
+        return {}
+
+
+def _get_real_regime() -> Dict[str, Any]:
+    """Get current market regime from the regime engine."""
+    try:
+        from core.regime import regime_engine
+        from core.data_loader import load_sp500_data
+        df = load_sp500_data()
+        spy_like = df.groupby(level="date")["return_1d"].mean()
+        if len(spy_like) < 60:
+            return {"current_regime": "INSUFFICIENT_DATA"}
+        regime_df = regime_engine.fit_regimes(spy_like)
+        if regime_df.empty:
+            return {"current_regime": "NO_DATA"}
+        current = regime_df.iloc[-1]
+        return {
+            "current_regime": str(current.get("regime_name", "UNKNOWN")),
+            "regime_id": int(current.get("regime_id", -1)),
+        }
+    except Exception as e:
+        logger.debug(f"Could not compute regime: {e}")
+        return {"current_regime": "COMPUTATION_FAILED"}
 
 
 _DATA_DIR = Path(__file__).resolve().parents[2] / "data"
@@ -237,93 +317,211 @@ def get_drawdown_curve() -> List[DrawdownPoint]:
 
 @router.get("/monthly-returns", response_model=MonthlyReturnsMatrix)
 def get_monthly_returns() -> MonthlyReturnsMatrix:
-    """12xN institutional monthly return performance matrix."""
-    data_2022 = {"Jan": 1.8, "Feb": 0.9, "Mar": 2.4, "Apr": -0.8, "May": 1.2, "Jun": 0.4, "Jul": 2.1, "Aug": -0.5, "Sep": 1.6, "Oct": 2.8, "Nov": 1.5, "Dec": 0.7}
-    data_2023 = {"Jan": 2.5, "Feb": 1.1, "Mar": -0.4, "Apr": 1.8, "May": 2.2, "Jun": 1.4, "Jul": 1.9, "Aug": -0.9, "Sep": 1.2, "Oct": -0.3, "Nov": 2.8, "Dec": 1.9}
-    data_2024 = {"Jan": 2.1, "Feb": 2.8, "Mar": 1.4, "Apr": -0.6, "May": 2.2, "Jun": 1.8, "Jul": 1.5, "Aug": 1.2, "Sep": 0.8, "Oct": 0.0, "Nov": 0.0, "Dec": 0.0}
+    """12xN institutional monthly return performance matrix computed from real equity curve."""
+    curves = _get_real_market_curves()
+    equity_pts = curves.get("equity", [])
 
-    ytd_2022 = round(sum(data_2022.values()), 1)
-    ytd_2023 = round(sum(data_2023.values()), 1)
-    ytd_2024 = round(sum(data_2024.values()), 1)
+    if not equity_pts or len(equity_pts) < 2:
+        return MonthlyReturnsMatrix(years=[], matrix=[])
 
-    return MonthlyReturnsMatrix(
-        years=[2024, 2023, 2022],
-        matrix=[
-            MonthlyReturnItem(year=2024, returns=data_2024, ytd=ytd_2024),
-            MonthlyReturnItem(year=2023, returns=data_2023, ytd=ytd_2023),
-            MonthlyReturnItem(year=2022, returns=data_2022, ytd=ytd_2022),
-        ]
-    )
+    try:
+        import pandas as pd
+        dates = [pd.Timestamp(p.date) for p in equity_pts]
+        navs = [p.nav for p in equity_pts]
+        df = pd.DataFrame({"date": dates, "nav": navs}).set_index("date")
+        monthly = df["nav"].resample("ME").last().pct_change().dropna() * 100.0
+
+        year_data: Dict[int, Dict[str, float]] = {}
+        for dt, ret in monthly.items():
+            yr = dt.year
+            month_name = dt.strftime("%b")
+            if yr not in year_data:
+                year_data[yr] = {}
+            year_data[yr][month_name] = round(float(ret), 1)
+
+        matrix_items = []
+        for yr in sorted(year_data.keys(), reverse=True):
+            months = year_data[yr]
+            ytd = round(sum(months.values()), 1)
+            matrix_items.append(MonthlyReturnItem(year=yr, returns=months, ytd=ytd))
+
+        return MonthlyReturnsMatrix(
+            years=[item.year for item in matrix_items],
+            matrix=matrix_items
+        )
+    except Exception as e:
+        logger.debug(f"Could not compute monthly returns: {e}")
+        return MonthlyReturnsMatrix(years=[], matrix=[])
 
 
 @router.get("/alerts", response_model=List[DashboardAlert])
 def get_dashboard_alerts() -> List[DashboardAlert]:
-    """Active critical and informational system alerts."""
-    return [
-        DashboardAlert(id="ALT-1", timestamp="17:15:00", severity="INFO", message="Regime detector confirmed low-volatility expansion trend.", module="Regime Engine"),
-        DashboardAlert(id="ALT-2", timestamp="15:45:00", severity="INFO", message="A001_MOM cleared all 9/9 Alpha Quality Gate criteria.", module="Quality Gate"),
-        DashboardAlert(id="ALT-3", timestamp="14:30:00", severity="WARNING", message="Feature 'volume_ratio' PSI = 0.124 (Moderate drift).", module="Feature Factory"),
-        DashboardAlert(id="ALT-4", timestamp="12:00:00", severity="INFO", message="12-Fold Walk-Forward Cross-Validation completed (OOS Sharpe: 1.68).", module="Validation Engine")
-    ]
+    """Active system alerts — computed from real pipeline state."""
+    try:
+        from core.data_pipeline import data_pipeline
+        pipe_status = data_pipeline.get_status()
+        alerts = []
+        if pipe_status.get("status") == "COMPLETED":
+            alerts.append(DashboardAlert(
+                id="ALT-1",
+                timestamp=pipe_status.get("last_sync", "unknown")[:8],
+                severity="INFO",
+                message=f"Data pipeline completed: {pipe_status.get('records_count', 0)} records, {pipe_status.get('clean_pct', 0)}% clean.",
+                module="Data Infrastructure"
+            ))
+        elif pipe_status.get("status"):
+            alerts.append(DashboardAlert(
+                id="ALT-1",
+                timestamp=pipe_status.get("last_sync", "unknown")[:8],
+                severity="WARNING",
+                message=f"Data pipeline status: {pipe_status.get('status')}",
+                module="Data Infrastructure"
+            ))
+        return alerts
+    except Exception as e:
+        logger.debug(f"Could not compute alerts: {e}")
+        return []
 
 
 @router.get("/pipeline", response_model=List[PipelineStatus])
 def get_pipeline_status() -> List[PipelineStatus]:
-    """12-module DAG health indicators and batch records throughput."""
+    """Module health indicators computed from real pipeline state."""
     from core.data_pipeline import data_pipeline
     pipe_status = data_pipeline.get_status()
-    rec_count = pipe_status.get("records_count", 79815)
-    last_sync = pipe_status.get("last_sync", "17:28:45")
+    rec_count = pipe_status.get("records_count", 0)
+    last_sync = pipe_status.get("last_sync", "")
     if "T" in last_sync:
         last_sync = last_sync.split("T")[1][:8]
 
-    mods = [
-        ("01", "Data Infrastructure", "HEALTHY", last_sync, 12.5, rec_count),
-        ("02", "Feature Factory", "HEALTHY", "17:28:40", 18.2, rec_count * 50),
-        ("03", "Alpha Discovery Lab", "HEALTHY", "17:28:35", 25.1, 450),
-        ("04", "Statistical Engine", "HEALTHY", "17:28:30", 8.4, 2500),
-        ("05", "Model Research Lab", "HEALTHY", "17:28:20", 42.0, 8),
-        ("06", "Time-Series Validation", "HEALTHY", "17:28:15", 38.5, 12),
-        ("07", "Alpha Quality Gate", "HEALTHY", "17:28:10", 6.2, 8),
-        ("08", "Portfolio Engine", "HEALTHY", "17:28:05", 14.8, 1),
-        ("09", "Execution Research", "HEALTHY", "17:28:00", 4.1, 28),
-        ("10", "Risk Engine", "HEALTHY", "17:27:55", 9.5, 504),
-        ("11", "Live Research", "HEALTHY", "17:27:50", 5.2, 6),
-        ("12", "Production Monitor", "HEALTHY", "17:27:45", 3.1, 13)
-    ]
+    pipe_ok = pipe_status.get("status") == "COMPLETED"
+    data_status = "HEALTHY" if pipe_ok else ("ERROR" if pipe_status.get("status") else "UNKNOWN")
+
     return [
-        PipelineStatus(module_num=num, name=name, status=stat, last_run=lr, latency_ms=lat, records_processed=rec)
-        for num, name, stat, lr, lat, rec in mods
+        PipelineStatus(
+            module_num="01", name="Data Infrastructure",
+            status=data_status, last_run=last_sync,
+            latency_ms=0.0, records_processed=rec_count
+        ),
     ]
 
 
 @router.get("/positions", response_model=List[Position])
 def get_top_positions(limit: int = 10) -> List[Position]:
-    """Current top institutional holdings with weights and unrealized P&L."""
-    positions = [
-        Position(ticker="NVDA", name="NVIDIA Corp", weight=0.124, market_value=6200000.0, unrealized_pnl=840000.0, pnl_pct=15.7, side="LONG", sector="Technology"),
-        Position(ticker="MSFT", name="Microsoft Corp", weight=0.130, market_value=6500000.0, unrealized_pnl=580000.0, pnl_pct=9.8, side="LONG", sector="Technology"),
-        Position(ticker="AAPL", name="Apple Inc", weight=0.112, market_value=5600000.0, unrealized_pnl=420000.0, pnl_pct=8.1, side="LONG", sector="Technology"),
-        Position(ticker="AMZN", name="Amazon.com Inc", weight=0.108, market_value=5400000.0, unrealized_pnl=480000.0, pnl_pct=9.7, side="LONG", sector="Consumer Discretionary"),
-        Position(ticker="GOOGL", name="Alphabet Inc", weight=0.105, market_value=5250000.0, unrealized_pnl=310000.0, pnl_pct=6.3, side="LONG", sector="Communication"),
-        Position(ticker="JPM", name="JPMorgan Chase", weight=0.100, market_value=5000000.0, unrealized_pnl=390000.0, pnl_pct=8.5, side="LONG", sector="Financials"),
-        Position(ticker="LLY", name="Eli Lilly & Co", weight=0.098, market_value=4900000.0, unrealized_pnl=620000.0, pnl_pct=14.5, side="LONG", sector="Healthcare"),
-        Position(ticker="XOM", name="Exxon Mobil Corp", weight=0.089, market_value=4450000.0, unrealized_pnl=-95000.0, pnl_pct=-2.1, side="LONG", sector="Energy"),
-        Position(ticker="INTC", name="Intel Corp", weight=-0.030, market_value=-1500000.0, unrealized_pnl=180000.0, pnl_pct=12.0, side="SHORT", sector="Technology"),
-        Position(ticker="TSLA", name="Tesla Inc", weight=-0.035, market_value=-1750000.0, unrealized_pnl=140000.0, pnl_pct=8.0, side="SHORT", sector="Consumer Discretionary")
-    ]
+    """Current holdings from the paper trading engine."""
+    paper_state = paper_trader.get_live_portfolio_state()
+    raw_positions = paper_state.get("positions", [])
+    positions = []
+    for p in raw_positions:
+        ticker = p.get("ticker", "")
+        shares = p.get("shares", 0)
+        current_price = p.get("current_price", 0.0)
+        entry_price = p.get("entry_price", 0.0)
+        market_value = abs(shares * current_price)
+        unrealized_pnl = p.get("unrealized_pnl", 0.0)
+        pnl_pct = ((current_price / entry_price) - 1.0) * 100.0 if entry_price > 0 else 0.0
+        side = "LONG" if shares > 0 else "SHORT"
+        total_nav = paper_state.get("current_nav", 1.0)
+        weight = round(market_value / max(total_nav, 1.0), 4)
+
+        positions.append(Position(
+            ticker=ticker,
+            name=ticker,
+            weight=weight,
+            market_value=round(market_value, 2),
+            unrealized_pnl=round(unrealized_pnl, 2),
+            pnl_pct=round(pnl_pct, 1),
+            side=side,
+            sector="Unknown"
+        ))
     return positions[:limit]
 
 
 @router.get("/regime", response_model=RegimeInfo)
 def get_current_regime() -> RegimeInfo:
-    """Current market macro regime from Gaussian HMM and volatility clustering."""
-    return RegimeInfo(
-        current_regime="LOW_VOL_EXPANSION",
-        confidence=0.892,
-        transition_probability_bear=0.084,
-        transition_probability_bull=0.916,
-        regime_duration_days=42,
-        vix_implied_vol=14.85,
-        macro_state="Economic Expansion, Stable Treasury Yields, Low Credit Spreads"
-    )
+    """Current market regime computed from Gaussian HMM on real market data."""
+    try:
+        from core.regime import regime_engine
+        from core.data_loader import load_sp500_data
+        df = load_sp500_data()
+        spy_like = df.groupby(level="date")["return_1d"].mean()
+
+        if len(spy_like) < 60:
+            return RegimeInfo(
+                current_regime="INSUFFICIENT_DATA",
+                confidence=0.0,
+                transition_probability_bear=0.0,
+                transition_probability_bull=0.0,
+                regime_duration_days=0,
+                vix_implied_vol=0.0,
+                macro_state="Insufficient data for regime detection"
+            )
+
+        regime_df = regime_engine.fit_regimes(spy_like)
+        if regime_df.empty:
+            return RegimeInfo(
+                current_regime="NO_DATA",
+                confidence=0.0,
+                transition_probability_bear=0.0,
+                transition_probability_bull=0.0,
+                regime_duration_days=0,
+                vix_implied_vol=0.0,
+                macro_state="No regime data available"
+            )
+
+        current = regime_df.iloc[-1]
+        regime_name = str(current.get("regime_name", "UNKNOWN"))
+        regime_id = int(current.get("regime_id", -1))
+
+        # Compute regime duration (consecutive days in current regime)
+        regime_labels = regime_df["regime_id"].values
+        duration = 0
+        for val in reversed(regime_labels):
+            if val == regime_id:
+                duration += 1
+            else:
+                break
+
+        # Compute regime probabilities from GMM if available
+        confidence = 0.0
+        prob_bull = 0.0
+        prob_bear = 0.0
+        try:
+            from sklearn.mixture import GaussianMixture
+            clean_ret = spy_like.dropna()
+            vol_20 = clean_ret.rolling(20).std().dropna()
+            common_idx = clean_ret.index.intersection(vol_20.index)
+            X = np.column_stack([clean_ret.loc[common_idx].values, vol_20.loc[common_idx].values])
+            gmm = GaussianMixture(n_components=3, covariance_type="full", random_state=42)
+            gmm.fit(X)
+            probs = gmm.predict_proba(X[-1:])
+            confidence = float(np.max(probs))
+            # Map regime indices to bull/bear
+            vol_means = [gmm.means_[i][1] for i in range(3)]
+            order = np.argsort(vol_means)
+            bull_idx = order[0]  # lowest vol = bull
+            bear_idx = order[2]  # highest vol = bear
+            prob_bull = float(probs[0][bull_idx])
+            prob_bear = float(probs[0][bear_idx])
+        except Exception:
+            pass
+
+        return RegimeInfo(
+            current_regime=regime_name,
+            confidence=round(confidence, 3),
+            transition_probability_bear=round(prob_bear, 3),
+            transition_probability_bull=round(prob_bull, 3),
+            regime_duration_days=duration,
+            vix_implied_vol=0.0,
+            macro_state=f"Regime detected from {len(spy_like)} observations"
+        )
+    except Exception as e:
+        logger.debug(f"Could not compute regime: {e}")
+        return RegimeInfo(
+            current_regime="COMPUTATION_FAILED",
+            confidence=0.0,
+            transition_probability_bear=0.0,
+            transition_probability_bull=0.0,
+            regime_duration_days=0,
+            vix_implied_vol=0.0,
+            macro_state=f"Regime computation failed: {e}"
+        )
