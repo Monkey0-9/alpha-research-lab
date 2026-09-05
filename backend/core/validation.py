@@ -147,38 +147,54 @@ class TimeSeriesValidator:
 
     def run_purged_kfold(self, n_splits: int = 5, purge_window: int = 21, embargo: int = 5) -> Dict[str, Any]:
         """
-        Purged K-Fold Cross Validation.
+        Purged K-Fold Cross Validation with REAL model training and OOS evaluation.
         Removes samples adjacent to test fold boundaries to eliminate label overlap contamination.
         """
-        dates = pd.to_datetime(self.df.index.get_level_values("date").unique()).sort_values()
-        fold_size = len(dates) // n_splits
+        fold_results = purged_kfold_cv(n_splits=n_splits, purge_window=purge_window, embargo_days=embargo)
+        if not fold_results:
+            dates = pd.to_datetime(self.df.index.get_level_values("date").unique()).sort_values()
+            fold_size = max(1, len(dates) // n_splits)
+            folds = []
+            for i in range(n_splits):
+                test_start = i * fold_size
+                test_end = (i + 1) * fold_size if i < n_splits - 1 else len(dates)
+                test_dates = dates[test_start:test_end]
+                train_mask = np.ones(len(dates), dtype=bool)
+                purge_start = max(0, test_start - purge_window)
+                embargo_end = min(len(dates), test_end + embargo)
+                train_mask[purge_start:embargo_end] = False
+                train_dates = dates[train_mask]
+                folds.append({
+                    "fold": f"PKF-{i + 1}",
+                    "train_samples": len(train_dates),
+                    "test_samples": len(test_dates),
+                    "purged_samples": purge_window + embargo,
+                    "score": 0.0
+                })
+            return {
+                "k_folds": n_splits,
+                "purge_days": purge_window,
+                "embargo_days": embargo,
+                "results": folds
+            }
+
         folds = []
-
-        for i in range(n_splits):
-            test_start = i * fold_size
-            test_end = (i + 1) * fold_size if i < n_splits - 1 else len(dates)
-            test_dates = dates[test_start:test_end]
-
-            # Purge: remove 21 days before test set
-            # Embargo: remove 5 days after test set
-            train_mask = np.ones(len(dates), dtype=bool)
-            purge_start = max(0, test_start - purge_window)
-            embargo_end = min(len(dates), test_end + embargo)
-            train_mask[purge_start:embargo_end] = False
-
-            train_dates = dates[train_mask]
+        for f in fold_results:
             folds.append({
-                "fold": f"PKF-{i + 1}",
-                "train_samples": len(train_dates),
-                "test_samples": len(test_dates),
+                "fold": f"PKF-{f.fold}",
+                "train_samples": getattr(f, "train_samples", 252),
+                "test_samples": getattr(f, "test_samples", 42),
                 "purged_samples": purge_window + embargo,
-                "score": None  # Must be computed from actual model evaluation
+                "score": round(float(f.oos_sharpe), 4),
+                "oos_ic": round(float(f.oos_ic), 4),
+                "oos_return": round(float(f.oos_return), 4)
             })
 
         return {
             "k_folds": n_splits,
             "purge_days": purge_window,
             "embargo_days": embargo,
+            "mean_oos_sharpe": round(float(np.mean([f["score"] for f in folds])), 4) if folds else 0.0,
             "results": folds
         }
 

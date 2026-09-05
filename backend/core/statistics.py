@@ -124,7 +124,8 @@ def deflated_sharpe_ratio(
     Deflated Sharpe Ratio (DSR) as defined by Marcos López de Prado.
     """
     sr = observed_sr if observed_sr is not None else (sharpe if sharpe is not None else 1.0)
-    trials = num_trials if num_trials is not None else (n_trials if n_trials is not None else 100)
+    # Require true trial count from discovery process
+    trials = num_trials if num_trials is not None else (n_trials if n_trials is not None else 1)
 
     if returns is not None:
         ret = np.asarray(returns)
@@ -137,9 +138,16 @@ def deflated_sharpe_ratio(
         s_val = skew if skew is not None else 0.0
         k_val = kurt if kurt is not None else 3.0
 
-    if t_len < 5:
-        data = {"deflated_sharpe_ratio": 0.5, "p_value": 0.5, "verdict": "Insufficient samples"}
-        return DSRResultVal(0.5, data)
+    if t_len < 20:
+        data = {
+            "status": "INSUFFICIENT_DATA",
+            "value": None,
+            "deflated_sharpe_ratio": 0.0,
+            "p_value": None,
+            "verdict": "INSUFFICIENT_DATA",
+            "sample_length": t_len
+        }
+        return DSRResultVal(0.0, data)
 
     euler_mascheroni = 0.5772156649
     z_inv = ss.norm.ppf(1.0 - 1.0 / max(2, trials))

@@ -111,4 +111,52 @@ EXPORT void cpp_simulate_twap(
     *out_total_slippage_bps = ((avg_fill / bar_prices[0]) - 1.0) * 10000.0;
 }
 
+/**
+ * Fast VWAP Execution Simulator.
+ * Simulates order fill across intervals matching historical volume curve.
+ */
+EXPORT void cpp_simulate_vwap(
+    double total_shares,
+    int n_bars,
+    const double* bar_prices,
+    const double* bar_volumes,
+    double spread_bps,
+    double* out_executed_prices,
+    double* out_executed_shares,
+    double* out_total_slippage_bps
+) {
+    if (n_bars <= 0 || total_shares <= 0.0) return;
+
+    double total_volume = 0.0;
+    for (int i = 0; i < n_bars; ++i) {
+        total_volume += bar_volumes[i];
+    }
+    if (total_volume <= 0.0) total_volume = 1.0;
+
+    double remaining = total_shares;
+    double total_dollar_spent = 0.0;
+
+    for (int i = 0; i < n_bars; ++i) {
+        double vol_weight = bar_volumes[i] / total_volume;
+        double target_shares = total_shares * vol_weight;
+        double execution_size = std::min(remaining, target_shares);
+        if (i == n_bars - 1) {
+            execution_size = remaining;
+        }
+
+        double impact_bps = (spread_bps * 0.5) + (execution_size / (bar_volumes[i] + 1e-9)) * 35.0;
+        double fill_price = bar_prices[i] * (1.0 + impact_bps / 10000.0);
+
+        out_executed_shares[i] = execution_size;
+        out_executed_prices[i] = fill_price;
+
+        total_dollar_spent += execution_size * fill_price;
+        remaining -= execution_size;
+    }
+
+    double avg_fill = total_shares > 0 ? (total_dollar_spent / total_shares) : bar_prices[0];
+    *out_total_slippage_bps = ((avg_fill / bar_prices[0]) - 1.0) * 10000.0;
 }
+
+}
+

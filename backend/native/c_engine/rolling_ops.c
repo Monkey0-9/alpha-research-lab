@@ -114,3 +114,29 @@ EXPORT void c_simulate_pnl(
         prev_pos = pos;
     }
 }
+
+EXPORT void c_rolling_zscore(const double* in, double* out, int n, int window) {
+    if (n <= 0 || window <= 1) return;
+    double sum = 0.0;
+    double sum_sq = 0.0;
+
+    for (int i = 0; i < n; i++) {
+        sum += in[i];
+        sum_sq += in[i] * in[i];
+
+        if (i >= window) {
+            sum -= in[i - window];
+            sum_sq -= in[i - window] * in[i - window];
+        }
+
+        if (i >= window - 1) {
+            double mean = sum / (double)window;
+            double variance = (sum_sq - (sum * sum) / (double)window) / (double)(window - 1);
+            double std = variance > 1e-12 ? sqrt(variance) : 1e-6;
+            out[i] = (in[i] - mean) / std;
+        } else {
+            out[i] = 0.0;
+        }
+    }
+}
+

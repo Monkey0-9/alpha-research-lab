@@ -1,4 +1,4 @@
-//! Rust Engine for Ultra-Fast Alpha Metrics & Backtesting
+//! Rust Engine for Ultra-Fast Alpha Metrics, Backtesting & Quantitative Statistics.
 //! Exposes C-compatible FFI ABI for zero-overhead Python ctypes bindings.
 
 use std::slice;
@@ -86,4 +86,67 @@ pub extern "C" fn rust_fast_backtest_pnl(
     }
 
     cum_pnl
+}
+
+#[no_mangle]
+pub extern "C" fn rust_information_coefficient(
+    preds_ptr: *const f64,
+    targets_ptr: *const f64,
+    len: usize
+) -> f64 {
+    if len < 3 || preds_ptr.is_null() || targets_ptr.is_null() {
+        return 0.0;
+    }
+    let preds = unsafe { slice::from_raw_parts(preds_ptr, len) };
+    let targets = unsafe { slice::from_raw_parts(targets_ptr, len) };
+
+    let mean_p = preds.iter().sum::<f64>() / (len as f64);
+    let mean_t = targets.iter().sum::<f64>() / (len as f64);
+
+    let mut cov = 0.0;
+    let mut var_p = 0.0;
+    let mut var_t = 0.0;
+
+    for i in 0..len {
+        let dp = preds[i] - mean_p;
+        let dt = targets[i] - mean_t;
+        cov += dp * dt;
+        var_p += dp * dp;
+        var_t += dt * dt;
+    }
+
+    let denom = (var_p * var_t).sqrt();
+    if denom < 1e-9 {
+        return 0.0;
+    }
+    cov / denom
+}
+
+#[no_mangle]
+pub extern "C" fn rust_rank_ic(
+    preds_ptr: *const f64,
+    targets_ptr: *const f64,
+    len: usize
+) -> f64 {
+    if len < 3 || preds_ptr.is_null() || targets_ptr.is_null() {
+        return 0.0;
+    }
+    let preds = unsafe { slice::from_raw_parts(preds_ptr, len) };
+    let targets = unsafe { slice::from_raw_parts(targets_ptr, len) };
+
+    // Function to compute ranks
+    let rank = |vals: &[f64]| -> Vec<f64> {
+        let mut indexed: Vec<(usize, f64)> = vals.iter().cloned().enumerate().collect();
+        indexed.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        let mut ranks = vec![0.0; vals.len()];
+        for (r, &(orig_idx, _)) in indexed.iter().enumerate() {
+            ranks[orig_idx] = (r + 1) as f64;
+        }
+        ranks
+    };
+
+    let r_p = rank(preds);
+    let r_t = rank(targets);
+
+    rust_information_coefficient(r_p.as_ptr(), r_t.as_ptr(), len)
 }
