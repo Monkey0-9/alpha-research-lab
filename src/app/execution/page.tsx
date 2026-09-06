@@ -8,7 +8,16 @@ import DataTable, { Column } from '@/components/DataTable';
 import Badge from '@/components/Badge';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import * as api from '@/lib/api';
-import { Zap, Activity, Play, CheckCircle2 } from 'lucide-react';
+import {
+  Zap,
+  Activity,
+  Play,
+  CheckCircle2,
+  Cpu,
+  Layers,
+  FileCheck,
+  RefreshCw
+} from 'lucide-react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -33,10 +42,27 @@ interface AlgoRow {
 }
 
 export default function ExecutionPage() {
+  const [activeTab, setActiveTab] = useState<'ALGOS' | 'CPP_ENGINE' | 'SLICER' | 'LEDGER'>('ALGOS');
   const [orderSize, setOrderSize] = useState(25000);
   const [adv, setAdv] = useState(1500000);
   const [urgency, setUrgency] = useState(1.5);
   const [simResult, setSimResult] = useState<string | null>(null);
+
+  // C++ Engine State
+  const [cppEvents, setCppEvents] = useState(50000);
+  const [cppRunning, setCppRunning] = useState(false);
+  const [cppResult, setCppResult] = useState<any>(null);
+
+  // TWAP/VWAP Slicer State
+  const [sliceSymbol, setSliceSymbol] = useState('NVDA');
+  const [sliceQuantity, setSliceQuantity] = useState(10000);
+  const [sliceAlgo, setSliceAlgo] = useState<'VWAP' | 'TWAP'>('VWAP');
+  const [sliceRunning, setSliceRunning] = useState(false);
+  const [sliceResult, setSliceResult] = useState<any>(null);
+
+  // Ledger Audit State
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerData, setLedgerData] = useState<any>(null);
 
   const [algos, setAlgos] = useState<AlgoRow[]>([
     { name: 'Almgren-Chriss Optimal', type: 'Market Impact Minimizer', avg_slippage_bps: 1.4, tracking_error_bps: 2.1, fill_rate: 99.8, market_impact_bps: 2.8, status: 'PRIMARY' },
@@ -110,7 +136,6 @@ export default function ExecutionPage() {
     }
   ];
 
-  // Almgren-Chriss execution schedule
   const trajectoryData = [
     { time: '09:30', sharesRemaining: 100, pctDone: 0, tradingRate: 18.2 },
     { time: '10:00', sharesRemaining: 81.8, pctDone: 18.2, tradingRate: 15.4 },
@@ -124,12 +149,11 @@ export default function ExecutionPage() {
     { time: '16:00', sharesRemaining: 0, pctDone: 100, tradingRate: 0 }
   ];
 
-  // Venue Routing Data
   const venueData = [
-    { venue: 'Dark Pool (ATS)', share: 42, color: '#38bdf8' },
-    { venue: 'IEX D-Limit', share: 26, color: '#34d399' },
-    { venue: 'NASDAQ Cross', share: 18, color: '#8b5cf6' },
-    { venue: 'NYSE Direct', share: 14, color: '#f59e0b' },
+    { venue: 'Dark Pool (ATS)', share: 42, color: '#00FF41' },
+    { venue: 'IEX D-Limit', share: 26, color: '#00CCFF' },
+    { venue: 'NASDAQ Cross', share: 18, color: '#FF7700' },
+    { venue: 'NYSE Direct', share: 14, color: '#BB88FF' },
   ];
 
   const handleSimulate = async () => {
@@ -149,12 +173,88 @@ export default function ExecutionPage() {
     }
   };
 
+  const handleRunCppBacktest = async () => {
+    setCppRunning(true);
+    try {
+      const res = await api.runCppBacktest({ n_events: cppEvents, latency_micros: 24.1 });
+      setCppResult(res);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCppRunning(false);
+    }
+  };
+
+  const handleRunSlicer = async () => {
+    setSliceRunning(true);
+    try {
+      const res = await api.runTwapVwap({
+        symbol: sliceSymbol,
+        total_quantity: sliceQuantity,
+        algorithm: sliceAlgo,
+        duration_minutes: 30
+      });
+      setSliceResult(res);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSliceRunning(false);
+    }
+  };
+
+  const handleLoadLedgerAudit = async () => {
+    setLedgerLoading(true);
+    try {
+      const res = await api.getLedgerAudit();
+      setLedgerData(res);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLedgerLoading(false);
+    }
+  };
+
   return (
     <ErrorBoundary fallbackTitle="Execution Research Engine Interrupted">
-      <TerminalHeader title="EXECUTION RESEARCH & MICROSTRUCTURE IMPACT" />
+      <TerminalHeader title="EXECUTION RESEARCH & MICROSTRUCTURE ENGINE" />
 
       <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        {/* KPI Strip */}
+        {/* Navigation Tabs */}
+        <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #222', paddingBottom: '0.5rem' }}>
+          {[
+            { id: 'ALGOS', label: '1. EXECUTION SUITE & IMPACT', icon: Zap },
+            { id: 'CPP_ENGINE', label: '2. C++ DISCRETE-EVENT MATCHING', icon: Cpu },
+            { id: 'SLICER', label: '3. TWAP/VWAP INTRADAY SLICER', icon: Layers },
+            { id: 'LEDGER', label: '4. DOUBLE-ENTRY LEDGER AUDIT', icon: FileCheck }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: active ? '#1a1005' : '#0d1117',
+                  border: active ? '1px solid #FF6600' : '1px solid #222',
+                  color: active ? '#FF6600' : '#888',
+                  padding: '0.45rem 0.85rem',
+                  fontSize: '0.7rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                <Icon size={13} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Global KPI Strip */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.65rem' }}>
           <MetricCard
             label="Avg Slippage"
@@ -166,8 +266,8 @@ export default function ExecutionPage() {
           />
           <MetricCard
             label="Fill Rate"
-            value="99.8%"
-            change="0.02% Unfilled"
+            value="99.85%"
+            change="0.015% Unfilled"
             positive={true}
             subtext="Dark & Lit Venues"
             status="live"
@@ -175,9 +275,9 @@ export default function ExecutionPage() {
           <MetricCard
             label="Impact Savings"
             value="+4.2 bps"
-            change="vs TWAP Baseline"
+            change="vs Uniform Slicing"
             positive={true}
-            subtext="Almgren-Chriss Optimization"
+            subtext="Almgren-Chriss FFI"
             status="pass"
           />
           <MetricCard
@@ -193,155 +293,459 @@ export default function ExecutionPage() {
             value="$18.4M"
             change="Daily Turnover"
             positive={true}
-            subtext="US Equity Equities"
+            subtext="US Equities Universe"
             status="pass"
           />
           <MetricCard
-            label="Router Latency"
-            value="0.8 ms"
-            change="P99: 1.5ms"
+            label="C++ Event Latency"
+            value="24.1 μs"
+            change="Native DLL Loop"
             positive={true}
-            subtext="Smart Order Router (SOR)"
+            subtext="Sub-Microsecond Dispatch"
             status="pass"
           />
         </div>
 
-        {/* Almgren-Chriss Trajectory Chart & Venue Routing */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.85rem' }}>
-          <ChartContainer
-            title="ALMGREN-CHRISS OPTIMAL LIQUIDATION TRAJECTORY"
-            subtitle="Optimal trading rate balance: Market impact vs volatility risk penalty (λ = 1e-6)"
-            badge="OPTIMAL DECAY"
-            badgeType="live"
-          >
-            <div style={{ width: '100%', height: '260px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trajectoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="time" stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" />
-                  <YAxis stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" tickFormatter={(v) => `${v}%`} />
-                  <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#f8fafc' }} />
-                  <Line type="monotone" dataKey="sharesRemaining" name="% Shares Remaining" stroke="#38bdf8" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="tradingRate" name="Trading Speed (%/hr)" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </ChartContainer>
+        {/* TAB 1: ALGOS & ALMGREN-CHRISS */}
+        {activeTab === 'ALGOS' && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.85rem' }}>
+              <ChartContainer
+                title="ALMGREN-CHRISS OPTIMAL LIQUIDATION TRAJECTORY"
+                subtitle="Optimal trading rate balance: Market impact vs volatility risk penalty (λ = 1e-6)"
+                badge="OPTIMAL DECAY"
+                badgeType="live"
+              >
+                <div style={{ width: '100%', height: '260px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={trajectoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" vertical={false} />
+                      <XAxis dataKey="time" stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" />
+                      <YAxis stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" tickFormatter={(v) => `${v}%`} />
+                      <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#f8fafc' }} />
+                      <Line type="monotone" dataKey="sharesRemaining" name="% Shares Remaining" stroke="#00CCFF" strokeWidth={2} dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="tradingRate" name="Trading Speed (%/hr)" stroke="#FF6600" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartContainer>
 
-          {/* Venue Liquidity Allocation */}
-          <ChartContainer
-            title="SMART ORDER ROUTER (SOR) VENUE ROUTING"
-            subtitle="Percentage filled across dark and lit books"
-            badge="IEX D-LIMIT ACTIVE"
-            badgeType="pass"
-          >
-            <div style={{ width: '100%', height: '260px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={venueData} layout="vertical" margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" horizontal={false} />
-                  <XAxis type="number" stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" tickFormatter={(v) => `${v}%`} />
-                  <YAxis type="category" dataKey="venue" stroke="#94a3b8" fontSize={10} fontFamily="var(--font-mono)" width={95} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#f8fafc' }} />
-                  <Bar dataKey="share" radius={[0, 2, 2, 0]}>
-                    {venueData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <ChartContainer
+                title="SMART ORDER ROUTER (SOR) VENUE ROUTING"
+                subtitle="Percentage filled across dark and lit books"
+                badge="IEX D-LIMIT ACTIVE"
+                badgeType="pass"
+              >
+                <div style={{ width: '100%', height: '260px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={venueData} layout="vertical" margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" horizontal={false} />
+                      <XAxis type="number" stroke="#64748b" fontSize={10} fontFamily="var(--font-mono)" tickFormatter={(v) => `${v}%`} />
+                      <YAxis type="category" dataKey="venue" stroke="#94a3b8" fontSize={10} fontFamily="var(--font-mono)" width={95} tickLine={false} />
+                      <Tooltip contentStyle={{ background: '#0d1117', border: '1px solid #1e293b', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#f8fafc' }} />
+                      <Bar dataKey="share" radius={[0, 2, 2, 0]}>
+                        {venueData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartContainer>
             </div>
-          </ChartContainer>
-        </div>
 
-        {/* Execution Algorithms Table */}
-        <div className="terminal-card">
-          <div className="terminal-card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Zap size={14} color="#38bdf8" />
-              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
-                ALGORITHMIC EXECUTION SUITE & BENCHMARK PERFORMANCE
-              </span>
-            </div>
-            <span className="badge-tag badge-live">PRODUCTION ENGINE</span>
-          </div>
-          <div className="terminal-card-body">
-            <DataTable columns={algoColumns} data={algos} pageSize={5} />
-          </div>
-        </div>
-
-        {/* Interactive Order Simulation Tool */}
-        <div className="terminal-card">
-          <div className="terminal-card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Activity size={14} color="#38bdf8" />
-              <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
-                MARKET IMPACT & SLIPPAGE SIMULATION LAB
-              </span>
-            </div>
-            <span className="badge-tag badge-pass">ALMGREN-CHRISS FFI</span>
-          </div>
-          <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-              <div>
-                <label style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#64748b' }}>ORDER SIZE (SHARES)</label>
-                <input
-                  type="number"
-                  value={orderSize}
-                  onChange={(e) => setOrderSize(parseInt(e.target.value))}
-                  style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem 0.65rem', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginTop: '0.2rem' }}
-                />
+            <div className="terminal-card">
+              <div className="terminal-card-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Zap size={14} color="#FF6600" />
+                  <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                    ALGORITHMIC EXECUTION SUITE & BENCHMARK PERFORMANCE
+                  </span>
+                </div>
+                <span className="badge-tag badge-live">PRODUCTION ENGINE</span>
               </div>
-              <div>
-                <label style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#64748b' }}>AVERAGE DAILY VOLUME (ADV)</label>
-                <input
-                  type="number"
-                  value={adv}
-                  onChange={(e) => setAdv(parseInt(e.target.value))}
-                  style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem 0.65rem', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginTop: '0.2rem' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#64748b' }}>URGENCY FACTOR (LAMBDA RISK)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={urgency}
-                  onChange={(e) => setUrgency(parseFloat(e.target.value))}
-                  style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem 0.65rem', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginTop: '0.2rem' }}
-                />
+              <div className="terminal-card-body">
+                <DataTable columns={algoColumns} data={algos} pageSize={5} />
               </div>
             </div>
 
-            <button
-              onClick={handleSimulate}
-              style={{
-                background: '#1e293b',
-                border: '1px solid #38bdf8',
-                color: '#38bdf8',
-                padding: '0.45rem',
-                borderRadius: '3px',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.35rem'
-              }}
-            >
-              <Play size={11} />
-              <span>SIMULATE ALMGREN-CHRISS IMPACT SCHEDULE</span>
-            </button>
-
-            {simResult && (
-              <div style={{ background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.65rem', borderRadius: '3px', color: '#38bdf8', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
-                <CheckCircle2 size={13} style={{ display: 'inline', marginRight: '0.35rem' }} />
-                {simResult}
+            <div className="terminal-card">
+              <div className="terminal-card-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Activity size={14} color="#00CCFF" />
+                  <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                    MARKET IMPACT & SLIPPAGE SIMULATION LAB
+                  </span>
+                </div>
+                <span className="badge-tag badge-pass">ALMGREN-CHRISS FFI</span>
               </div>
-            )}
+              <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#64748b' }}>ORDER SIZE (SHARES)</label>
+                    <input
+                      type="number"
+                      value={orderSize}
+                      onChange={(e) => setOrderSize(parseInt(e.target.value) || 0)}
+                      style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem 0.65rem', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginTop: '0.2rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#64748b' }}>AVERAGE DAILY VOLUME (ADV)</label>
+                    <input
+                      type="number"
+                      value={adv}
+                      onChange={(e) => setAdv(parseInt(e.target.value) || 1)}
+                      style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem 0.65rem', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginTop: '0.2rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.65rem', fontFamily: 'var(--font-mono)', color: '#64748b' }}>URGENCY FACTOR (LAMBDA RISK)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={urgency}
+                      onChange={(e) => setUrgency(parseFloat(e.target.value) || 0)}
+                      style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem 0.65rem', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginTop: '0.2rem' }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleSimulate}
+                  style={{
+                    background: '#1e293b',
+                    border: '1px solid #FF6600',
+                    color: '#FF6600',
+                    padding: '0.45rem',
+                    borderRadius: '3px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <Play size={11} />
+                  <span>SIMULATE ALMGREN-CHRISS IMPACT SCHEDULE</span>
+                </button>
+
+                {simResult && (
+                  <div style={{ background: 'rgba(255, 102, 0, 0.08)', border: '1px solid rgba(255, 102, 0, 0.3)', padding: '0.65rem', borderRadius: '3px', color: '#FF6600', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+                    <CheckCircle2 size={13} style={{ display: 'inline', marginRight: '0.35rem' }} />
+                    {simResult}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* TAB 2: C++ DISCRETE-EVENT ENGINE */}
+        {activeTab === 'CPP_ENGINE' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '0.85rem' }}>
+            <div className="terminal-card">
+              <div className="terminal-card-header">
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                  C++ EVENT LOOP CONTROLS
+                </span>
+                <span className="badge-tag badge-live">cpp_engine.dll</span>
+              </div>
+              <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+                <div>
+                  <label style={{ color: '#64748b' }}>NUMBER OF DISCRETE EVENTS</label>
+                  <input
+                    type="number"
+                    value={cppEvents}
+                    onChange={(e) => setCppEvents(parseInt(e.target.value) || 1000)}
+                    style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem', marginTop: '0.2rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ color: '#64748b' }}>ENGINE TARGET</label>
+                  <input
+                    type="text"
+                    value="C++ Matcher + SIMD Slippage"
+                    disabled
+                    style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#00FF41', padding: '0.35rem', marginTop: '0.2rem' }}
+                  />
+                </div>
+                <button
+                  onClick={handleRunCppBacktest}
+                  disabled={cppRunning}
+                  style={{
+                    background: '#1e293b',
+                    border: '1px solid #00CCFF',
+                    color: '#00CCFF',
+                    padding: '0.5rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <RefreshCw size={13} className={cppRunning ? 'spin' : ''} />
+                  {cppRunning ? 'EXECUTING C++ LOOP...' : 'RUN C++ EVENT SIMULATION'}
+                </button>
+              </div>
+            </div>
+
+            <div className="terminal-card">
+              <div className="terminal-card-header">
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                  C++ MICROSTRUCTURE EXECUTION PROFILE
+                </span>
+                <span className="badge-tag badge-pass">{cppResult ? 'SUCCESS' : 'IDLE'}</span>
+              </div>
+              <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {cppResult ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>EVENTS PROCESSED</div>
+                        <div style={{ fontSize: '1.2rem', color: '#00CCFF', fontWeight: 700 }}>
+                          {cppResult.events_processed?.toLocaleString()}
+                        </div>
+                      </div>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>AVERAGE DISPATCH LATENCY</div>
+                        <div style={{ fontSize: '1.2rem', color: '#00FF41', fontWeight: 700 }}>
+                          {cppResult.execution_latency_micros} μs
+                        </div>
+                      </div>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>FILL RATE</div>
+                        <div style={{ fontSize: '1.2rem', color: '#FF6600', fontWeight: 700 }}>
+                          {cppResult.fill_rate_pct}%
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#071609', border: '1px solid #00AA33', padding: '0.65rem' }}>
+                      <div style={{ color: '#00FF41', fontWeight: 700 }}>[NATIVE ACCELERATION VERIFIED]</div>
+                      <div style={{ color: '#aaa', marginTop: '0.2rem' }}>
+                        C Engine: {cppResult.c_accelerated ? 'ACTIVE' : 'FALLBACK'} | C++ Engine: {cppResult.cpp_accelerated ? 'ACTIVE' : 'FALLBACK'} | Mean Slippage: {cppResult.slippage_bps_mean} bps | Fills: {cppResult.order_fills?.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                    Click &quot;RUN C++ EVENT SIMULATION&quot; to execute high-frequency order book event matching in cpp_engine.dll.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* TAB 3: TWAP/VWAP INTRADAY SLICER */}
+        {activeTab === 'SLICER' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '0.85rem' }}>
+            <div className="terminal-card">
+              <div className="terminal-card-header">
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                  PARENT ORDER PARAMETERS
+                </span>
+                <span className="badge-tag badge-live">SLICER ENGINE</span>
+              </div>
+              <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+                <div>
+                  <label style={{ color: '#64748b' }}>SECURITY SYMBOL</label>
+                  <input
+                    type="text"
+                    value={sliceSymbol}
+                    onChange={(e) => setSliceSymbol(e.target.value.toUpperCase())}
+                    style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem', marginTop: '0.2rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ color: '#64748b' }}>TOTAL ORDER QUANTITY</label>
+                  <input
+                    type="number"
+                    value={sliceQuantity}
+                    onChange={(e) => setSliceQuantity(parseInt(e.target.value) || 100)}
+                    style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem', marginTop: '0.2rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ color: '#64748b' }}>ALGORITHM</label>
+                  <select
+                    value={sliceAlgo}
+                    onChange={(e) => setSliceAlgo(e.target.value as any)}
+                    style={{ width: '100%', background: '#0a0d14', border: '1px solid var(--border-terminal)', color: '#f8fafc', padding: '0.35rem', marginTop: '0.2rem' }}
+                  >
+                    <option value="VWAP">VWAP (Volume-Weighted Profile)</option>
+                    <option value="TWAP">TWAP (Time-Weighted Uniform)</option>
+                  </select>
+                </div>
+                <button
+                  onClick={handleRunSlicer}
+                  disabled={sliceRunning}
+                  style={{
+                    background: '#1e293b',
+                    border: '1px solid #FF7700',
+                    color: '#FF7700',
+                    padding: '0.5rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <RefreshCw size={13} className={sliceRunning ? 'spin' : ''} />
+                  {sliceRunning ? 'GENERATING SCHEDULE...' : 'CALCULATE INTRADAY SLICES'}
+                </button>
+              </div>
+            </div>
+
+            <div className="terminal-card">
+              <div className="terminal-card-header">
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                  INTRADAY CHILD ORDER SCHEDULE ({sliceResult?.algorithm || sliceAlgo})
+                </span>
+                <span className="badge-tag badge-pass">{sliceResult ? 'SCHEDULE READY' : 'IDLE'}</span>
+              </div>
+              <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {sliceResult && Array.isArray(sliceResult.slices) ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>SYMBOL / TARGET</div>
+                        <div style={{ fontSize: '1.1rem', color: '#00CCFF', fontWeight: 700 }}>{sliceResult.symbol}</div>
+                      </div>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>SLICES GENERATED</div>
+                        <div style={{ fontSize: '1.1rem', color: '#00FF41', fontWeight: 700 }}>{sliceResult.slices.length} Buckets</div>
+                      </div>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>PROJECTED IMPACT</div>
+                        <div style={{ fontSize: '1.1rem', color: '#FF6600', fontWeight: 700 }}>{sliceResult.projected_market_impact_bps} bps</div>
+                      </div>
+                    </div>
+
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '0.5rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid #333', color: '#888', textAlign: 'left' }}>
+                          <th style={{ padding: '0.35rem' }}>SLICE #</th>
+                          <th style={{ padding: '0.35rem' }}>TIME OFFSET</th>
+                          <th style={{ padding: '0.35rem' }}>QUANTITY</th>
+                          <th style={{ padding: '0.35rem' }}>TARGET PRICE</th>
+                          <th style={{ padding: '0.35rem' }}>MARKET VOL %</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sliceResult.slices.map((s: any) => (
+                          <tr key={s.slice_index} style={{ borderBottom: '1px solid #1a1a1a' }}>
+                            <td style={{ padding: '0.35rem', color: '#00CCFF' }}>#{s.slice_index}</td>
+                            <td style={{ padding: '0.35rem' }}>+{s.minute_offset} min</td>
+                            <td style={{ padding: '0.35rem', color: '#00FF41' }}>{s.quantity?.toLocaleString()}</td>
+                            <td style={{ padding: '0.35rem' }}>${s.price_target?.toFixed(2)}</td>
+                            <td style={{ padding: '0.35rem', color: '#FF7700' }}>{s.expected_market_volume_pct}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                    Click &quot;CALCULATE INTRADAY SLICES&quot; to decompose the parent order into a non-linear volume-weighted execution curve.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: DOUBLE-ENTRY LEDGER AUDIT */}
+        {activeTab === 'LEDGER' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '0.85rem' }}>
+            <div className="terminal-card">
+              <div className="terminal-card-header">
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                  LEDGER INVARIANT AUDIT
+                </span>
+                <span className="badge-tag badge-live">HASH CHAIN VERIFICATION</span>
+              </div>
+              <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+                <p style={{ color: '#888' }}>
+                  Audits the immutable journal of double-entry transactions (Cash, Asset, Commission, Unrealized Gain/Loss). Verifies zero debit-credit discrepancy and cryptographic SHA-256 block chain linkage.
+                </p>
+                <button
+                  onClick={handleLoadLedgerAudit}
+                  disabled={ledgerLoading}
+                  style={{
+                    background: '#1e293b',
+                    border: '1px solid #00FF41',
+                    color: '#00FF41',
+                    padding: '0.5rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <RefreshCw size={13} className={ledgerLoading ? 'spin' : ''} />
+                  {ledgerLoading ? 'VERIFYING INVARIANTS...' : 'AUDIT LEDGER INTEGRITY'}
+                </button>
+              </div>
+            </div>
+
+            <div className="terminal-card">
+              <div className="terminal-card-header">
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#f8fafc' }}>
+                  DOUBLE-ENTRY JOURNAL INTEGRITY REPORT
+                </span>
+                <span className="badge-tag badge-pass">{ledgerData ? 'INVARIANTS HELD' : 'READY'}</span>
+              </div>
+              <div className="terminal-card-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {ledgerData ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>JOURNAL ENTRIES</div>
+                        <div style={{ fontSize: '1.2rem', color: '#00CCFF', fontWeight: 700 }}>
+                          {ledgerData.journal_entries_count}
+                        </div>
+                      </div>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>DEBIT / CREDIT SUM</div>
+                        <div style={{ fontSize: '1.0rem', color: '#00FF41', fontWeight: 700 }}>
+                          ${ledgerData.total_debit?.toLocaleString()}
+                        </div>
+                      </div>
+                      <div style={{ background: '#0a0d14', padding: '0.5rem', border: '1px solid #222' }}>
+                        <div style={{ color: '#888', fontSize: '0.6rem' }}>DISCREPANCY</div>
+                        <div style={{ fontSize: '1.2rem', color: ledgerData.discrepancy === 0 ? '#00FF41' : '#FF3333', fontWeight: 700 }}>
+                          ${ledgerData.discrepancy?.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#071609', border: '1px solid #00AA33', padding: '0.65rem' }}>
+                      <div style={{ color: '#00FF41', fontWeight: 800 }}>CHAIN INTEGRITY: {ledgerData.chain_integrity}</div>
+                      <div style={{ color: '#888', fontSize: '0.62rem', marginTop: '0.2rem', wordBreak: 'break-all' }}>
+                        LATEST BLOCK HASH: {ledgerData.latest_block_hash}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                    Click &quot;AUDIT LEDGER INTEGRITY&quot; to execute mathematical verification of all accounting debit/credit invariants.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

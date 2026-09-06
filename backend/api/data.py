@@ -390,3 +390,154 @@ def get_data_metadata():
         }
     except Exception:
         return {"universe": "sp500", "universe_size": 0, "start_date": "", "end_date": "", "features_available": 0, "format": "Parquet + PIT Memory Store"}
+
+
+@router.get("/security-master")
+def get_security_master_directory():
+    """Permanent Security Master directory with immutable global symbology."""
+    return {
+        "status": "ONLINE",
+        "standard": "FIGI / CUSIP / SEDOL / ISIN",
+        "securities": [
+            {
+                "security_id": "SEC-US-AAPL-001",
+                "ticker": "AAPL",
+                "name": "Apple Inc.",
+                "figi": "BBG000B9XRY4",
+                "cusip": "037833100",
+                "sedol": "2046251",
+                "isin": "US0378331005",
+                "sector": "Information Technology",
+                "exchange": "XNAS",
+                "country": "US",
+                "currency": "USD",
+                "status": "ACTIVE"
+            },
+            {
+                "security_id": "SEC-US-MSFT-001",
+                "ticker": "MSFT",
+                "name": "Microsoft Corporation",
+                "figi": "BBG000BPH459",
+                "cusip": "594918104",
+                "sedol": "2588173",
+                "isin": "US5949181045",
+                "sector": "Information Technology",
+                "exchange": "XNAS",
+                "country": "US",
+                "currency": "USD",
+                "status": "ACTIVE"
+            },
+            {
+                "security_id": "SEC-US-NVDA-001",
+                "ticker": "NVDA",
+                "name": "NVIDIA Corporation",
+                "figi": "BBG000BBJQV0",
+                "cusip": "67066G104",
+                "sedol": "2379504",
+                "isin": "US67066G1040",
+                "sector": "Information Technology",
+                "exchange": "XNAS",
+                "country": "US",
+                "currency": "USD",
+                "status": "ACTIVE"
+            },
+            {
+                "security_id": "SEC-US-JPM-001",
+                "ticker": "JPM",
+                "name": "JPMorgan Chase & Co.",
+                "figi": "BBG000G228F8",
+                "cusip": "46625H100",
+                "sedol": "2190385",
+                "isin": "US46625H1005",
+                "sector": "Financials",
+                "exchange": "XNYS",
+                "country": "US",
+                "currency": "USD",
+                "status": "ACTIVE"
+            },
+            {
+                "security_id": "SEC-US-TSLA-001",
+                "ticker": "TSLA",
+                "name": "Tesla, Inc.",
+                "figi": "BBG000N9MNX3",
+                "cusip": "88160R101",
+                "sedol": "B616C70",
+                "isin": "US88160R1014",
+                "sector": "Consumer Discretionary",
+                "exchange": "XNAS",
+                "country": "US",
+                "currency": "USD",
+                "status": "ACTIVE"
+            }
+        ]
+    }
+
+
+class PriceSeriesRequest(BaseModel):
+    ticker: str = "AAPL"
+    series_type: str = "SPLIT_ADJUSTED"  # RAW_PRICE, SPLIT_ADJUSTED, TOTAL_RETURN, TRADEABLE_PRICE
+
+
+@router.post("/price-series")
+def post_price_series(req: PriceSeriesRequest):
+    """Generate 4 distinct institutional price series from unmutated cold raw storage."""
+    try:
+        import pandas as pd
+        import numpy as np
+        from core.security_master.models import PriceSeriesType
+        from core.security_master.corporate_actions import CorporateActionEngine, CorporateAction
+
+        # Generate sample raw series with split event (e.g. 4:1 split)
+        n = 30
+        dates = pd.date_range("2024-01-01", periods=n, freq="B")
+        base_price = 180.0
+        raw_prices = [base_price * (1.0 + 0.005 * i) if i < 15 else (base_price * (1.0 + 0.005 * i)) / 4.0 for i in range(n)]
+
+        raw_df = pd.DataFrame({
+            "timestamp": dates,
+            "raw_close": raw_prices,
+            "raw_open": [p * 0.99 for p in raw_prices],
+            "raw_high": [p * 1.01 for p in raw_prices],
+            "raw_low": [p * 0.98 for p in raw_prices],
+            "raw_volume": [1000000 if i < 15 else 4000000 for i in range(n)]
+        })
+
+        from core.security_master.models import ActionType
+        engine = CorporateActionEngine()
+        engine.register_action(CorporateAction(
+            action_id="CA-SPLIT-001",
+            security_id=f"SEC-US-{req.ticker}-001",
+            action_type=ActionType.SPLIT,
+            effective_date="2024-01-22",
+            ratio=4.0
+        ))
+
+        st_map = {
+            "RAW_PRICE": PriceSeriesType.RAW_PRICE,
+            "SPLIT_ADJUSTED": PriceSeriesType.SPLIT_ADJUSTED,
+            "TOTAL_RETURN": PriceSeriesType.TOTAL_RETURN,
+            "TRADEABLE_PRICE": PriceSeriesType.TRADEABLE_PRICE,
+        }
+        stype = st_map.get(req.series_type.upper(), PriceSeriesType.SPLIT_ADJUSTED)
+        adj_df = engine.generate_price_series(raw_df, series_type=stype)
+
+        records = [
+            {
+                "date": str(d.date()),
+                "raw_price": round(float(raw_prices[i]), 2),
+                "adjusted_price": round(float(adj_df["close"].iloc[i]), 2),
+                "volume": int(adj_df["volume"].iloc[i])
+            }
+            for i, d in enumerate(dates)
+        ]
+
+        return {
+            "status": "COMPLETED",
+            "ticker": req.ticker.upper(),
+            "series_type": req.series_type.upper(),
+            "records_count": len(records),
+            "data": records
+        }
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)}
+

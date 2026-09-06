@@ -18,7 +18,7 @@ from api import (  # noqa: E402
     data, features, alpha_discovery, statistical_engine,
     model_lab, validation, quality_gate, portfolio,
     execution, risk, live_research, monitoring, dashboard,
-    backtest
+    backtest, native_engine
 )
 
 logger = logging.getLogger("quantalpha")
@@ -102,6 +102,7 @@ app.include_router(risk.router,               prefix="/api/risk",               
 app.include_router(live_research.router,      prefix="/api/live-research",      tags=["11 Live Research"])
 app.include_router(monitoring.router,         prefix="/api/monitoring",         tags=["12 Monitoring"])
 app.include_router(backtest.router,           prefix="/api/backtest",           tags=["Backtest Engine"])
+app.include_router(native_engine.router)
 
 
 @app.websocket("/ws/portfolio")

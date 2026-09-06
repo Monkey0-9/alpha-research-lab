@@ -369,3 +369,124 @@ def get_rebalance_history() -> List[RebalanceEvent]:
         return events
     except Exception:
         return []
+
+
+class ConvexOptimizeRequest(BaseModel):
+    tickers: Optional[List[str]] = Field(default=["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "JPM", "V"])
+    target_net_leverage: float = Field(0.0, description="Dollar neutrality target (0.0 = dollar neutral)")
+    gross_leverage_limit: float = Field(1.6, description="Gross leverage limit sum(|w|) <= L")
+    max_position_weight: float = Field(0.15, description="Max single position bound |w_i| <= w_max")
+    turnover_budget: Optional[float] = Field(0.25, description="Turnover budget ||w - w0||_1 <= tau")
+    risk_aversion: float = Field(1.0, description="Risk aversion parameter lambda")
+
+
+@router.post("/convex-optimize")
+def post_convex_optimization(req: ConvexOptimizeRequest):
+    """Solve institutional convex QP portfolio optimization with institutional constraints."""
+    try:
+        from core.portfolio import convex_portfolio_optimizer, ledoit_wolf_covariance
+        returns_df, available = _get_real_returns(req.tickers)
+        if returns_df is None or returns_df.empty:
+            return {"status": "NO_DATA", "weights": {}, "gross_leverage": 0.0}
+
+        n = len(available)
+        np.random.seed(42)
+        # Synthetic alpha signal correlated with momentum
+        raw_alpha = returns_df.mean().values * 252
+        shrunk_cov, delta = ledoit_wolf_covariance(returns_df.values)
+
+        # Factor beta constraint (Market Beta)
+        factor_beta = np.ones((n, 1))
+
+        res = convex_portfolio_optimizer(
+            alpha_signal=raw_alpha,
+            cov_matrix=shrunk_cov,
+            target_net_leverage=req.target_net_leverage,
+            gross_leverage_limit=req.gross_leverage_limit,
+            max_position_weight=req.max_position_weight,
+            factor_loadings=factor_beta,
+            factor_bounds=[(-0.05, 0.05)],
+            turnover_budget=req.turnover_budget,
+            risk_aversion=req.risk_aversion
+        )
+
+        weights = res["weights"]
+        allocations = [
+            {
+                "ticker": available[i],
+                "weight": round(float(weights[i]), 4),
+                "side": "LONG" if weights[i] > 0 else "SHORT",
+                "abs_exposure_pct": round(abs(float(weights[i])) * 100, 2)
+            }
+            for i in range(n)
+        ]
+
+        return {
+            "status": "OPTIMAL" if res["optimization_success"] else "APPROXIMATION",
+            "optimization_success": res["optimization_success"],
+            "gross_leverage": round(res["gross_leverage"], 3),
+            "net_leverage": round(res["net_leverage"], 4),
+            "portfolio_volatility": round(res["portfolio_volatility"] * np.sqrt(252), 4),
+            "expected_return": round(res["expected_return"], 4),
+            "sharpe_implied": round(res["sharpe_implied"], 2),
+            "turnover": round(res["turnover"], 4),
+            "shrinkage_intensity": round(delta, 4),
+            "allocations": allocations
+        }
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)}
+
+
+@router.get("/shrinkage-compare")
+def get_shrinkage_comparison():
+    """Compare sample covariance, Ledoit-Wolf, and OAS shrinkage condition numbers and eigenvalues."""
+    try:
+        from core.portfolio import ledoit_wolf_covariance, oas_covariance
+        from core.data_loader import load_sp500_data
+
+        raw = load_sp500_data()
+        tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "JPM", "V", "LLY", "XOM"]
+        available = [t for t in tickers if t in raw.index.get_level_values("ticker")]
+        if len(available) < 3:
+            return {"status": "INSUFFICIENT_DATA"}
+
+        sub = raw[raw.index.get_level_values("ticker").isin(available)]
+        rets = sub["return_1d"].unstack("ticker").dropna().values
+
+        sample_cov = np.cov(rets, rowvar=False)
+        lw_cov, lw_delta = ledoit_wolf_covariance(rets)
+        oas_cov, oas_delta = oas_covariance(rets)
+
+        sample_cond = float(np.linalg.cond(sample_cov))
+        lw_cond = float(np.linalg.cond(lw_cov))
+        oas_cond = float(np.linalg.cond(oas_cov))
+
+        sample_eigs = sorted([round(float(x), 6) for x in np.linalg.eigvalsh(sample_cov)], reverse=True)
+        lw_eigs = sorted([round(float(x), 6) for x in np.linalg.eigvalsh(lw_cov)], reverse=True)
+        oas_eigs = sorted([round(float(x), 6) for x in np.linalg.eigvalsh(oas_cov)], reverse=True)
+
+        return {
+            "status": "COMPLETED",
+            "n_assets": len(available),
+            "sample_covariance": {
+                "condition_number": round(sample_cond, 2),
+                "min_eigenvalue": round(sample_eigs[-1], 6),
+                "max_eigenvalue": round(sample_eigs[0], 6),
+                "eigenvalues": sample_eigs[:6]
+            },
+            "ledoit_wolf": {
+                "condition_number": round(lw_cond, 2),
+                "shrinkage_delta": round(lw_delta, 4),
+                "condition_reduction_pct": round((1 - lw_cond / max(sample_cond, 1e-6)) * 100, 1),
+                "eigenvalues": lw_eigs[:6]
+            },
+            "oas_shrinkage": {
+                "condition_number": round(oas_cond, 2),
+                "shrinkage_delta": round(oas_delta, 4),
+                "condition_reduction_pct": round((1 - oas_cond / max(sample_cond, 1e-6)) * 100, 1),
+                "eigenvalues": oas_eigs[:6]
+            }
+        }
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)}
+

@@ -17,6 +17,7 @@ const MODULES = [
   { href: '/execution',         label: 'EXECUTION RESEARCH',      key: 'EXEC' },
   { href: '/risk',              label: 'INSTITUTIONAL RISK',      key: 'RISK' },
   { href: '/live-research',     label: 'LIVE PAPER TRADING',      key: 'LIVE' },
+  { href: '/native-engine',     label: 'KDB+/Q & C NATIVE LAB',   key: 'NTV' },
   { href: '/monitoring',        label: 'PRODUCTION TELEMETRY',    key: 'TELE' },
 ];
 
@@ -161,7 +162,7 @@ export default function Sidebar() {
         {/* Uptime */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#444' }}>
           <span>UPTIME: {fmtUptime(uptime)}</span>
-          <span style={{ color: '#FF6600' }}>FFI:RUST+C</span>
+          <span style={{ color: '#FF6600' }}>FFI:RUST+C+Q</span>
         </div>
       </div>
     </aside>
