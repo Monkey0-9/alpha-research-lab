@@ -115,4 +115,3 @@ def get_production_health() -> Dict[str, Any]:
             "feature_store_records": 0,
             "alerts": []
         }
-

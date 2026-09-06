@@ -18,7 +18,12 @@ import lightgbm as lgb
 class MetaLabelingSystem:
     def __init__(self, confidence_threshold: float = 0.60):
         self.threshold = confidence_threshold
-        self.primary_model = lgb.LGBMRegressor(n_estimators=40, max_depth=3, learning_rate=0.03, random_state=42, verbose=-1)
+        self.primary_model = lgb.LGBMRegressor(
+            n_estimators=40,
+            max_depth=3,
+            learning_rate=0.03,
+            random_state=42,
+            verbose=-1)
         self.meta_classifier = RandomForestClassifier(n_estimators=40, max_depth=3, random_state=42)
 
     def fit(self, X: np.ndarray, returns: np.ndarray):

@@ -375,7 +375,16 @@ def parse_formula(formula_str: str) -> ASTNode:
                     win = int(args[2].value)
                 return TimeSeriesCorrNode(left, right, win)
 
-            if fn_name in ("ts_mean", "ts_std", "ts_zscore", "ts_rank", "ts_delta", "ts_momentum", "ts_decay", "ts_kalman", "ts_hurst"):
+            if fn_name in (
+                "ts_mean",
+                "ts_std",
+                "ts_zscore",
+                "ts_rank",
+                "ts_delta",
+                "ts_momentum",
+                "ts_decay",
+                "ts_kalman",
+                    "ts_hurst"):
                 child = args[0] if args else FeatureNode("close")
                 win = 20
                 if len(args) > 1 and isinstance(args[1], ConstantNode):

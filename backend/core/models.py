@@ -27,37 +27,66 @@ class ModelTrainer:
     def __init__(self):
         self.trained_models = {}
 
-    def train_ridge(self, X_train: np.ndarray, y_train: np.ndarray, X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None) -> Ridge:
+    def train_ridge(self,
+                    X_train: np.ndarray,
+                    y_train: np.ndarray,
+                    X_val: Optional[np.ndarray] = None,
+                    y_val: Optional[np.ndarray] = None) -> Ridge:
         model = Ridge(alpha=50.0)
         model.fit(X_train, y_train)
         return model
 
-    def train_lasso(self, X_train: np.ndarray, y_train: np.ndarray, X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None) -> Lasso:
+    def train_lasso(self,
+                    X_train: np.ndarray,
+                    y_train: np.ndarray,
+                    X_val: Optional[np.ndarray] = None,
+                    y_val: Optional[np.ndarray] = None) -> Lasso:
         model = Lasso(alpha=0.001)
         model.fit(X_train, y_train)
         return model
 
-    def train_random_forest(self, X_train: np.ndarray, y_train: np.ndarray, X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None) -> RandomForestRegressor:
+    def train_random_forest(self,
+                            X_train: np.ndarray,
+                            y_train: np.ndarray,
+                            X_val: Optional[np.ndarray] = None,
+                            y_val: Optional[np.ndarray] = None) -> RandomForestRegressor:
         model = RandomForestRegressor(n_estimators=50, max_depth=5, random_state=42, n_jobs=-1)
         model.fit(X_train, y_train)
         return model
 
-    def train_xgboost(self, X_train: np.ndarray, y_train: np.ndarray, X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None) -> xgb.XGBRegressor:
+    def train_xgboost(self,
+                      X_train: np.ndarray,
+                      y_train: np.ndarray,
+                      X_val: Optional[np.ndarray] = None,
+                      y_val: Optional[np.ndarray] = None) -> xgb.XGBRegressor:
         model = xgb.XGBRegressor(n_estimators=40, max_depth=4, learning_rate=0.03, random_state=42, n_jobs=-1)
         model.fit(X_train, y_train)
         return model
 
-    def train_lightgbm(self, X_train: np.ndarray, y_train: np.ndarray, X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None) -> lgb.LGBMRegressor:
+    def train_lightgbm(self,
+                       X_train: np.ndarray,
+                       y_train: np.ndarray,
+                       X_val: Optional[np.ndarray] = None,
+                       y_val: Optional[np.ndarray] = None) -> lgb.LGBMRegressor:
         model = lgb.LGBMRegressor(n_estimators=50, max_depth=4, learning_rate=0.03, random_state=42, verbose=-1)
         model.fit(X_train, y_train)
         return model
 
-    def train_lstm(self, X_train: np.ndarray, y_train: np.ndarray, X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None, seq_len: int = 20) -> Any:
+    def train_lstm(self,
+                   X_train: np.ndarray,
+                   y_train: np.ndarray,
+                   X_val: Optional[np.ndarray] = None,
+                   y_val: Optional[np.ndarray] = None,
+                   seq_len: int = 20) -> Any:
         model = Ridge(alpha=10.0)
         model.fit(X_train, y_train)
         return model
 
-    def train_transformer(self, X_train: np.ndarray, y_train: np.ndarray, X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None) -> Any:
+    def train_transformer(self,
+                          X_train: np.ndarray,
+                          y_train: np.ndarray,
+                          X_val: Optional[np.ndarray] = None,
+                          y_val: Optional[np.ndarray] = None) -> Any:
         model = Ridge(alpha=5.0)
         model.fit(X_train, y_train)
         return model

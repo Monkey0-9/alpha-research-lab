@@ -24,6 +24,7 @@ from core.paper_trading import paper_trader
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+
 class PortfolioSummary(BaseModel):
     aum: float
     ytd_return_pct: float
@@ -36,12 +37,14 @@ class PortfolioSummary(BaseModel):
     calmar_ratio: float
     sortino_ratio: float
 
+
 class DashboardSummary(BaseModel):
     portfolio: PortfolioSummary
     live_paper_pnl: Dict[str, Any]
     active_models: List[Dict[str, Any]]
     system_health: Dict[str, Any]
     recent_alerts: List[Dict[str, Any]]
+
 
 class EquityPoint(BaseModel):
     date: str
@@ -50,19 +53,23 @@ class EquityPoint(BaseModel):
     pnl: float
     alpha: float
 
+
 class DrawdownPoint(BaseModel):
     date: str
     drawdown_pct: float
     max_drawdown_pct: float
+
 
 class MonthlyReturnItem(BaseModel):
     year: int
     returns: Dict[str, float]  # "Jan": 2.4, ...
     ytd: float
 
+
 class MonthlyReturnsMatrix(BaseModel):
     years: List[int]
     matrix: List[MonthlyReturnItem]
+
 
 class DashboardAlert(BaseModel):
     id: str
@@ -71,6 +78,7 @@ class DashboardAlert(BaseModel):
     message: str
     module: str
 
+
 class PipelineStatus(BaseModel):
     module_num: str
     name: str
@@ -78,6 +86,7 @@ class PipelineStatus(BaseModel):
     last_run: str
     latency_ms: float
     records_processed: int
+
 
 class Position(BaseModel):
     ticker: str
@@ -88,6 +97,7 @@ class Position(BaseModel):
     pnl_pct: float
     side: str
     sector: str
+
 
 class RegimeInfo(BaseModel):
     current_regime: str  # "BULL_TRENDING", "BEAR_DEFENSIVE", "CRISIS_VOLATILITY", "LOW_VOL_EXPANSION"
@@ -362,13 +372,20 @@ def get_dashboard_alerts() -> List[DashboardAlert]:
         pipe_status = data_pipeline.get_status()
         alerts = []
         if pipe_status.get("status") == "COMPLETED":
-            alerts.append(DashboardAlert(
-                id="ALT-1",
-                timestamp=pipe_status.get("last_sync", "unknown")[:8],
-                severity="INFO",
-                message=f"Data pipeline completed: {pipe_status.get('records_count', 0)} records, {pipe_status.get('clean_pct', 0)}% clean.",
-                module="Data Infrastructure"
-            ))
+            alerts.append(
+                DashboardAlert(
+                    id="ALT-1",
+                    timestamp=pipe_status.get(
+                        "last_sync",
+                        "unknown")[
+                        :8],
+                    severity="INFO",
+                    message=(
+                        f"Data pipeline completed: "
+                        f"{pipe_status.get('records_count', 0)} records, "
+                        f"{pipe_status.get('clean_pct', 0)}% clean."
+                    ),
+                    module="Data Infrastructure"))
         elif pipe_status.get("status"):
             alerts.append(DashboardAlert(
                 id="ALT-1",

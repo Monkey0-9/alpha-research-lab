@@ -89,12 +89,10 @@ COMMUTATIVE_OPS: Set[OpType] = {OpType.ADD, OpType.MUL, OpType.AND, OpType.OR, O
 
 class TypeCheckError(Exception):
     """Raised when an expression attempts an illegal operation across types."""
-    pass
 
 
 class DuplicateAlphaError(Exception):
     """Raised when an alpha AST hash matches an already registered discovery."""
-    pass
 
 
 @dataclass
@@ -177,7 +175,13 @@ class TypeChecker:
             return node.node_type
 
         # 2. Cross-Sectional Transformations
-        if node.op in {OpType.RANK, OpType.ZSCORE, OpType.WINSORIZE, OpType.CS_RANK, OpType.CS_ZSCORE, OpType.CS_DEMEAN}:
+        if node.op in {
+                OpType.RANK,
+                OpType.ZSCORE,
+                OpType.WINSORIZE,
+                OpType.CS_RANK,
+                OpType.CS_ZSCORE,
+                OpType.CS_DEMEAN}:
             if len(arg_types) != 1:
                 raise TypeCheckError(f"Operation {node.op.value} requires 1 argument.")
             if arg_types[0] == DslType.BOOLEAN:

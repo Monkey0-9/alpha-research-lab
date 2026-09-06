@@ -4,10 +4,9 @@ Validates that the quantitative discovery and validation pipeline reliably detec
 and promotes a genuinely planted statistical signal.
 """
 import numpy as np
-import pytest
 from core.metrics import information_coefficient
 from core.statistics import deflated_sharpe_ratio
-from core.quality_gate import run_quality_gate, AlphaStage, ClaimCeiling
+from core.quality_gate import run_quality_gate, ClaimCeiling
 
 
 def test_planted_signal_recovery_and_quality_gate_promotion():
@@ -52,5 +51,7 @@ def test_planted_signal_recovery_and_quality_gate_promotion():
     )
 
     assert qg_res["all_passed"] is True
-    assert qg_res["claim_ceiling"] in [ClaimCeiling.CAPACITY_VERIFIED_CANDIDATE.value, ClaimCeiling.PRODUCTION_CANDIDATE.value]
+    assert qg_res["claim_ceiling"] in [
+        ClaimCeiling.CAPACITY_VERIFIED_CANDIDATE.value,
+        ClaimCeiling.PRODUCTION_CANDIDATE.value]
     assert qg_res["verdict"] == "APPROVED_FOR_PRODUCTION"

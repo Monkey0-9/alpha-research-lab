@@ -29,18 +29,18 @@ def generate_labels(df: pd.DataFrame) -> pd.DataFrame:
         sub_sorted = sub.droplevel("ticker").sort_index()
         c = sub_sorted["close"]
 
-        fwd_1d  = c.shift(-1) / c - 1
-        fwd_5d  = c.shift(-5) / c - 1
+        fwd_1d = c.shift(-1) / c - 1
+        fwd_5d = c.shift(-5) / c - 1
         fwd_20d = c.shift(-20) / c - 1
 
         idx = pd.MultiIndex.from_tuples(
             [(d, ticker) for d in sub_sorted.index], names=["date", "ticker"]
         )
-        result.loc[idx, "fwd_return_1d"]  = fwd_1d.values
-        result.loc[idx, "fwd_return_5d"]  = fwd_5d.values
+        result.loc[idx, "fwd_return_1d"] = fwd_1d.values
+        result.loc[idx, "fwd_return_5d"] = fwd_5d.values
         result.loc[idx, "fwd_return_20d"] = fwd_20d.values
-        result.loc[idx, "label_1d"]  = (fwd_1d > 0).astype(int).values
-        result.loc[idx, "label_5d"]  = (fwd_5d > 0).astype(int).values
+        result.loc[idx, "label_1d"] = (fwd_1d > 0).astype(int).values
+        result.loc[idx, "label_5d"] = (fwd_5d > 0).astype(int).values
         result.loc[idx, "label_20d"] = (fwd_20d > 0).astype(int).values
 
     return result

@@ -283,4 +283,3 @@ class HistoricalStressTester:
             "overall_stress_passed": max_scenario_loss_pct <= max_tolerable_drawdown,
             "scenarios": results
         }
-

@@ -2,7 +2,6 @@
 Tests for Capacity Model & Factor Attribution Engine.
 """
 import numpy as np
-import pytest
 from core.capacity import capacity_model
 from core.factor_attribution import factor_attribution
 

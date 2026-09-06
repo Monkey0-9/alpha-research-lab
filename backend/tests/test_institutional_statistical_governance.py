@@ -10,7 +10,7 @@ Verifies:
 import numpy as np
 import pandas as pd
 
-from core.cpcv import CombinatorialPurgedCV, run_cpcv_evaluation
+from core.cpcv import CombinatorialPurgedCV
 from core.pbo import compute_pbo
 from core.statistics import (
     deflated_sharpe_ratio,
@@ -19,7 +19,6 @@ from core.statistics import (
 )
 from core.quality_gate import (
     generate_alpha_evidence_card,
-    evaluate_alpha,
 )
 
 

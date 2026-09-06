@@ -24,56 +24,95 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _CATEGORY_MAP: Dict[str, str] = {
-    "return_1d":      "Short-Term Reversal",
-    "return_5d":      "Short-Term Momentum",
-    "return_10d":     "Short-Term Momentum",
-    "return_20d":     "Cross-Sectional Momentum",
-    "return_60d":     "Cross-Sectional Momentum",
-    "momentum_20d":   "Cross-Sectional Momentum",
-    "momentum_60d":   "Cross-Sectional Momentum",
-    "momentum_120d":  "Cross-Sectional Momentum",
+    "return_1d": "Short-Term Reversal",
+    "return_5d": "Short-Term Momentum",
+    "return_10d": "Short-Term Momentum",
+    "return_20d": "Cross-Sectional Momentum",
+    "return_60d": "Cross-Sectional Momentum",
+    "momentum_20d": "Cross-Sectional Momentum",
+    "momentum_60d": "Cross-Sectional Momentum",
+    "momentum_120d": "Cross-Sectional Momentum",
     "volatility_20d": "Volatility Premium",
     "volatility_60d": "Volatility Premium",
-    "rsi_14":         "Mean Reversion",
-    "rsi_7":          "Mean Reversion",
-    "macd":           "Trend Following",
-    "macd_signal":    "Trend Following",
-    "macd_hist":      "Trend Following",
-    "bb_pct_b":       "Mean Reversion",
-    "bb_width":       "Volatility Premium",
-    "volume_ratio":   "Liquidity Premium",
-    "volume_ma_20":   "Liquidity Premium",
-    "skewness_60d":   "Higher Moments",
-    "kurtosis_60d":   "Higher Moments",
-    "drawdown":       "Drawdown Recovery",
-    "atr_14":         "Volatility Premium",
-    "stoch_k":        "Mean Reversion",
-    "cci_20":         "Mean Reversion",
-    "obv":            "Liquidity Premium",
-    "adl":            "Liquidity Premium",
-    "cmf_20":         "Liquidity Premium",
-    "doji":           "Technical Pattern",
-    "hammer":         "Technical Pattern",
-    "gap_open":       "Opening Gap",
-    "overnight_ret":  "Overnight Effect",
-    "amihud_illiq":   "Liquidity Premium",
-    "bid_ask_proxy":  "Market Microstructure",
+    "rsi_14": "Mean Reversion",
+    "rsi_7": "Mean Reversion",
+    "macd": "Trend Following",
+    "macd_signal": "Trend Following",
+    "macd_hist": "Trend Following",
+    "bb_pct_b": "Mean Reversion",
+    "bb_width": "Volatility Premium",
+    "volume_ratio": "Liquidity Premium",
+    "volume_ma_20": "Liquidity Premium",
+    "skewness_60d": "Higher Moments",
+    "kurtosis_60d": "Higher Moments",
+    "drawdown": "Drawdown Recovery",
+    "atr_14": "Volatility Premium",
+    "stoch_k": "Mean Reversion",
+    "cci_20": "Mean Reversion",
+    "obv": "Liquidity Premium",
+    "adl": "Liquidity Premium",
+    "cmf_20": "Liquidity Premium",
+    "doji": "Technical Pattern",
+    "hammer": "Technical Pattern",
+    "gap_open": "Opening Gap",
+    "overnight_ret": "Overnight Effect",
+    "amihud_illiq": "Liquidity Premium",
+    "bid_ask_proxy": "Market Microstructure",
 }
 
 _ECONOMIC_RATIONALE: Dict[str, str] = {
-    "Short-Term Reversal":       "Short-term price overreaction leads to mean reversion within 1-5 days as institutional participants unwind aggressive positions.",
-    "Short-Term Momentum":       "Persistent order flow and momentum in earnings revisions sustains 5-20 day drift following strong directional moves.",
-    "Cross-Sectional Momentum":  "12-1 month momentum captures delayed information diffusion and institutional herding across the cross-section.",
-    "Volatility Premium":        "Stocks with low realized volatility earn a premium due to leverage constraints on institutional investors (low-vol anomaly).",
-    "Mean Reversion":            "RSI/oscillator extremes identify temporary mispricing corrected as price returns to fair value over 5-15 days.",
-    "Trend Following":           "MACD crossovers and signal-line divergences capture regime persistence in price trends driven by systematic fund flows.",
-    "Liquidity Premium":         "Illiquid stocks earn a premium commensurate with transaction costs; volume signals capture temporary supply-demand imbalances.",
-    "Higher Moments":            "Return skewness captures lottery-ticket demand; kurtosis flags fat-tail events that systematically misprice risk.",
-    "Drawdown Recovery":         "Stocks in deep drawdown exhibit reversal once selling pressure exhausts; drawdown magnitude predicts mean reversion timing.",
-    "Technical Pattern":         "Candlestick patterns encode short-term supply/demand information exploitable in market microstructure time frames.",
-    "Opening Gap":               "Gap-open events aggregate overnight information; systematic gap fade or continuation strategies exploit systematic overreaction.",
-    "Overnight Effect":          "Overnight returns capture risk premia from earnings drift and macro announcements absorbed outside regular trading hours.",
-    "Market Microstructure":     "Bid-ask spread proxies identify short-term adverse selection costs; narrowing spread predicts positive return contribution.",
+    "Short-Term Reversal": (
+        "Short-term price overreaction leads to mean reversion within 1-5 days "
+        "as institutional participants unwind aggressive positions."
+    ),
+    "Short-Term Momentum": (
+        "Persistent order flow and momentum in earnings revisions sustains 5-20 day "
+        "drift following strong directional moves."
+    ),
+    "Cross-Sectional Momentum": (
+        "12-1 month momentum captures delayed information diffusion and institutional "
+        "herding across the cross-section."
+    ),
+    "Volatility Premium": (
+        "Stocks with low realized volatility earn a premium due to leverage constraints "
+        "on institutional investors (low-vol anomaly)."
+    ),
+    "Mean Reversion": (
+        "RSI/oscillator extremes identify temporary mispricing corrected as price "
+        "returns to fair value over 5-15 days."
+    ),
+    "Trend Following": (
+        "MACD crossovers and signal-line divergences capture regime persistence in "
+        "price trends driven by systematic fund flows."
+    ),
+    "Liquidity Premium": (
+        "Illiquid stocks earn a premium commensurate with transaction costs; volume "
+        "signals capture temporary supply-demand imbalances."
+    ),
+    "Higher Moments": (
+        "Return skewness captures lottery-ticket demand; kurtosis flags fat-tail events "
+        "that systematically misprice risk."
+    ),
+    "Drawdown Recovery": (
+        "Stocks in deep drawdown exhibit reversal once selling pressure exhausts; "
+        "drawdown magnitude predicts mean reversion timing."
+    ),
+    "Technical Pattern": (
+        "Candlestick patterns encode short-term supply/demand information exploitable "
+        "in market microstructure time frames."
+    ),
+    "Opening Gap": (
+        "Gap-open events aggregate overnight information; systematic gap fade or "
+        "continuation strategies exploit systematic overreaction."
+    ),
+    "Overnight Effect": (
+        "Overnight returns capture risk premia from earnings drift and macro "
+        "announcements absorbed outside regular trading hours."
+    ),
+    "Market Microstructure": (
+        "Bid-ask spread proxies identify short-term adverse selection costs; "
+        "narrowing spread predicts positive return contribution."
+    ),
 }
 
 

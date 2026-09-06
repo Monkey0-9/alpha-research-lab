@@ -17,11 +17,10 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import time
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 import pandas as pd
 from core.data_loader import load_sp500_data
 from core.universe.universe_engine import universe_engine
-from core.security_master.master import security_master
 
 logger = logging.getLogger(__name__)
 

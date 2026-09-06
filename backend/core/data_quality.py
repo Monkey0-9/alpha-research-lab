@@ -20,7 +20,6 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -106,8 +105,12 @@ class DataQualityEngine:
         errors.extend(s_errs)
 
         # Detect key columns
-        t_col = time_col or ("observation_time" if "observation_time" in df.columns else ("date" if "date" in df.columns else None))
-        sec_col = security_id_col or ("security_id" if "security_id" in df.columns else ("ticker" if "ticker" in df.columns else None))
+        t_col = time_col or (
+            "observation_time" if "observation_time" in df.columns else (
+                "date" if "date" in df.columns else None))
+        sec_col = security_id_col or (
+            "security_id" if "security_id" in df.columns else (
+                "ticker" if "ticker" in df.columns else None))
 
         # 2. Duplicate Detection
         d_res, d_errs = self._check_duplicates(df, sec_col, t_col)
@@ -416,8 +419,12 @@ class DataQualityEngine:
                 QualityCheckResult(
                     check_name="outlier_detection",
                     status=status,
-                    details=f"Evaluated return distribution: {outlier_count} outliers exceeding {self.max_outlier_sigma} MAD.",
-                    metrics={"outlier_count": outlier_count},
+                    details=(
+                        f"Evaluated return distribution: {outlier_count} outliers "
+                        f"exceeding {self.max_outlier_sigma} MAD."
+                    ),
+                    metrics={
+                        "outlier_count": outlier_count},
                 ),
                 warns,
             )

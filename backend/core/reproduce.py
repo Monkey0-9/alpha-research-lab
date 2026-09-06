@@ -26,9 +26,7 @@ try:
         experiment_registry,
         compute_sha256,
         compute_file_sha256,
-        get_git_commit_sha,
         PreRegistrationSpec,
-        ExperimentManifest,
         _DEFAULT_DATA_FILE,
     )
 except ImportError:
@@ -36,9 +34,7 @@ except ImportError:
         experiment_registry,
         compute_sha256,
         compute_file_sha256,
-        get_git_commit_sha,
         PreRegistrationSpec,
-        ExperimentManifest,
         _DEFAULT_DATA_FILE,
     )
 
@@ -214,7 +210,11 @@ def reproduce_experiment(
             return {
                 "experiment_id": experiment_id,
                 "status": "MANIFEST_TAMPER_DETECTED",
-                "reason": f"Cryptographic manifest seal broken! Registered {manifest.manifest_hash[:12]}, computed {recomputed_manifest_hash[:12]}.",
+                "reason": (
+                    f"Cryptographic manifest seal broken! "
+                    f"Registered {manifest.manifest_hash[:12]}, "
+                    f"computed {recomputed_manifest_hash[:12]}."
+                ),
                 "spec_integrity_verified": False,
                 "dataset_checksum_verified": False,
                 "is_exact_match": False,
@@ -225,7 +225,10 @@ def reproduce_experiment(
         return {
             "experiment_id": experiment_id,
             "status": "CODE_VERSION_FAILURE",
-            "reason": f"Code version mismatch: registered {manifest.git_commit[:12]}, received {code_version_override[:12]}.",
+            "reason": (
+                f"Code version mismatch: registered {manifest.git_commit[:12]}, "
+                f"received {code_version_override[:12]}."
+            ),
             "spec_integrity_verified": True,
             "dataset_checksum_verified": False,
             "is_exact_match": False,
@@ -236,7 +239,10 @@ def reproduce_experiment(
         return {
             "experiment_id": experiment_id,
             "status": "ENVIRONMENT_HASH_FAILURE",
-            "reason": f"Runtime environment altered: registered {manifest.env_lock_hash[:12]}, received {env_hash_override[:12]}.",
+            "reason": (
+                f"Runtime environment altered: registered {manifest.env_lock_hash[:12]}, "
+                f"received {env_hash_override[:12]}."
+            ),
             "spec_integrity_verified": True,
             "dataset_checksum_verified": False,
             "is_exact_match": False,
@@ -247,7 +253,10 @@ def reproduce_experiment(
         return {
             "experiment_id": experiment_id,
             "status": "AST_HASH_FAILURE",
-            "reason": f"Alpha AST expression altered: registered {manifest.alpha_ast_hash[:12]}, received {ast_hash_override[:12]}.",
+            "reason": (
+                f"Alpha AST expression altered: registered {manifest.alpha_ast_hash[:12]}, "
+                f"received {ast_hash_override[:12]}."
+            ),
             "spec_integrity_verified": True,
             "dataset_checksum_verified": False,
             "is_exact_match": False,
@@ -260,7 +269,11 @@ def reproduce_experiment(
             return {
                 "experiment_id": experiment_id,
                 "status": "CONFIG_HASH_FAILURE",
-                "reason": f"Hyperparameter configuration altered: registered {manifest.config_hash[:12]}, computed {computed_cfg_hash[:12]}.",
+                "reason": (
+                    f"Hyperparameter configuration altered: "
+                    f"registered {manifest.config_hash[:12]}, "
+                    f"computed {computed_cfg_hash[:12]}."
+                ),
                 "spec_integrity_verified": True,
                 "dataset_checksum_verified": False,
                 "is_exact_match": False,
@@ -290,7 +303,10 @@ def reproduce_experiment(
         return {
             "experiment_id": experiment_id,
             "status": "DATASET_CHECKSUM_FAILURE",
-            "reason": f"Dataset artifact checksum mismatch: registered {manifest.data_hash[:16]}, found {current_data_hash[:16]}.",
+            "reason": (
+                f"Dataset artifact checksum mismatch: "
+                f"registered {manifest.data_hash[:16]}, found {current_data_hash[:16]}."
+            ),
             "spec_integrity_verified": True,
             "dataset_checksum_verified": False,
             "is_exact_match": False,
@@ -323,7 +339,11 @@ def reproduce_experiment(
     is_exact_match = (sharpe_diff < 1e-4)
 
     status = "REPRODUCED_MATCH" if is_exact_match else "REPRODUCTION_MISMATCH"
-    reason = "Reproduced identically within numerical tolerance (< 1e-4)." if is_exact_match else f"Metric drift detected: delta Sharpe {sharpe_diff:.6f} exceeds tolerance 1e-4."
+    reason = (
+        "Reproduced identically within numerical tolerance (< 1e-4)."
+        if is_exact_match
+        else f"Metric drift detected: delta Sharpe {sharpe_diff:.6f} exceeds tolerance 1e-4."
+    )
 
     return {
         "experiment_id": experiment_id,

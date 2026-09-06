@@ -14,22 +14,29 @@ from core.execution import almgren_chriss_impact, simulate_twap_vwap
 
 router = APIRouter()
 
+
 class ACRequest(BaseModel):
     order_size: float = Field(100_000.0, description="Total shares")
     adv: float = Field(5_000_000.0, description="Average daily volume")
     urgency: float = Field(1.0, description="Execution urgency")
     intervals: int = Field(10, description="Number of intervals")
+
+
 class OrderSimRequest(BaseModel):
     order_size: float = Field(50_000.0, description="Total shares")
     benchmark_price: float = Field(150.0, description="Arrival price")
     algo: str = Field("TWAP", description="Algo")
     intervals: int = Field(10, description="Execution intervals")
+
+
 class ImpactRequest(BaseModel):
     ticker: str = "AAPL"
     order_size: float = 50_000.0
     adv: float = 45_000_000.0
     volatility: float = 0.22
     urgency: float = 1.0
+
+
 class ImpactResult(BaseModel):
     ticker: str
     order_size: float
@@ -40,6 +47,8 @@ class ImpactResult(BaseModel):
     estimated_dollar_cost: float
     optimal_execution_minutes: float
     schedule: List[Dict[str, Any]]
+
+
 class AlgoInfo(BaseModel):
     algo: str
     name: str
@@ -49,6 +58,8 @@ class AlgoInfo(BaseModel):
     market_impact_bps: float
     recommended_order_size: str
     status: str
+
+
 class FillQualityPoint(BaseModel):
     time: str
     arrival_price: float
@@ -57,12 +68,14 @@ class FillQualityPoint(BaseModel):
     volume_filled: int
     algo: str
 
+
 class FillQualityData(BaseModel):
     algo: str
     overall_fill_rate_pct: float
     avg_slippage_bps: float
     total_shares: int
     fills: List[FillQualityPoint]
+
 
 class SlippageRecord(BaseModel):
     trade_id: str
@@ -74,11 +87,13 @@ class SlippageRecord(BaseModel):
     delta_bps: float
     algo: str
 
+
 class SlippageData(BaseModel):
     mean_expected_bps: float
     mean_actual_bps: float
     net_alpha_drag_bps: float
     trades: List[SlippageRecord]
+
 
 class VenueItem(BaseModel):
     venue: str
@@ -87,6 +102,7 @@ class VenueItem(BaseModel):
     avg_latency_ms: float
     reversion_bps: float
     fill_quality_score: float
+
 
 class VenueData(BaseModel):
     total_venues: int
@@ -126,12 +142,51 @@ def estimate_market_impact(request: ImpactRequest) -> ImpactResult:
 def get_algo_comparison() -> List[AlgoInfo]:
     """Algo descriptions — reference catalog of available execution algorithms."""
     return [
-        AlgoInfo(algo="TWAP", name="Time-Weighted Average Price", description="Uniform slice execution across trading window.", avg_slippage_bps=0, fill_rate_pct=0, market_impact_bps=0, recommended_order_size="< 2% ADV", status="REFERENCE"),
-        AlgoInfo(algo="VWAP", name="Volume-Weighted Average Price", description="Dynamic slicing calibrated to intraday volume curves.", avg_slippage_bps=0, fill_rate_pct=0, market_impact_bps=0, recommended_order_size="2% - 8% ADV", status="REFERENCE"),
-        AlgoInfo(algo="POV", name="Percentage of Volume", description="Real-time order tracking pegged to tape volume.", avg_slippage_bps=0, fill_rate_pct=0, market_impact_bps=0, recommended_order_size="5% - 15% ADV", status="REFERENCE"),
-        AlgoInfo(algo="IS", name="Implementation Shortfall", description="Urgency-calibrated nonlinear trajectory.", avg_slippage_bps=0, fill_rate_pct=0, market_impact_bps=0, recommended_order_size="Any", status="REFERENCE"),
-        AlgoInfo(algo="DARK_ICEBERG", name="Dark Iceberg with Midpoint Peg", description="Stealth midpoint routing.", avg_slippage_bps=0, fill_rate_pct=0, market_impact_bps=0, recommended_order_size="Large / Illiquid", status="REFERENCE")
-    ]
+        AlgoInfo(
+            algo="TWAP",
+            name="Time-Weighted Average Price",
+            description="Uniform slice execution across trading window.",
+            avg_slippage_bps=0,
+            fill_rate_pct=0,
+            market_impact_bps=0,
+            recommended_order_size="< 2% ADV",
+            status="REFERENCE"),
+        AlgoInfo(
+            algo="VWAP",
+            name="Volume-Weighted Average Price",
+            description="Dynamic slicing calibrated to intraday volume curves.",
+            avg_slippage_bps=0,
+            fill_rate_pct=0,
+            market_impact_bps=0,
+            recommended_order_size="2% - 8% ADV",
+            status="REFERENCE"),
+        AlgoInfo(
+            algo="POV",
+            name="Percentage of Volume",
+            description="Real-time order tracking pegged to tape volume.",
+            avg_slippage_bps=0,
+            fill_rate_pct=0,
+            market_impact_bps=0,
+            recommended_order_size="5% - 15% ADV",
+            status="REFERENCE"),
+        AlgoInfo(
+            algo="IS",
+            name="Implementation Shortfall",
+            description="Urgency-calibrated nonlinear trajectory.",
+            avg_slippage_bps=0,
+            fill_rate_pct=0,
+            market_impact_bps=0,
+            recommended_order_size="Any",
+            status="REFERENCE"),
+        AlgoInfo(
+            algo="DARK_ICEBERG",
+            name="Dark Iceberg with Midpoint Peg",
+            description="Stealth midpoint routing.",
+            avg_slippage_bps=0,
+            fill_rate_pct=0,
+            market_impact_bps=0,
+            recommended_order_size="Large / Illiquid",
+            status="REFERENCE")]
 
 
 @router.get("/fills", response_model=FillQualityData)

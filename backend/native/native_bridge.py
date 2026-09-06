@@ -47,12 +47,28 @@ _c_lib = None
 if C_LIB_PATH and C_LIB_PATH.exists():
     try:
         _c_lib = _load_cdll(C_LIB_PATH)
-        _c_lib.c_rolling_mean.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
-        _c_lib.c_rolling_std.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
-        _c_lib.c_rolling_rsi.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
-        _c_lib.c_simulate_pnl.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_double]
+        _c_lib.c_rolling_mean.argtypes = [
+            ctypes.POINTER(
+                ctypes.c_double), ctypes.POINTER(
+                ctypes.c_double), ctypes.c_int, ctypes.c_int]
+        _c_lib.c_rolling_std.argtypes = [
+            ctypes.POINTER(
+                ctypes.c_double), ctypes.POINTER(
+                ctypes.c_double), ctypes.c_int, ctypes.c_int]
+        _c_lib.c_rolling_rsi.argtypes = [
+            ctypes.POINTER(
+                ctypes.c_double), ctypes.POINTER(
+                ctypes.c_double), ctypes.c_int, ctypes.c_int]
+        _c_lib.c_simulate_pnl.argtypes = [
+            ctypes.POINTER(
+                ctypes.c_double), ctypes.POINTER(
+                ctypes.c_double), ctypes.POINTER(
+                ctypes.c_double), ctypes.c_int, ctypes.c_double]
         if hasattr(_c_lib, "c_rolling_zscore"):
-            _c_lib.c_rolling_zscore.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.c_int, ctypes.c_int]
+            _c_lib.c_rolling_zscore.argtypes = [
+                ctypes.POINTER(
+                    ctypes.c_double), ctypes.POINTER(
+                    ctypes.c_double), ctypes.c_int, ctypes.c_int]
         if hasattr(_c_lib, "c_kalman_filter"):
             _c_lib.c_kalman_filter.argtypes = [
                 ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
@@ -376,8 +392,8 @@ class NativeAccelerator:
         # Fallback
         bp, bs, ap, as_ = bid_prices[:n], bid_sizes[:n], ask_prices[:n], ask_sizes[:n]
         for i in range(1, n):
-            db = bs[i] if bp[i] > bp[i-1] else (bs[i] - bs[i-1] if bp[i] == bp[i-1] else -bs[i-1])
-            da = as_[i] if ap[i] < ap[i-1] else (as_[i] - as_[i-1] if ap[i] == ap[i-1] else -as_[i-1])
+            db = bs[i] if bp[i] > bp[i - 1] else (bs[i] - bs[i - 1] if bp[i] == bp[i - 1] else -bs[i - 1])
+            da = as_[i] if ap[i] < ap[i - 1] else (as_[i] - as_[i - 1] if ap[i] == ap[i - 1] else -as_[i - 1])
             out_ofi[i] = db - da
         return out_ofi
 
@@ -406,7 +422,9 @@ class NativeAccelerator:
             return out_mp
 
         tot_depth = bid_sizes[:n] + ask_sizes[:n]
-        return np.where(tot_depth > 0, (bid_sizes[:n] * ask_prices[:n] + ask_sizes[:n] * bid_prices[:n]) / tot_depth, 0.5 * (bid_prices[:n] + ask_prices[:n]))
+        return np.where(tot_depth > 0,
+                        (bid_sizes[:n] * ask_prices[:n] + ask_sizes[:n] * bid_prices[:n]) / tot_depth,
+                        0.5 * (bid_prices[:n] + ask_prices[:n]))
 
     @staticmethod
     def fast_ewma_volatility(returns: np.ndarray, lambda_decay: float = 0.94) -> np.ndarray:

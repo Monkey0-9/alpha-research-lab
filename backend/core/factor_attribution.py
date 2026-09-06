@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 import numpy as np
-import pandas as pd
 from sklearn.linear_model import LinearRegression
 
 logger = logging.getLogger(__name__)
@@ -62,7 +61,7 @@ class FactorAttributionEngine:
             )
 
         mkt = np.asarray(market_returns, dtype=float) if market_returns is not None else np.zeros(n)
-        
+
         # OLS regression: R_strat = alpha + beta * R_mkt
         X = mkt.reshape(-1, 1)
         model = LinearRegression().fit(X, rets)
@@ -70,7 +69,7 @@ class FactorAttributionEngine:
         residuals = rets - preds
 
         intercept = float(model.intercept_)
-        mkt_beta = float(model.coef_[0])
+        float(model.coef_[0])
         alpha_ann = float(intercept * 252.0)
         res_std = float(np.std(residuals))
         res_vol_ann = float(res_std * np.sqrt(252.0))

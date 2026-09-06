@@ -239,15 +239,16 @@ class RobinhoodClient:
             for bar in historicals:
                 if not bar or "close_price" not in bar:
                     continue
-                records.append({
-                    "date": pd.to_datetime(bar["begins_at"]).normalize() if interval == "day" else pd.to_datetime(bar["begins_at"]),
-                    "open": float(bar["open_price"]),
-                    "high": float(bar["high_price"]),
-                    "low": float(bar["low_price"]),
-                    "close": float(bar["close_price"]),
-                    "volume": int(bar["volume"]),
-                    "ticker": sym
-                })
+                records.append(
+                    {
+                        "date": pd.to_datetime(
+                            bar["begins_at"]).normalize() if interval == "day" else pd.to_datetime(
+                            bar["begins_at"]), "open": float(
+                            bar["open_price"]), "high": float(
+                            bar["high_price"]), "low": float(
+                            bar["low_price"]), "close": float(
+                                bar["close_price"]), "volume": int(
+                                    bar["volume"]), "ticker": sym})
 
             if not records:
                 return pd.DataFrame()

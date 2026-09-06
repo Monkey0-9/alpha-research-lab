@@ -55,7 +55,10 @@ class ComplianceDecision:
             self.audit_hash = self._compute_hash()
 
     def _compute_hash(self) -> str:
-        content = f"{self.order_id}|{self.ticker}|{self.action}|{self.shares}|{self.price}|{self.status.value}|{self.timestamp}"
+        content = (
+            f"{self.order_id}|{self.ticker}|{self.action}"
+            f"|{self.shares}|{self.price}|{self.status.value}|{self.timestamp}"
+        )
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     def to_dict(self) -> Dict[str, Any]:
@@ -140,7 +143,11 @@ class PreTradeComplianceEngine:
             results.append(res)
             rejections.append(f"[{res.rule_name}] {res.details}")
         else:
-            results.append(ComplianceRuleResult(rule_name="RESTRICTED_TICKER", passed=True, details="Ticker is clear to trade."))
+            results.append(
+                ComplianceRuleResult(
+                    rule_name="RESTRICTED_TICKER",
+                    passed=True,
+                    details="Ticker is clear to trade."))
 
         # 2. Max Single-Order Notional Check
         if notional > self.config.max_order_notional:
@@ -169,7 +176,11 @@ class PreTradeComplianceEngine:
                 res = ComplianceRuleResult(
                     rule_name="FAT_FINGER_PRICE_COLLAR",
                     passed=False,
-                    details=f"Limit price ${price:.2f} deviates {price_dev:.1%} from NBBO quote ${market_quote:.2f}, exceeding collar limit of {self.config.fat_finger_collar_pct:.1%}.",
+                    details=(
+                        f"Limit price ${price:.2f} deviates {price_dev:.1%} from "
+                        f"NBBO quote ${market_quote:.2f}, exceeding collar limit of "
+                        f"{self.config.fat_finger_collar_pct:.1%}."
+                    ),
                     limit_value=self.config.fat_finger_collar_pct,
                     observed_value=price_dev,
                 )
@@ -191,7 +202,11 @@ class PreTradeComplianceEngine:
                 res = ComplianceRuleResult(
                     rule_name="ADV_PARTICIPATION_LIMIT",
                     passed=False,
-                    details=f"Order size {shares:,.0f} shares is {participation:.1%} of 20d ADV ({adv_shares_20d:,.0f}), exceeding max participation rate of {self.config.max_adv_participation_pct:.1%}.",
+                    details=(
+                        f"Order size {shares:,.0f} shares is {participation:.1%} of "
+                        f"20d ADV ({adv_shares_20d:,.0f}), exceeding max participation "
+                        f"rate of {self.config.max_adv_participation_pct:.1%}."
+                    ),
                     limit_value=self.config.max_adv_participation_pct,
                     observed_value=participation,
                 )
@@ -216,7 +231,11 @@ class PreTradeComplianceEngine:
                 res = ComplianceRuleResult(
                     rule_name="PORTFOLIO_CONCENTRATION_LIMIT",
                     passed=False,
-                    details=f"Projected post-trade concentration {projected_weight:.1%} exceeds maximum single-name cap of {self.config.max_portfolio_concentration:.1%}.",
+                    details=(
+                        f"Projected post-trade concentration {projected_weight:.1%} "
+                        f"exceeds maximum single-name cap of "
+                        f"{self.config.max_portfolio_concentration:.1%}."
+                    ),
                     limit_value=self.config.max_portfolio_concentration,
                     observed_value=projected_weight,
                 )
@@ -237,7 +256,10 @@ class PreTradeComplianceEngine:
                 res = ComplianceRuleResult(
                     rule_name="REG_SHO_LOCATE",
                     passed=False,
-                    details=f"Short sale of {shares:,.0f} shares of {ticker} rejected: No valid borrow locate identifier provided.",
+                    details=(
+                        f"Short sale of {shares:,.0f} shares of {ticker} rejected: "
+                        "No valid borrow locate identifier provided."
+                    ),
                 )
                 results.append(res)
                 rejections.append(f"[{res.rule_name}] {res.details}")

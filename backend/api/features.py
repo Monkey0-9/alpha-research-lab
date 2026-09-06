@@ -12,6 +12,7 @@ import numpy as np
 
 router = APIRouter()
 
+
 class FeatureInfo(BaseModel):
     name: str
     category: str
@@ -20,6 +21,7 @@ class FeatureInfo(BaseModel):
     lookahead_bias: bool = False
     last_computed: str = "2026-09-04T17:00:00Z"
     mean_ic: float = 0.052
+
 
 class FeatureIC(BaseModel):
     feature: str
@@ -30,6 +32,7 @@ class FeatureIC(BaseModel):
     fdr_pass: bool
     std_ic: float = 0.038
 
+
 class RollingICPoint(BaseModel):
     date: str
     ic: float
@@ -37,15 +40,18 @@ class RollingICPoint(BaseModel):
     upper_bound: float
     lower_bound: float
 
+
 class CorrelationMatrix(BaseModel):
     features: List[str]
     matrix: List[List[float]]
+
 
 class TuneRequest(BaseModel):
     feature: str = "momentum_20d"
     lookback: int = 20
     smoothing: int = 5
     target_horizon: int = 5
+
 
 class TuneResponse(BaseModel):
     feature: str
@@ -54,6 +60,7 @@ class TuneResponse(BaseModel):
     current_ic: float
     optimized_ic: float
     ic_curve: List[Dict[str, Any]]
+
 
 class DistributionData(BaseModel):
     feature: str
@@ -67,50 +74,200 @@ class DistributionData(BaseModel):
 
 
 FEATURE_CATALOG = [
-    {"name": "return_1d", "category": "Returns", "formula": "close / close.shift(1) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "return_5d", "category": "Returns", "formula": "close / close.shift(5) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "return_10d", "category": "Returns", "formula": "close / close.shift(10) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "return_20d", "category": "Returns", "formula": "close / close.shift(20) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "return_60d", "category": "Returns", "formula": "close / close.shift(60) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "momentum_20d", "category": "Momentum", "formula": "close / close.shift(20) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "momentum_60d", "category": "Momentum", "formula": "close / close.shift(60) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "momentum_120d", "category": "Momentum", "formula": "close / close.shift(120) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "mom_composite", "category": "Momentum", "formula": "0.4*M20 + 0.3*M60 + 0.3*M120", "shift": 1, "lookahead_bias": False},
-    {"name": "volatility_20d", "category": "Volatility", "formula": "rolling_std(return_1d, 20)", "shift": 1, "lookahead_bias": False},
-    {"name": "volatility_60d", "category": "Volatility", "formula": "rolling_std(return_1d, 60)", "shift": 1, "lookahead_bias": False},
-    {"name": "rsi_14", "category": "Oscillator", "formula": "100 - (100 / (1 + RS(14)))", "shift": 1, "lookahead_bias": False},
-    {"name": "rsi_7", "category": "Oscillator", "formula": "100 - (100 / (1 + RS(7)))", "shift": 1, "lookahead_bias": False},
+    {"name": "return_1d",
+     "category": "Returns",
+     "formula": "close / close.shift(1) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "return_5d",
+     "category": "Returns",
+     "formula": "close / close.shift(5) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "return_10d",
+     "category": "Returns",
+     "formula": "close / close.shift(10) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "return_20d",
+     "category": "Returns",
+     "formula": "close / close.shift(20) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "return_60d",
+     "category": "Returns",
+     "formula": "close / close.shift(60) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "momentum_20d",
+     "category": "Momentum",
+     "formula": "close / close.shift(20) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "momentum_60d",
+     "category": "Momentum",
+     "formula": "close / close.shift(60) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "momentum_120d",
+     "category": "Momentum",
+     "formula": "close / close.shift(120) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "mom_composite",
+     "category": "Momentum",
+     "formula": "0.4*M20 + 0.3*M60 + 0.3*M120",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "volatility_20d",
+     "category": "Volatility",
+     "formula": "rolling_std(return_1d, 20)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "volatility_60d",
+     "category": "Volatility",
+     "formula": "rolling_std(return_1d, 60)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "rsi_14",
+     "category": "Oscillator",
+     "formula": "100 - (100 / (1 + RS(14)))",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "rsi_7",
+     "category": "Oscillator",
+     "formula": "100 - (100 / (1 + RS(7)))",
+     "shift": 1,
+     "lookahead_bias": False},
     {"name": "macd", "category": "Trend", "formula": "EMA(12) - EMA(26)", "shift": 1, "lookahead_bias": False},
     {"name": "macd_signal", "category": "Trend", "formula": "EMA(MACD, 9)", "shift": 1, "lookahead_bias": False},
     {"name": "macd_hist", "category": "Trend", "formula": "MACD - MACD_signal", "shift": 1, "lookahead_bias": False},
-    {"name": "bb_position", "category": "Volatility", "formula": "(close - lower) / (upper - lower)", "shift": 1, "lookahead_bias": False},
-    {"name": "bb_width", "category": "Volatility", "formula": "(upper - lower) / mid", "shift": 1, "lookahead_bias": False},
-    {"name": "volume_ma_20", "category": "Volume", "formula": "rolling_mean(volume, 20)", "shift": 1, "lookahead_bias": False},
-    {"name": "volume_ratio", "category": "Volume", "formula": "volume / volume_ma_20", "shift": 1, "lookahead_bias": False},
+    {"name": "bb_position",
+     "category": "Volatility",
+     "formula": "(close - lower) / (upper - lower)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "bb_width",
+     "category": "Volatility",
+     "formula": "(upper - lower) / mid",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "volume_ma_20",
+     "category": "Volume",
+     "formula": "rolling_mean(volume, 20)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "volume_ratio", "category": "Volume",
+     "formula": "volume / volume_ma_20", "shift": 1, "lookahead_bias": False},
     {"name": "dollar_volume", "category": "Volume", "formula": "close * volume", "shift": 1, "lookahead_bias": False},
-    {"name": "autocorr_5d", "category": "Autocorrelation", "formula": "rolling_autocorr(return_1d, 5)", "shift": 1, "lookahead_bias": False},
-    {"name": "autocorr_20d", "category": "Autocorrelation", "formula": "rolling_autocorr(return_1d, 20)", "shift": 1, "lookahead_bias": False},
-    {"name": "hurst_100d", "category": "Memory", "formula": "R/S Hurst exponent (100d)", "shift": 1, "lookahead_bias": False},
-    {"name": "skew_60d", "category": "Moments", "formula": "rolling_skew(return_1d, 60)", "shift": 1, "lookahead_bias": False},
-    {"name": "kurt_60d", "category": "Moments", "formula": "rolling_kurt(return_1d, 60)", "shift": 1, "lookahead_bias": False},
-    {"name": "current_drawdown", "category": "Drawdown", "formula": "close / rolling_peak(252) - 1", "shift": 1, "lookahead_bias": False},
-    {"name": "max_drawdown_60d", "category": "Drawdown", "formula": "rolling_min(drawdown, 60)", "shift": 1, "lookahead_bias": False},
-    {"name": "price_ma_10_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 10)", "shift": 1, "lookahead_bias": False},
-    {"name": "price_ma_50_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 50)", "shift": 1, "lookahead_bias": False},
-    {"name": "price_ma_200_ratio", "category": "Trend", "formula": "close / rolling_mean(close, 200)", "shift": 1, "lookahead_bias": False},
-    {"name": "hl_range_20d", "category": "Volatility", "formula": "rolling_mean((high - low)/low, 20)", "shift": 1, "lookahead_bias": False},
-    {"name": "gap_pct", "category": "Price Action", "formula": "(open - close.shift(1)) / close.shift(1)", "shift": 1, "lookahead_bias": False},
-    {"name": "trend_strength_20d", "category": "Trend", "formula": "R^2 of 20d linear regression", "shift": 1, "lookahead_bias": False},
-    {"name": "momentum_rank_20d", "category": "Cross-Sectional", "formula": "rank_pct(momentum_20d) by date", "shift": 1, "lookahead_bias": False},
-    {"name": "vol_rank_volatility_20d", "category": "Cross-Sectional", "formula": "rank_pct(volatility_20d) by date", "shift": 1, "lookahead_bias": False},
-    {"name": "ret_rank_20d", "category": "Cross-Sectional", "formula": "rank_pct(return_20d) by date", "shift": 1, "lookahead_bias": False},
+    {"name": "autocorr_5d",
+     "category": "Autocorrelation",
+     "formula": "rolling_autocorr(return_1d, 5)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "autocorr_20d",
+     "category": "Autocorrelation",
+     "formula": "rolling_autocorr(return_1d, 20)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "hurst_100d",
+     "category": "Memory",
+     "formula": "R/S Hurst exponent (100d)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "skew_60d",
+     "category": "Moments",
+     "formula": "rolling_skew(return_1d, 60)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "kurt_60d",
+     "category": "Moments",
+     "formula": "rolling_kurt(return_1d, 60)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "current_drawdown",
+     "category": "Drawdown",
+     "formula": "close / rolling_peak(252) - 1",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "max_drawdown_60d",
+     "category": "Drawdown",
+     "formula": "rolling_min(drawdown, 60)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "price_ma_10_ratio",
+     "category": "Trend",
+     "formula": "close / rolling_mean(close, 10)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "price_ma_50_ratio",
+     "category": "Trend",
+     "formula": "close / rolling_mean(close, 50)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "price_ma_200_ratio",
+     "category": "Trend",
+     "formula": "close / rolling_mean(close, 200)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "hl_range_20d",
+     "category": "Volatility",
+     "formula": "rolling_mean((high - low)/low, 20)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "gap_pct",
+     "category": "Price Action",
+     "formula": "(open - close.shift(1)) / close.shift(1)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "trend_strength_20d",
+     "category": "Trend",
+     "formula": "R^2 of 20d linear regression",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "momentum_rank_20d",
+     "category": "Cross-Sectional",
+     "formula": "rank_pct(momentum_20d) by date",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "vol_rank_volatility_20d", "category": "Cross-Sectional",
+        "formula": "rank_pct(volatility_20d) by date", "shift": 1, "lookahead_bias": False},
+    {"name": "ret_rank_20d",
+     "category": "Cross-Sectional",
+     "formula": "rank_pct(return_20d) by date",
+     "shift": 1,
+     "lookahead_bias": False},
     # Native C and Q Hardware-Accelerated Quantitative Features
-    {"name": "kalman_fair_value", "category": "State-Space", "formula": "C_Kalman_Filter(close, Q=1e-5, R=1e-3)", "shift": 1, "lookahead_bias": False},
-    {"name": "kalman_residual", "category": "State-Space", "formula": "close.shift(1) - kalman_fair_value", "shift": 1, "lookahead_bias": False},
-    {"name": "ewma_volatility_20d", "category": "Volatility", "formula": "C_RiskMetrics_EWMA(return_1d, lambda=0.94)", "shift": 1, "lookahead_bias": False},
-    {"name": "c_zscore_20d", "category": "Statistical", "formula": "C_SIMD_Rolling_ZScore(close, 20)", "shift": 1, "lookahead_bias": False},
-    {"name": "q_ofi_signal", "category": "Microstructure", "formula": "Q_calcOFI[quotes] (Level-1 Imbalance)", "shift": 1, "lookahead_bias": False},
-    {"name": "c_microprice_spread", "category": "Microstructure", "formula": "C_Microprice(depth_weighted_equilibrium)", "shift": 1, "lookahead_bias": False},
+    {"name": "kalman_fair_value",
+     "category": "State-Space",
+     "formula": "C_Kalman_Filter(close, Q=1e-5, R=1e-3)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "kalman_residual",
+     "category": "State-Space",
+     "formula": "close.shift(1) - kalman_fair_value",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "ewma_volatility_20d",
+     "category": "Volatility",
+     "formula": "C_RiskMetrics_EWMA(return_1d, lambda=0.94)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "c_zscore_20d",
+     "category": "Statistical",
+     "formula": "C_SIMD_Rolling_ZScore(close, 20)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "q_ofi_signal",
+     "category": "Microstructure",
+     "formula": "Q_calcOFI[quotes] (Level-1 Imbalance)",
+     "shift": 1,
+     "lookahead_bias": False},
+    {"name": "c_microprice_spread",
+     "category": "Microstructure",
+     "formula": "C_Microprice(depth_weighted_equilibrium)",
+     "shift": 1,
+     "lookahead_bias": False},
 ]
 
 
@@ -180,20 +337,27 @@ def get_features_list():
         ic_ir = round(mean_ic / ic_std, 2) if ic_std > 0 else 0.0
         t_stat = round(ic_ir * 2.45, 2)
 
-        enriched.append({
-            **item,
-            "id": f"F{idx + 1:02d}",
-            "category": category_norm,
-            "lookback": "20 Days" if "20" in item["name"] else ("60 Days" if "60" in item["name"] else ("14 Days" if "14" in item["name"] else "5 Days")),
-            "ic_mean": round(mean_ic, 4),
-            "ic_std": ic_std,
-            "ic_ir": ic_ir,
-            "t_statistic": t_stat,
-            "p_value": round(p_val, 6),
-            "fdr_pass": fdr_q < 0.05,
-            "status": "PROMOTED" if fdr_q < 0.05 else ("TESTING" if fdr_q < 0.10 else "REJECTED"),
-            "description": f"{item.get('category')} factor: {item.get('formula')}"
-        })
+        enriched.append(
+            {
+                **item,
+                "id": f"F{idx + 1:02d}",
+                "category": category_norm,
+                "lookback": "20 Days" if "20" in item["name"] else (
+                    "60 Days" if "60" in item["name"] else (
+                        "14 Days" if "14" in item["name"] else "5 Days")),
+                "ic_mean": round(
+                    mean_ic,
+                    4),
+                "ic_std": ic_std,
+                "ic_ir": ic_ir,
+                "t_statistic": t_stat,
+                "p_value": round(
+                    p_val,
+                    6),
+                "fdr_pass": fdr_q < 0.05,
+                "status": "PROMOTED" if fdr_q < 0.05 else (
+                    "TESTING" if fdr_q < 0.10 else "REJECTED"),
+                "description": f"{item.get('category')} factor: {item.get('formula')}"})
 
     return {
         "count": len(FEATURE_CATALOG),
@@ -308,7 +472,15 @@ def get_feature_correlation() -> CorrelationMatrix:
         from core.features import build_features
         raw = load_sp500_data()
         f = build_features(raw)
-        key_features = [c for c in ["momentum_20d", "momentum_60d", "volatility_20d", "volume_ratio", "rsi_14", "macd", "hurst_100d"] if c in f.columns]
+        key_features = [
+            c for c in [
+                "momentum_20d",
+                "momentum_60d",
+                "volatility_20d",
+                "volume_ratio",
+                "rsi_14",
+                "macd",
+                "hurst_100d"] if c in f.columns]
         if len(key_features) < 2:
             return CorrelationMatrix(features=key_features, matrix=[])
 

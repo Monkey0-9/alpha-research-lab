@@ -10,10 +10,9 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -191,7 +190,8 @@ class PortfolioLedger:
 
         if abs(new_qty) < 1e-8:
             # Position closed
-            realized = (fill.price - pos.cost_basis) * old_qty if old_qty > 0 else (pos.cost_basis - fill.price) * abs(old_qty)
+            realized = (fill.price - pos.cost_basis) * \
+                old_qty if old_qty > 0 else (pos.cost_basis - fill.price) * abs(old_qty)
             pos.realized_pnl += (realized - fill.fees)
             pos.quantity = 0.0
             pos.cost_basis = 0.0
@@ -355,7 +355,8 @@ class PortfolioLedger:
 
         total_realized = sum(p.realized_pnl for p in self.positions.values())
         total_unrealized = sum(p.unrealized_pnl for p in self.positions.values())
-        pnl_reconciliation = abs((equity - self.initial_cash) - (total_realized + total_unrealized - self.accrued_borrow_fees)) < 1e-2
+        pnl_reconciliation = abs((equity - self.initial_cash) - (total_realized +
+                                 total_unrealized - self.accrued_borrow_fees)) < 1e-2
 
         return {
             "is_balanced": abs(total_assets - (total_liabilities + equity)) < 1e-4,

@@ -14,6 +14,7 @@ from core.regime import regime_engine
 
 router = APIRouter()
 
+
 class SplitStructure(BaseModel):
     train_pct: float = 60.0
     val_pct: float = 20.0
@@ -21,6 +22,7 @@ class SplitStructure(BaseModel):
     embargo_days: int = 21
     purge_days: int = 5
     timeline: List[Dict[str, Any]]
+
 
 class FoldResult(BaseModel):
     fold: int
@@ -34,6 +36,7 @@ class FoldResult(BaseModel):
     oos_return: Optional[float] = None
     status: str
 
+
 class WalkForwardResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
     model_type: str
@@ -43,6 +46,7 @@ class WalkForwardResponse(BaseModel):
     positive_fold_ratio: float
     folds: List[FoldResult]
 
+
 class PurgedFold(BaseModel):
     fold: int
     train_count: int
@@ -51,6 +55,7 @@ class PurgedFold(BaseModel):
     embargo_count: int
     oos_sharpe: float
 
+
 class PurgedCVResponse(BaseModel):
     n_splits: int
     purge_window_days: int
@@ -58,6 +63,7 @@ class PurgedCVResponse(BaseModel):
     mean_purged_sharpe: float
     leakage_detected: bool
     folds: List[PurgedFold]
+
 
 class RegimeResult(BaseModel):
     regime: str
@@ -68,12 +74,14 @@ class RegimeResult(BaseModel):
     win_rate: float
     is_robust: bool
 
+
 class RegimeTestResponse(BaseModel):
     model_config = {"protected_namespaces": ()}
     model_type: str
     overall_robustness_passed: bool
     regimes_tested: int
     results: List[RegimeResult]
+
 
 class ConsistencyScore(BaseModel):
     model_config = {"protected_namespaces": ()}
@@ -105,11 +113,35 @@ def get_train_val_test_splits() -> SplitStructure:
             embargo_days=21,
             purge_days=5,
             timeline=[
-                {"phase": "Train (In-Sample)", "start": str(dates[0].date()), "end": str(train_end.date()), "color": "#38bdf8", "pct": 60},
-                {"phase": "Purge / Embargo", "start": str(train_end.date()), "end": str(purge_end.date()), "color": "#f43f5e", "pct": 2},
-                {"phase": "Validation", "start": str(purge_end.date()), "end": str(val_end.date()), "color": "#f59e0b", "pct": 18},
-                {"phase": "Out-of-Sample Test", "start": str(val_end.date()), "end": str(test_end.date()), "color": "#10b981", "pct": 20}
-            ]
+                {
+                    "phase": "Train (In-Sample)",
+                    "start": str(dates[0].date()),
+                    "end": str(train_end.date()),
+                    "color": "#38bdf8",
+                    "pct": 60,
+                },
+                {
+                    "phase": "Purge / Embargo",
+                    "start": str(train_end.date()),
+                    "end": str(purge_end.date()),
+                    "color": "#f43f5e",
+                    "pct": 2,
+                },
+                {
+                    "phase": "Validation",
+                    "start": str(purge_end.date()),
+                    "end": str(val_end.date()),
+                    "color": "#f59e0b",
+                    "pct": 18,
+                },
+                {
+                    "phase": "Out-of-Sample Test",
+                    "start": str(val_end.date()),
+                    "end": str(test_end.date()),
+                    "color": "#10b981",
+                    "pct": 20,
+                },
+            ],
         )
     except Exception:
         return SplitStructure(
@@ -199,7 +231,11 @@ def get_consistency_score(model_type: str = "lightgbm") -> ConsistencyScore:
         worst_dd = round(min(f.get("max_drawdown_pct", 0) for f in folds), 3) if folds else 0.0
 
         is_consistent = pos_pct >= 70 and dispersion < 0.5
-        recommendation = "PASSED: Model exhibits high stability across rolling cross-validation folds." if is_consistent else "FAILED: Model shows inconsistent performance across folds."
+        recommendation = (
+            "PASSED: Model exhibits high stability across rolling cross-validation folds."
+            if is_consistent
+            else "FAILED: Model shows inconsistent performance across folds."
+        )
 
         return ConsistencyScore(
             model_type=model_type,

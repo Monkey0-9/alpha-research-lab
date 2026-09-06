@@ -62,12 +62,14 @@ class TimeSeriesValidator:
         if total_days < 100:
             return {
                 "status": "INSUFFICIENT_DATA",
-                "reason": f"Insufficient historical data ({total_days} days) for walk-forward validation; minimum required is 100.",
+                "reason": (
+                    f"Insufficient historical data ({total_days} days) for "
+                    "walk-forward validation; minimum required is 100."
+                ),
                 "folds": [],
                 "mean_oos_sharpe": None,
                 "sharpe_std": None,
-                "consistency_ratio": None
-            }
+                "consistency_ratio": None}
 
         if total_days < 500:
             min_train = max(40, int(total_days * 0.35))
@@ -97,8 +99,10 @@ class TimeSeriesValidator:
             if len(test_dates) < 10 or len(train_dates) < 100:
                 continue
 
-            train_sub = self.df[self.df.index.get_level_values("date").isin(train_dates)].dropna(subset=self.feature_cols + [self.target_col])
-            test_sub = self.df[self.df.index.get_level_values("date").isin(test_dates)].dropna(subset=self.feature_cols + [self.target_col])
+            train_sub = self.df[self.df.index.get_level_values("date").isin(
+                train_dates)].dropna(subset=self.feature_cols + [self.target_col])
+            test_sub = self.df[self.df.index.get_level_values("date").isin(
+                test_dates)].dropna(subset=self.feature_cols + [self.target_col])
 
             if train_sub.empty or test_sub.empty:
                 continue
@@ -116,7 +120,8 @@ class TimeSeriesValidator:
             train_sub_copy["pred"] = preds_tr
             tr_daily_rets = []
             for d in train_dates[-60:]:  # sample recent training window
-                d_slice_tr = train_sub_copy.xs(d, level="date") if d in train_sub_copy.index.get_level_values("date") else pd.DataFrame()
+                d_slice_tr = train_sub_copy.xs(
+                    d, level="date") if d in train_sub_copy.index.get_level_values("date") else pd.DataFrame()
                 if len(d_slice_tr) >= 4:
                     q_h = d_slice_tr["pred"].quantile(0.7)
                     q_l = d_slice_tr["pred"].quantile(0.3)
@@ -130,7 +135,8 @@ class TimeSeriesValidator:
             test_sub_copy["pred"] = preds
             daily_rets = []
             for d in test_dates:
-                d_slice = test_sub_copy.xs(d, level="date") if d in test_sub_copy.index.get_level_values("date") else pd.DataFrame()
+                d_slice = test_sub_copy.xs(
+                    d, level="date") if d in test_sub_copy.index.get_level_values("date") else pd.DataFrame()
                 if len(d_slice) >= 4:
                     q_high = d_slice["pred"].quantile(0.7)
                     q_low = d_slice["pred"].quantile(0.3)
@@ -232,7 +238,14 @@ class CVFoldResult:
             setattr(self, k, v)
 
 
-def walk_forward_cv(features=None, target=None, model_type="lightgbm", n_folds=12, train_min_months=24, test_months=3, embargo_months=1) -> List[CVFoldResult]:
+def walk_forward_cv(
+        features=None,
+        target=None,
+        model_type="lightgbm",
+        n_folds=12,
+        train_min_months=24,
+        test_months=3,
+        embargo_months=1) -> List[CVFoldResult]:
     """Execute expanding window walk-forward cross-validation."""
     res = validator.run_walk_forward(num_folds=n_folds, model_type=model_type)
     fold_objs = []
@@ -255,7 +268,13 @@ def walk_forward_cv(features=None, target=None, model_type="lightgbm", n_folds=1
     return fold_objs
 
 
-def purged_kfold_cv(features=None, target=None, model_type="lightgbm", n_splits=5, purge_window=21, embargo_days=5) -> List[CVFoldResult]:
+def purged_kfold_cv(
+        features=None,
+        target=None,
+        model_type="lightgbm",
+        n_splits=5,
+        purge_window=21,
+        embargo_days=5) -> List[CVFoldResult]:
     """Execute purged K-fold cross-validation with actual model training and evaluation."""
     validator_instance = TimeSeriesValidator()
     validator_instance._ensure_data()
@@ -287,8 +306,10 @@ def purged_kfold_cv(features=None, target=None, model_type="lightgbm", n_splits=
         if len(train_dates_fold) < 100 or len(test_dates_fold) < 10:
             continue
 
-        train_sub = df[df.index.get_level_values("date").isin(train_dates_fold)].dropna(subset=feature_cols + [target_col])
-        test_sub = df[df.index.get_level_values("date").isin(test_dates_fold)].dropna(subset=feature_cols + [target_col])
+        train_sub = df[df.index.get_level_values("date").isin(
+            train_dates_fold)].dropna(subset=feature_cols + [target_col])
+        test_sub = df[df.index.get_level_values("date").isin(
+            test_dates_fold)].dropna(subset=feature_cols + [target_col])
 
         if train_sub.empty or test_sub.empty:
             continue
@@ -350,4 +371,3 @@ def validate_no_leakage(train_data: Any, test_data: Any) -> bool:
         test_idx = set(test_data.index)
         return len(train_idx.intersection(test_idx)) == 0
     return True
-

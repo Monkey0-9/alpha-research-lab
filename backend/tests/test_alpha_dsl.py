@@ -1,5 +1,6 @@
 """
-Unit tests for Alpha DSL, Typed AST, Mathematical Canonicalization, and Deduplicating Alpha Registry.
+Unit tests for Alpha DSL, Typed AST, Mathematical Canonicalization,
+and Deduplicating Alpha Registry.
 """
 import pytest
 from backend.core.alpha_dsl import (
@@ -60,7 +61,8 @@ def test_alpha_registry_deduplication(tmp_path):
     assert rec1.alpha_id == "ALPHA-000001"
     assert rec1.canonical_expression == "ADD(close,open)"
 
-    # Attempt to register mathematically identical discovery with reversed arguments
+    # Attempt to register mathematically identical discovery
+    # with reversed arguments
     with pytest.raises(DuplicateAlphaError) as exc_info:
         registry.register("ADD(close, open)", creator="RESEARCHER_B")
     assert "Duplicate alpha discovery" in str(exc_info.value)

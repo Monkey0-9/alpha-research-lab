@@ -14,7 +14,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,6 @@ class PriceType(str, enum.Enum):
 
 class DataUnavailableError(Exception):
     """Raised in RESEARCH or LIVE mode when market data cannot be retrieved from verified sources."""
-    pass
 
 
 class MarketDataProvider(ABC):
@@ -50,12 +48,10 @@ class MarketDataProvider(ABC):
         price_type: PriceType = PriceType.TOTAL_RETURN
     ) -> pd.DataFrame:
         """Fetch historical bars as a multi-index DataFrame [date, ticker]."""
-        pass
 
     @abstractmethod
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         """Fetch latest market quote for symbol."""
-        pass
 
 
 @dataclass

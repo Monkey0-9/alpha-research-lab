@@ -34,7 +34,17 @@ class EnsembleEngine:
                 f["fwd_return_1d"] = labels["fwd_return_1d"]
             f = f.dropna(subset=["fwd_return_1d"])
 
-            feature_cols = [c for c in f.columns if c not in ["fwd_return_1d", "fwd_return_5d", "fwd_return_20d", "ticker", "open", "high", "low", "close", "volume"]]
+            feature_cols = [
+                c for c in f.columns if c not in [
+                    "fwd_return_1d",
+                    "fwd_return_5d",
+                    "fwd_return_20d",
+                    "ticker",
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume"]]
             if not feature_cols:
                 return {"models": [], "ensemble": {}, "status": "NO_FEATURES"}
 
@@ -71,10 +81,15 @@ class EnsembleEngine:
                     test_sharpe = sharpe_ratio(preds * y_test) if len(y_test) > 5 else 0.0
                     test_ic = information_coefficient(preds, y_test) if len(y_test) > 5 else 0.0
 
+                    _fam = (
+                        "Gradient Boosting"
+                        if name in ["LightGBM", "XGBoost"]
+                        else ("Bagging Trees" if name == "Random Forest" else "Linear")
+                    )
                     models.append({
                         "model": name,
                         "model_name": name,
-                        "family": "Gradient Boosting" if name in ["LightGBM", "XGBoost"] else ("Bagging Trees" if name == "Random Forest" else "Linear"),
+                        "family": _fam,
                         "sharpe": round(float(test_sharpe), 2),
                         "in_sample_sharpe": round(float(metrics.get("sharpe", 0)), 2),
                         "out_of_sample_sharpe": round(float(test_sharpe), 2),

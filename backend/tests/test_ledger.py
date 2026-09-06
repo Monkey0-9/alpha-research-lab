@@ -6,7 +6,6 @@ Validates double-entry accounting invariants:
 3. NAV identity: NAV == Cash + sum(Market Value).
 4. PnL identity: Cumulative Daily PnL == delta NAV.
 """
-import pytest
 from core.portfolio_ledger import PortfolioLedger, FillEvent
 
 

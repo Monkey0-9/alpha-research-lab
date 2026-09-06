@@ -102,14 +102,20 @@ def post_multiple_testing_correction(request: MTCRequest) -> MTCResult:
     raw_pvals = request.p_values
     m = len(raw_pvals)
     if m == 0:
-        return MTCResult(alpha_nominal=request.alpha, total_tested=0, bonferroni_significant=0, bh_fdr_significant=0, results=[])
+        return MTCResult(
+            alpha_nominal=request.alpha,
+            total_tested=0,
+            bonferroni_significant=0,
+            bh_fdr_significant=0,
+            results=[])
 
     bonf_flags = statistics.bonferroni_correction(raw_pvals, alpha=request.alpha)
     bh_flags = statistics.benjamini_hochberg_fdr(raw_pvals, alpha=request.alpha)
 
     items: List[MTCFeatureItem] = []
     for idx, pval in enumerate(raw_pvals):
-        feat_name = request.feature_names[idx] if request.feature_names and idx < len(request.feature_names) else f"feature_{idx}"
+        feat_name = request.feature_names[idx] if request.feature_names and idx < len(
+            request.feature_names) else f"feature_{idx}"
         tstat = request.t_stats[idx] if request.t_stats and idx < len(request.t_stats) else 0.0
         bonf_p = min(1.0, pval * m)
         rank = idx + 1
@@ -167,7 +173,8 @@ def calculate_dsr(request: DSRRequest) -> DSRResult:
         n_obs=request.n_obs
     )
     gamma = 0.5772156649
-    exp_max_sr = (1 - gamma) * np.sqrt(2 * np.log(max(1, request.n_trials))) + gamma * np.sqrt(2 * np.log(max(1, request.n_trials))) * 0.5
+    exp_max_sr = (1 - gamma) * np.sqrt(2 * np.log(max(1, request.n_trials))) + \
+        gamma * np.sqrt(2 * np.log(max(1, request.n_trials))) * 0.5
     exp_max_sr = round(float(exp_max_sr / np.sqrt(request.n_obs) * np.sqrt(252)), 2)
 
     return DSRResult(
@@ -203,7 +210,17 @@ def get_alpha_decay(ticker: str = "SPY"):
             f["fwd_return_1d"] = labels["fwd_return_1d"]
         f = f.dropna(subset=["fwd_return_1d"])
 
-        feat_cols = [c for c in f.columns if c not in ["fwd_return_1d", "fwd_return_5d", "fwd_return_20d", "ticker", "open", "high", "low", "close", "volume"]]
+        feat_cols = [
+            c for c in f.columns if c not in [
+                "fwd_return_1d",
+                "fwd_return_5d",
+                "fwd_return_20d",
+                "ticker",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume"]]
         if not feat_cols:
             return {"status": "NO_FEATURES", "history": []}
 
@@ -493,4 +510,3 @@ def post_alpha_evidence_card(req: EvidenceCardRequest):
         return card
     except Exception as e:
         return {"status": "ERROR", "error": str(e)}
-

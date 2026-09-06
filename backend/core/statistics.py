@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import numpy as np
 import scipy.stats as ss
-from typing import List, Any, Optional, Dict, Tuple
-
+from typing import List, Any, Optional, Dict
 
 
 class SignificanceMask(list):
     """List that also supports dict access for backward compatibility."""
+
     def __init__(self, items: list, meta: dict = None):
         super().__init__(items)
         self.meta = meta or {}
@@ -232,7 +232,7 @@ def hac_newey_west(
     # S_0: White contemporaneous covariance
     S = np.zeros((k, k), dtype=np.float64)
     for t in range(n):
-        xt = X[t : t + 1]
+        xt = X[t: t + 1]
         S += (residuals[t] ** 2) * (xt.T @ xt)
 
     # Autocorrelation lags with Bartlett kernel weights
@@ -240,8 +240,8 @@ def hac_newey_west(
         weight = 1.0 - (lag / (max_lags + 1.0))
         gamma = np.zeros((k, k), dtype=np.float64)
         for t in range(lag, n):
-            xt = X[t : t + 1]
-            xt_lag = X[t - lag : t - lag + 1]
+            xt = X[t: t + 1]
+            xt_lag = X[t - lag: t - lag + 1]
             prod = residuals[t] * residuals[t - lag] * (xt.T @ xt_lag + xt_lag.T @ xt)
             gamma += prod
         S += weight * gamma
@@ -445,4 +445,3 @@ def whites_reality_check(
     w_res["p_value"] = res.get("p_value_white", 1.0)
     w_res["superiority_demonstrated"] = bool(w_res["p_value"] < 0.05 and res.get("t_stat", 0.0) > 0)
     return w_res
-

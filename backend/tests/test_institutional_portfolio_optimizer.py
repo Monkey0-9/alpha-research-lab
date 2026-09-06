@@ -16,18 +16,14 @@ Verifies:
 5. Pre-Trade Compliance Hard Stops: fat-finger collars, concentration limits, and Reg SHO locate.
 """
 import numpy as np
-import pytest
 
 from core.portfolio import (
     ledoit_wolf_covariance,
     oas_covariance,
     convex_portfolio_optimizer,
-    mean_variance_optimization,
-    hierarchical_risk_parity,
 )
 from core.risk import (
     cornish_fisher_var,
-    historical_var,
     parametric_var,
     HistoricalStressTester,
 )

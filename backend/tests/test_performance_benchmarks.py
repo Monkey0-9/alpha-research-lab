@@ -3,7 +3,6 @@ Performance microbenchmarks test suite.
 Validates that native acceleration (C, C++, Rust) delivers measured speedups
 over pure Python reference implementations while preserving exact numerical equivalence.
 """
-import pytest
 from backend.core.benchmarks_engine import BenchmarkEngine
 
 

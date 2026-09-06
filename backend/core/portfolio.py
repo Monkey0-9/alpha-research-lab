@@ -4,7 +4,7 @@ Portfolio Construction Engine.
 Implements:
 1. Mean-Variance Optimization (Markowitz with long-only and box constraints).
 2. Hierarchical Risk Parity (HRP) via SciPy hierarchical clustering (Ward/single linkage)
-   and quasi-diagonalization (López de Prado).
+and quasi-diagonalization (López de Prado).
 3. CVaR (Expected Shortfall) Optimization.
 """
 from __future__ import annotations

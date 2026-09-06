@@ -10,7 +10,6 @@ Validates:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from native.native_bridge import accelerator
 from core.broker_gateway import SimulatedBrokerGateway, AlpacaBrokerGateway

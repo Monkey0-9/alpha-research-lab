@@ -5,13 +5,14 @@ All endpoints return REAL computations from actual market data.
 No hardcoded results, no synthetic data.
 """
 from __future__ import annotations
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 import numpy as np
 from core.risk import historical_var, parametric_var, cvar_expected_shortfall
 
 router = APIRouter()
+
 
 class VaRResponse(BaseModel):
     confidence: float
@@ -26,6 +27,7 @@ class VaRResponse(BaseModel):
     var_99_dollars: float
     annualized_vol_pct: float
 
+
 class VaRDistributionData(BaseModel):
     mean_return: float
     std_return: float
@@ -35,12 +37,14 @@ class VaRDistributionData(BaseModel):
     bins: List[float]
     counts: List[int]
 
+
 class FactorAttributionItem(BaseModel):
     factor: str
     exposure: float
     factor_return_pct: float
     contribution_bps: float
     pct_of_total_risk: float
+
 
 class FactorAttribution(BaseModel):
     total_active_risk_pct: float
@@ -50,11 +54,13 @@ class FactorAttribution(BaseModel):
     factors: List[FactorAttributionItem]
     betas: Dict[str, float] = {}
 
+
 class DrawdownPoint(BaseModel):
     date: str
     drawdown_pct: float
     peak_nav: float
     current_nav: float
+
 
 class DrawdownData(BaseModel):
     current_drawdown_pct: float
@@ -64,6 +70,7 @@ class DrawdownData(BaseModel):
     recovery_status: str
     history: List[DrawdownPoint]
 
+
 class StressScenario(BaseModel):
     scenario: str
     market_drop_pct: float
@@ -71,6 +78,7 @@ class StressScenario(BaseModel):
     estimated_dollar_pnl: float
     status: str
     liquidity_impact: str
+
 
 class CorrelationMatrix(BaseModel):
     tickers: List[str]
@@ -136,18 +144,38 @@ def get_var_distribution() -> VaRDistributionData:
     """Historical return frequency distribution — computed from REAL returns."""
     portfolio_returns, _ = _get_real_returns()
     if portfolio_returns is None or len(portfolio_returns) < 20:
-        return VaRDistributionData(mean_return=0, std_return=0, var_95_cutoff=0, var_99_cutoff=0, cvar_95_cutoff=0, bins=[], counts=[])
+        return VaRDistributionData(
+            mean_return=0,
+            std_return=0,
+            var_95_cutoff=0,
+            var_99_cutoff=0,
+            cvar_95_cutoff=0,
+            bins=[],
+            counts=[])
 
     hist, bin_edges = np.histogram(portfolio_returns, bins=20)
     return VaRDistributionData(
-        mean_return=round(float(np.mean(portfolio_returns)), 6),
-        std_return=round(float(np.std(portfolio_returns)), 6),
-        var_95_cutoff=round(float(np.percentile(portfolio_returns, 5)), 6),
-        var_99_cutoff=round(float(np.percentile(portfolio_returns, 1)), 6),
-        cvar_95_cutoff=round(float(np.mean(portfolio_returns[portfolio_returns <= np.percentile(portfolio_returns, 5)])) if np.any(portfolio_returns <= np.percentile(portfolio_returns, 5)) else 0.0, 6),
-        bins=[round(float(b), 6) for b in bin_edges],
-        counts=[int(c) for c in hist]
-    )
+        mean_return=round(
+            float(
+                np.mean(portfolio_returns)), 6), std_return=round(
+            float(
+                np.std(portfolio_returns)), 6), var_95_cutoff=round(
+            float(
+                np.percentile(
+                    portfolio_returns, 5)), 6), var_99_cutoff=round(
+            float(
+                np.percentile(
+                    portfolio_returns, 1)), 6), cvar_95_cutoff=round(
+            float(
+                np.mean(
+                    portfolio_returns[
+                        portfolio_returns <= np.percentile(
+                            portfolio_returns, 5)])) if np.any(
+                portfolio_returns <= np.percentile(
+                    portfolio_returns, 5)) else 0.0, 6), bins=[
+            round(
+                float(b), 6) for b in bin_edges], counts=[
+            int(c) for c in hist])
 
 
 @router.get("/factor-attribution", response_model=FactorAttribution)
@@ -155,7 +183,12 @@ def get_factor_attribution() -> FactorAttribution:
     """Factor risk attribution — computed from real portfolio returns."""
     portfolio_returns, _ = _get_real_returns()
     if portfolio_returns is None or len(portfolio_returns) < 30:
-        return FactorAttribution(total_active_risk_pct=0, systematic_risk_pct=0, idiosyncratic_risk_pct=0, r_squared=0, factors=[])
+        return FactorAttribution(
+            total_active_risk_pct=0,
+            systematic_risk_pct=0,
+            idiosyncratic_risk_pct=0,
+            r_squared=0,
+            factors=[])
 
     factor_names = ["Market Beta", "Momentum", "Quality", "Low Volatility", "Size", "Value"]
     factors = []
@@ -187,7 +220,13 @@ def get_drawdown_analysis() -> DrawdownData:
     """Underwater curve — computed from REAL returns."""
     portfolio_returns, _ = _get_real_returns()
     if portfolio_returns is None or len(portfolio_returns) < 20:
-        return DrawdownData(current_drawdown_pct=0, max_drawdown_pct=0, max_drawdown_duration_days=0, current_duration_days=0, recovery_status="NO_DATA", history=[])
+        return DrawdownData(
+            current_drawdown_pct=0,
+            max_drawdown_pct=0,
+            max_drawdown_duration_days=0,
+            current_duration_days=0,
+            recovery_status="NO_DATA",
+            history=[])
 
     cum_ret = np.cumprod(1 + portfolio_returns)
     peak = np.maximum.accumulate(cum_ret)
@@ -230,7 +269,8 @@ def get_stress_scenarios() -> List[StressScenario]:
             "XOM": 0.10,
             "LLY": 0.10
         }
-        res = HistoricalStressTester.run_stress_scenarios(weights=weights, aum=10_000_000.0, max_tolerable_drawdown=0.20)
+        res = HistoricalStressTester.run_stress_scenarios(
+            weights=weights, aum=10_000_000.0, max_tolerable_drawdown=0.20)
         scenarios = res.get("scenarios", {})
 
         return [
@@ -246,11 +286,34 @@ def get_stress_scenarios() -> List[StressScenario]:
         ]
     except Exception:
         return [
-            StressScenario(scenario="2008 Lehman Liquidity Crisis", market_drop_pct=-38.0, estimated_portfolio_impact_pct=-14.2, estimated_dollar_pnl=-1420000.0, status="TOLERABLE", liquidity_impact="Financials detracted -52bp"),
-            StressScenario(scenario="2020 COVID Liquidity Shock", market_drop_pct=-34.0, estimated_portfolio_impact_pct=-11.8, estimated_dollar_pnl=-1180000.0, status="TOLERABLE", liquidity_impact="Energy detracted -55bp"),
-            StressScenario(scenario="2023 Silicon Valley Bank Contagion", market_drop_pct=-5.0, estimated_portfolio_impact_pct=2.4, estimated_dollar_pnl=240000.0, status="TOLERABLE", liquidity_impact="Mega-cap flight to safety hedge"),
-            StressScenario(scenario="May 2010 Flash Crash", market_drop_pct=-9.0, estimated_portfolio_impact_pct=-4.1, estimated_dollar_pnl=-410000.0, status="TOLERABLE", liquidity_impact="Equities rebounded intraday")
-        ]
+            StressScenario(
+                scenario="2008 Lehman Liquidity Crisis",
+                market_drop_pct=-38.0,
+                estimated_portfolio_impact_pct=-14.2,
+                estimated_dollar_pnl=-1420000.0,
+                status="TOLERABLE",
+                liquidity_impact="Financials detracted -52bp"),
+            StressScenario(
+                scenario="2020 COVID Liquidity Shock",
+                market_drop_pct=-34.0,
+                estimated_portfolio_impact_pct=-11.8,
+                estimated_dollar_pnl=-1180000.0,
+                status="TOLERABLE",
+                liquidity_impact="Energy detracted -55bp"),
+            StressScenario(
+                scenario="2023 Silicon Valley Bank Contagion",
+                market_drop_pct=-5.0,
+                estimated_portfolio_impact_pct=2.4,
+                estimated_dollar_pnl=240000.0,
+                status="TOLERABLE",
+                liquidity_impact="Mega-cap flight to safety hedge"),
+            StressScenario(
+                scenario="May 2010 Flash Crash",
+                market_drop_pct=-9.0,
+                estimated_portfolio_impact_pct=-4.1,
+                estimated_dollar_pnl=-410000.0,
+                status="TOLERABLE",
+                liquidity_impact="Equities rebounded intraday")]
 
 
 @router.get("/correlation", response_model=CorrelationMatrix)
@@ -294,19 +357,55 @@ def get_risk_metrics():
     cvar_95 = cvar_expected_shortfall(portfolio_returns, 0.95)
 
     return {
-        "var_95_daily_pct": round(h_var_95 * 100, 3),
-        "var_99_daily_pct": round(h_var_99 * 100, 3),
-        "parametric_var_95_pct": round(p_var_95 * 100, 3),
-        "parametric_var_99_pct": round(p_var_99 * 100, 3),
-        "cornish_fisher_var_95_pct": round(cf_var_95 * 100, 3),
-        "cornish_fisher_var_99_pct": round(cf_var_99 * 100, 3),
-        "cvar_expected_shortfall_95_pct": round(cvar_95 * 100, 3),
-        "volatility_annualized_pct": round(float(np.std(portfolio_returns) * np.sqrt(252) * 100), 2),
+        "var_95_daily_pct": round(
+            h_var_95 *
+            100,
+            3),
+        "var_99_daily_pct": round(
+            h_var_99 *
+            100,
+            3),
+        "parametric_var_95_pct": round(
+            p_var_95 *
+            100,
+            3),
+        "parametric_var_99_pct": round(
+            p_var_99 *
+            100,
+            3),
+        "cornish_fisher_var_95_pct": round(
+            cf_var_95 *
+            100,
+            3),
+        "cornish_fisher_var_99_pct": round(
+            cf_var_99 *
+            100,
+            3),
+        "cvar_expected_shortfall_95_pct": round(
+            cvar_95 *
+            100,
+            3),
+        "volatility_annualized_pct": round(
+            float(
+                np.std(portfolio_returns) *
+                np.sqrt(252) *
+                100),
+            2),
         "current_drawdown_pct": 0.0,
-        "max_drawdown_pct": round(float(np.min(np.cumprod(1 + portfolio_returns) / np.maximum.accumulate(np.cumprod(1 + portfolio_returns))) * 100), 2),
+        "max_drawdown_pct": round(
+            float(
+                np.min(
+                    np.cumprod(
+                        1 +
+                        portfolio_returns) /
+                    np.maximum.accumulate(
+                        np.cumprod(
+                            1 +
+                            portfolio_returns))) *
+                100),
+            2),
         "beta_to_sp500": 1.0,
-        "margin_cushion_pct": 24.5
-    }
+        "margin_cushion_pct": 24.5}
 
 
 @router.get("/stress-test")
@@ -346,4 +445,3 @@ def post_compliance_check(req: ComplianceCheckRequest):
         return decision.to_dict()
     except Exception as e:
         return {"status": "ERROR", "error": str(e)}
-

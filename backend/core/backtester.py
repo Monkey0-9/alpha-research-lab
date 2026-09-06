@@ -199,7 +199,9 @@ class EventDrivenBacktester:
                 continue
 
             # 2. Test slice (strictly in future interval)
-            test_mask = (df.index.get_level_values("date") > t_train_end) & (df.index.get_level_values("date") <= t_test_end)
+            test_mask = (
+                df.index.get_level_values("date") > t_train_end) & (
+                df.index.get_level_values("date") <= t_test_end)
             test_data = df[test_mask].dropna(subset=self.feature_cols)
 
             if test_data.empty:
@@ -229,7 +231,8 @@ class EventDrivenBacktester:
             test_data_scored["prediction"] = preds
 
             # 4. Construct Long/Short portfolio: Top 20% long, Bottom 20% short
-            rebal_slice = test_data_scored.xs(test_data_scored.index.get_level_values("date")[0], level="date", drop_level=False)
+            rebal_slice = test_data_scored.xs(test_data_scored.index.get_level_values("date")[
+                                              0], level="date", drop_level=False)
             active_members = universe_engine.get_active_tickers("SP500", as_of_date=t_train_end.strftime("%Y-%m-%d"))
             if active_members:
                 univ_slice = rebal_slice[rebal_slice.index.get_level_values("ticker").isin(active_members)]
@@ -265,7 +268,8 @@ class EventDrivenBacktester:
 
             # Record actual trades based on true asset returns over holding period
             for ticker in longs:
-                t_slice = df.loc[(df.index.get_level_values("ticker") == ticker) & (df.index.get_level_values("date").isin(test_dates))]
+                t_slice = df.loc[(df.index.get_level_values("ticker") == ticker) &
+                                 (df.index.get_level_values("date").isin(test_dates))]
                 if not t_slice.empty and "return_1d" in t_slice.columns:
                     cum_ret = float(np.prod(1.0 + np.nan_to_num(t_slice["return_1d"].values, 0.0)) - 1.0)
                 else:
@@ -281,7 +285,8 @@ class EventDrivenBacktester:
                     "pnl": round(float(net_ret * w_long), 5)
                 })
             for ticker in shorts:
-                t_slice = df.loc[(df.index.get_level_values("ticker") == ticker) & (df.index.get_level_values("date").isin(test_dates))]
+                t_slice = df.loc[(df.index.get_level_values("ticker") == ticker) &
+                                 (df.index.get_level_values("date").isin(test_dates))]
                 if not t_slice.empty and "return_1d" in t_slice.columns:
                     cum_ret = float(np.prod(1.0 + np.nan_to_num(t_slice["return_1d"].values, 0.0)) - 1.0)
                 else:
@@ -349,7 +354,7 @@ class EventDrivenBacktester:
         return BacktestResults({
             **metrics,
             "equity_curve": equity_curve,
-            "trades": trades[-50:], # return recent 50 trades
+            "trades": trades[-50:],  # return recent 50 trades
             "monthly_returns": monthly_returns
         })
 

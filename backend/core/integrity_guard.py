@@ -25,37 +25,30 @@ logger = logging.getLogger(__name__)
 
 class IntegrityError(Exception):
     """Base exception for quantitative integrity violations."""
-    pass
 
 
 class TemporalOrderingError(IntegrityError):
     """Raised when data timestamps are shuffled, out-of-order, or non-monotonic."""
-    pass
 
 
 class DuplicateObservationError(IntegrityError):
     """Raised when duplicate entity-timestamp observations are detected."""
-    pass
 
 
 class LabelLeakageError(IntegrityError):
     """Raised when forward targets or labels contaminate the feature matrix."""
-    pass
 
 
 class FutureLeakageError(IntegrityError):
     """Raised when a feature exhibits lookahead bias or future information leakage."""
-    pass
 
 
 class UniverseLeakageError(IntegrityError):
     """Raised when universe selection relies on future constituent membership."""
-    pass
 
 
 class CorporateActionLeakageError(IntegrityError):
     """Raised when corporate action adjustments leak future information."""
-    pass
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +68,8 @@ def validate_temporal_ordering(df: pd.DataFrame, time_level_or_col: str = "date"
                     dates = sub.index.get_level_values(time_level_or_col)
                     if not dates.is_monotonic_increasing:
                         raise TemporalOrderingError(
-                            f"Temporal ordering breach for ticker '{ticker}': timestamps are not monotonically increasing."
+                            f"Temporal ordering breach for ticker '{ticker}': "
+                            "timestamps are not monotonically increasing."
                         )
                 return True
             else:

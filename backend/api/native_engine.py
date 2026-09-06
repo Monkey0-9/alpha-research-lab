@@ -94,7 +94,8 @@ def run_c_hurst(req: CHurstRequest) -> Dict[str, Any]:
     elapsed_micros = round((time.perf_counter_ns() - start_ns) / 1000.0, 2)
 
     current_h = float(h_arr[-1])
-    regime = "MOMENTUM / TRENDING (H > 0.5)" if current_h > 0.55 else ("MEAN-REVERTING (H < 0.5)" if current_h < 0.45 else "RANDOM WALK / MARTINGALE (H ~ 0.5)")
+    regime = "MOMENTUM / TRENDING (H > 0.5)" if current_h > 0.55 else (
+        "MEAN-REVERTING (H < 0.5)" if current_h < 0.45 else "RANDOM WALK / MARTINGALE (H ~ 0.5)")
 
     return {
         "engine": "C-Native-Hurst-SIMD",
@@ -175,12 +176,17 @@ def get_q_bars(bar_seconds: int = 60, limit: int = 50) -> Dict[str, Any]:
     bars = q_engine.resample_bars_q(bar_seconds=bar_seconds).head(limit)
     elapsed_micros = round((time.perf_counter_ns() - start_ns) / 1000.0, 2)
 
+    sec_step = int(bar_seconds)
+    query_desc = (
+        f"qSQL: select open, high, low, close, volume, vwap by "
+        f"{sec_step} xbar time from trades"
+    )
     return {
         "engine": "KDB+/Q Bar Aggregator",
-        "query": "qSQL: select open, high, low, close, volume, vwap by " + str(int(bar_seconds)) + " xbar time from trades",
+        "query": query_desc,
         "elapsed_microseconds": elapsed_micros,
         "bars_count": len(bars),
-        "data": bars.to_dict(orient="records")
+        "data": bars.to_dict(orient="records"),
     }
 
 

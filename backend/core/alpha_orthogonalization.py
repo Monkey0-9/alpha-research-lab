@@ -56,7 +56,7 @@ def orthogonalize_alpha(
 
     # 1. Pairwise correlations with each existing alpha
     corrs = []
-    x_centered = x - np.mean(x)
+    x - np.mean(x)
     x_std = np.std(x)
     if x_std < 1e-9:
         x_std = 1.0
@@ -199,7 +199,7 @@ class AlphaBookManager:
         Evaluate candidate alpha against existing book and accept, residualize, or reject.
         """
         sig = np.asarray(signal, dtype=np.float64).flatten()
-        n_obs = len(sig)
+        len(sig)
 
         # Baseline IC if forward returns are provided
         raw_ic = 0.0
@@ -275,10 +275,17 @@ class AlphaBookManager:
             return {
                 "decision": "ACCEPTED_RESIDUAL",
                 "name": residual_name,
-                "residual_ic": round(res_ic, 4),
-                "residual_t_stat": round(res_t_stat, 2),
+                "residual_ic": round(
+                    res_ic,
+                    4),
+                "residual_t_stat": round(
+                    res_t_stat,
+                    2),
                 "fraction_variance_retained": diag["fraction_variance_retained"],
-                "reason": f"Collinear component removed; residual retained statistically significant alpha (t={res_t_stat:.2f})",
+                "reason": (
+                    f"Collinear component removed; residual retained statistically "
+                    f"significant alpha (t={res_t_stat:.2f})"
+                ),
             }
 
         return {
@@ -286,6 +293,12 @@ class AlphaBookManager:
             "name": name,
             "max_correlation": diag["max_correlation"],
             "r_squared": diag["r_squared"],
-            "residual_t_stat": round(res_t_stat, 2),
-            "reason": f"Candidate is collinear with existing alphas, and residual signal has insufficient statistical significance (t={res_t_stat:.2f} < {self.min_residual_t_stat})",
+            "residual_t_stat": round(
+                res_t_stat,
+                2),
+            "reason": (
+                f"Candidate is collinear with existing alphas, and residual signal has "
+                f"insufficient statistical significance "
+                f"(t={res_t_stat:.2f} < {self.min_residual_t_stat})"
+            ),
         }

@@ -9,8 +9,7 @@ Maintains immutable raw price stores and computes 4 distinct price series:
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
-import numpy as np
+from typing import Dict, List
 import pandas as pd
 
 from core.security_master.models import (
@@ -51,7 +50,12 @@ class CorporateActionEngine:
         - total_return_factor (split_factor * dividend_factor)
         """
         if raw_df.empty:
-            return pd.DataFrame(columns=["split_factor", "volume_split_factor", "dividend_factor", "total_return_factor"])
+            return pd.DataFrame(
+                columns=[
+                    "split_factor",
+                    "volume_split_factor",
+                    "dividend_factor",
+                    "total_return_factor"])
 
         dates = raw_df.index if not isinstance(raw_df.index, pd.MultiIndex) else raw_df.index.get_level_values("date")
         dates = pd.to_datetime(dates).sort_values().unique()
@@ -85,7 +89,8 @@ class CorporateActionEngine:
 
             elif act.action_type == ActionType.DIVIDEND and act.cash_amount > 0:
                 # Find ex-dividend price
-                post_bars = raw_df.loc[raw_df.index >= act_date] if not isinstance(raw_df.index, pd.MultiIndex) else raw_df.loc[raw_df.index.get_level_values("date") >= act_date]
+                post_bars = raw_df.loc[raw_df.index >= act_date] if not isinstance(
+                    raw_df.index, pd.MultiIndex) else raw_df.loc[raw_df.index.get_level_values("date") >= act_date]
                 if not post_bars.empty and "close" in post_bars.columns:
                     p_ex = float(post_bars["close"].iloc[0])
                     if p_ex > act.cash_amount:

@@ -12,7 +12,7 @@ import subprocess
 from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, Union
 import pandas as pd
 import pyarrow as pa
 import polars as pl

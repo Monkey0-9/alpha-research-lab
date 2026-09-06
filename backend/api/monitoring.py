@@ -12,6 +12,7 @@ import numpy as np
 
 router = APIRouter()
 
+
 class TelemetryData(BaseModel):
     model_config = {"protected_namespaces": ()}
     cpu_usage_pct: float
@@ -28,11 +29,13 @@ class TelemetryData(BaseModel):
     active_alphas: List[Dict[str, Any]] = []
     recent_alerts: List[Dict[str, Any]] = []
 
+
 class AlphaDecayPoint(BaseModel):
     date: str
     rolling_60d_ic: float
     threshold_alert: float
     is_decaying: bool
+
 
 class AlphaDecayData(BaseModel):
     model_config = {"protected_namespaces": ()}
@@ -44,12 +47,14 @@ class AlphaDecayData(BaseModel):
     alert_triggered: bool
     history: List[AlphaDecayPoint]
 
+
 class PSIScore(BaseModel):
     feature: str
     psi: float
     status: str
     retrain_recommended: bool
     drift_direction: str
+
 
 class SubsystemHealth(BaseModel):
     module_id: str
@@ -58,6 +63,7 @@ class SubsystemHealth(BaseModel):
     latency_ms: float
     last_heartbeat: str
     error_count_24h: int
+
 
 class Alert(BaseModel):
     id: str
@@ -128,7 +134,17 @@ def get_alpha_decay(alpha_id: str = "default"):
             f["fwd_return_1d"] = labels["fwd_return_1d"]
         f = f.dropna(subset=["fwd_return_1d"])
 
-        feat_cols = [c for c in f.columns if c not in ["fwd_return_1d", "fwd_return_5d", "fwd_return_20d", "ticker", "open", "high", "low", "close", "volume"]]
+        feat_cols = [
+            c for c in f.columns if c not in [
+                "fwd_return_1d",
+                "fwd_return_5d",
+                "fwd_return_20d",
+                "ticker",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume"]]
         if not feat_cols:
             return {"status": "NO_FEATURES", "history": []}
 
@@ -197,7 +213,15 @@ def get_psi_scores() -> List[PSIScore]:
 
         raw = load_sp500_data()
         features_df = build_features(raw)
-        feature_cols = [c for c in features_df.columns if c not in ["open", "high", "low", "close", "volume", "return_1d", "ticker"]]
+        feature_cols = [
+            c for c in features_df.columns if c not in [
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "return_1d",
+                "ticker"]]
         if not feature_cols:
             return []
 

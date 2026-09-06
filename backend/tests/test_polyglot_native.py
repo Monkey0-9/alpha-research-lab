@@ -3,7 +3,6 @@ Unit & Benchmark Tests for Polyglot Native Engines (C, C++, Rust, R, Q, OCaml).
 Verifies correctness, numerical precision, and performance dispatching.
 """
 import numpy as np
-import pytest
 from native.native_bridge import accelerator
 
 

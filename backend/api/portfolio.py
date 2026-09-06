@@ -13,6 +13,7 @@ from core.portfolio import mean_variance_optimization, hierarchical_risk_parity,
 
 router = APIRouter()
 
+
 class FrontierPoint(BaseModel):
     volatility: float
     expected_return: float
@@ -21,12 +22,14 @@ class FrontierPoint(BaseModel):
     is_min_vol: bool = False
     is_current: bool = False
 
+
 class FrontierData(BaseModel):
     method: str
     points: List[FrontierPoint]
     current_portfolio: FrontierPoint
     optimal_tangency: FrontierPoint
     min_variance: FrontierPoint
+
 
 class OptimizeRequest(BaseModel):
     method: str = Field("hrp", description="Optimization method: 'hrp', 'mean_variance'/'mv', 'cvar'")
@@ -35,11 +38,13 @@ class OptimizeRequest(BaseModel):
     max_position_weight: Optional[float] = Field(0.15, description="Max individual position constraint")
     long_only: Optional[bool] = Field(True, description="Enforce long-only or allow long/short")
 
+
 class AllocationItem(BaseModel):
     ticker: str
     weight: float
     sector: str
     side: str = "LONG"
+
 
 class PortfolioResult(BaseModel):
     method: str
@@ -49,6 +54,7 @@ class PortfolioResult(BaseModel):
     cvar_95: float
     diversification_ratio: float
     allocations: List[AllocationItem]
+
 
 class Holding(BaseModel):
     model_config = {"protected_namespaces": ()}
@@ -68,6 +74,7 @@ class Holding(BaseModel):
     market_price: Optional[float] = None
     marginal_risk_pct: Optional[float] = None
 
+
 class HoldingsResponse(BaseModel):
     total_aum: float
     cash: float
@@ -78,6 +85,7 @@ class HoldingsResponse(BaseModel):
     short_count: int
     holdings: List[Holding]
 
+
 class FactorBar(BaseModel):
     factor: str
     exposure: float
@@ -85,12 +93,14 @@ class FactorBar(BaseModel):
     active_exposure: float
     t_stat: float
 
+
 class FactorExposure(BaseModel):
     model_config = {"protected_namespaces": ()}
     model_name: str
     as_of: str
     r_squared: float
     factors: List[FactorBar]
+
 
 class RebalanceEvent(BaseModel):
     id: str
@@ -133,13 +143,21 @@ def get_efficient_frontier(method: str = "mv") -> FrontierData:
         top_tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "JPM", "V", "LLY", "XOM"]
         available = [t for t in top_tickers if t in raw.index.get_level_values("ticker")]
         if len(available) < 3:
-            return FrontierData(method=method.upper(), points=[], current_portfolio=FrontierPoint(volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(volatility=0, expected_return=0, sharpe=0))
+            return FrontierData(
+                method=method.upper(), points=[], current_portfolio=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0))
 
         mask = raw.index.get_level_values("ticker").isin(available)
         sub = raw[mask]
         returns_df = sub["return_1d"].unstack("ticker").dropna()
         if len(returns_df) < 30:
-            return FrontierData(method=method.upper(), points=[], current_portfolio=FrontierPoint(volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(volatility=0, expected_return=0, sharpe=0))
+            return FrontierData(
+                method=method.upper(), points=[], current_portfolio=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0))
 
         mean_ret = returns_df.mean().values * 252
         cov_mat = returns_df.cov().values * 252
@@ -162,18 +180,51 @@ def get_efficient_frontier(method: str = "mv") -> FrontierData:
                 continue
 
         if not pts:
-            return FrontierData(method=method.upper(), points=[], current_portfolio=FrontierPoint(volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(volatility=0, expected_return=0, sharpe=0))
+            return FrontierData(
+                method=method.upper(), points=[], current_portfolio=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
+                    volatility=0, expected_return=0, sharpe=0))
 
         tangency = max(pts, key=lambda p: p.sharpe)
         tangency.is_optimal = True
         min_vol = min(pts, key=lambda p: p.volatility)
         min_vol.is_min_vol = True
 
-        current = FrontierPoint(volatility=round(float(np.sqrt(np.diag(cov_mat).mean()) * np.sqrt(252)), 4), expected_return=round(float(np.mean(mean_ret)), 4), sharpe=round(float(np.mean(mean_ret) / max(np.sqrt(np.diag(cov_mat).mean()) * np.sqrt(252), 1e-6)), 2), is_current=True)
+        current = FrontierPoint(
+            volatility=round(
+                float(
+                    np.sqrt(
+                        np.diag(cov_mat).mean()) *
+                    np.sqrt(252)),
+                4),
+            expected_return=round(
+                float(
+                    np.mean(mean_ret)),
+                4),
+            sharpe=round(
+                float(
+                    np.mean(mean_ret) /
+                    max(
+                        np.sqrt(
+                            np.diag(cov_mat).mean()) *
+                        np.sqrt(252),
+                        1e-6)),
+                2),
+            is_current=True)
 
-        return FrontierData(method=method.upper(), points=pts, current_portfolio=current, optimal_tangency=tangency, min_variance=min_vol)
+        return FrontierData(
+            method=method.upper(),
+            points=pts,
+            current_portfolio=current,
+            optimal_tangency=tangency,
+            min_variance=min_vol)
     except Exception:
-        return FrontierData(method=method.upper(), points=[], current_portfolio=FrontierPoint(volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(volatility=0, expected_return=0, sharpe=0))
+        return FrontierData(
+            method=method.upper(), points=[], current_portfolio=FrontierPoint(
+                volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(
+                volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
+                volatility=0, expected_return=0, sharpe=0))
 
 
 @router.post("/optimize", response_model=PortfolioResult)
@@ -181,7 +232,14 @@ def optimize_portfolio(req: OptimizeRequest) -> PortfolioResult:
     """Compute optimal portfolio weights using real market data and chosen algorithm."""
     returns_df, available = _get_real_returns(req.tickers)
     if returns_df is None or returns_df.empty:
-        return PortfolioResult(method=req.method.upper(), annualized_return=0.0, annualized_volatility=0.0, sharpe=0.0, cvar_95=0.0, diversification_ratio=0.0, allocations=[])
+        return PortfolioResult(
+            method=req.method.upper(),
+            annualized_return=0.0,
+            annualized_volatility=0.0,
+            sharpe=0.0,
+            cvar_95=0.0,
+            diversification_ratio=0.0,
+            allocations=[])
 
     mean_ret = returns_df.mean().values * 252
     cov_mat = returns_df.cov().values * 252
@@ -198,11 +256,19 @@ def optimize_portfolio(req: OptimizeRequest) -> PortfolioResult:
         weights = np.clip(weights, 0.0, req.max_position_weight)
         weights = weights / max(np.sum(weights), 1e-8)
 
-    sectors = ["Technology", "Technology", "Communication", "Consumer", "Technology", "Technology", "Financials", "Financials", "Healthcare", "Energy"]
-    allocations = [
-        AllocationItem(ticker=available[i], weight=round(float(weights[i]), 4), sector=sectors[i % len(sectors)], side="LONG" if weights[i] >= 0 else "SHORT")
-        for i in range(len(available))
-    ]
+    sectors = [
+        "Technology",
+        "Technology",
+        "Communication",
+        "Consumer",
+        "Technology",
+        "Technology",
+        "Financials",
+        "Financials",
+        "Healthcare",
+        "Energy"]
+    allocations = [AllocationItem(ticker=available[i], weight=round(float(weights[i]), 4), sector=sectors[i % len(
+        sectors)], side="LONG" if weights[i] >= 0 else "SHORT") for i in range(len(available))]
 
     port_vol = float(np.sqrt(weights @ cov_mat @ weights))
     port_ret = float(weights @ mean_ret)
@@ -213,7 +279,12 @@ def optimize_portfolio(req: OptimizeRequest) -> PortfolioResult:
         annualized_volatility=round(port_vol, 4),
         sharpe=round(port_ret / max(port_vol, 1e-6), 2),
         cvar_95=round(port_vol * 1.645 * 0.12, 4),
-        diversification_ratio=round(float(np.sum(np.abs(weights) * np.sqrt(np.diag(cov_mat))) / max(port_vol, 1e-6)), 2),
+        diversification_ratio=round(
+            float(
+                np.sum(np.abs(weights) * np.sqrt(np.diag(cov_mat)))
+                / max(port_vol, 1e-6)
+            ), 2
+        ),
         allocations=allocations
     )
 
@@ -270,7 +341,15 @@ def get_current_holdings() -> HoldingsResponse:
             holdings=items
         )
     except Exception:
-        return HoldingsResponse(total_aum=0, cash=0, invested=0, gross_exposure=0, net_exposure=0, long_count=0, short_count=0, holdings=[])
+        return HoldingsResponse(
+            total_aum=0,
+            cash=0,
+            invested=0,
+            gross_exposure=0,
+            net_exposure=0,
+            long_count=0,
+            short_count=0,
+            holdings=[])
 
 
 @router.get("/allocations")
@@ -281,7 +360,11 @@ def get_current_allocations():
         state = paper_trader.get_live_portfolio_state()
         positions = state.get("positions", [])
         allocations = [
-            {"ticker": p.get("ticker", ""), "weight": round(p.get("weight", 0), 4), "side": "LONG" if p.get("shares", 0) > 0 else "SHORT"}
+            {
+                "ticker": p.get("ticker", ""),
+                "weight": round(p.get("weight", 0), 4),
+                "side": "LONG" if p.get("shares", 0) > 0 else "SHORT"
+            }
             for p in positions
         ]
         return {
@@ -292,7 +375,12 @@ def get_current_allocations():
             "allocations": allocations
         }
     except Exception:
-        return {"strategy": "Multi-Factor Market Neutral Alpha", "gross_leverage": 0, "net_exposure": 0, "holdings_count": 0, "allocations": []}
+        return {
+            "strategy": "Multi-Factor Market Neutral Alpha",
+            "gross_leverage": 0,
+            "net_exposure": 0,
+            "holdings_count": 0,
+            "allocations": []}
 
 
 @router.get("/factor-exposure", response_model=FactorExposure)
@@ -316,7 +404,13 @@ def get_factor_exposure() -> FactorExposure:
         portfolio_returns = returns_df.mean(axis=1).values
 
         factors_out = []
-        factor_names = ["Momentum (12-1m)", "Quality (ROE/Accruals)", "Value (B/P, E/P)", "Low Volatility", "Size (Log Cap)", "Market Beta"]
+        factor_names = [
+            "Momentum (12-1m)",
+            "Quality (ROE/Accruals)",
+            "Value (B/P, E/P)",
+            "Low Volatility",
+            "Size (Log Cap)",
+            "Market Beta"]
         for fname in factor_names:
             try:
                 np.random.seed(hash(fname) % 2**31)
@@ -489,4 +583,3 @@ def get_shrinkage_comparison():
         }
     except Exception as e:
         return {"status": "ERROR", "error": str(e)}
-

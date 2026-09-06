@@ -147,7 +147,11 @@ def run_cpcv_evaluation(
     oos_ics: List[float] = []
     fold_details: List[Dict[str, Any]] = []
 
-    feature_cols = [c for c in features_df.columns if c not in ("ticker", "date") and pd.api.types.is_numeric_dtype(features_df[c])]
+    feature_cols = [
+        c for c in features_df.columns if c not in (
+            "ticker",
+            "date") and pd.api.types.is_numeric_dtype(
+            features_df[c])]
     target_col = "fwd_return_1d" if "fwd_return_1d" in labels_df.columns else labels_df.columns[0]
 
     for sp in splits:

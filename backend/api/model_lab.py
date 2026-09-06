@@ -13,10 +13,12 @@ from core.ensemble import ensemble_engine
 
 router = APIRouter()
 
+
 class TrainRequest(BaseModel):
     model_config = {"protected_namespaces": ()}
     model_type: str = Field("lightgbm", description="Model type")
     hyperparams: dict = Field(default_factory=dict)
+
 
 class TrainingPoint(BaseModel):
     epoch: int
@@ -24,6 +26,7 @@ class TrainingPoint(BaseModel):
     val_loss: float
     train_ic: float
     val_ic: float
+
 
 class EnsembleRequest(BaseModel):
     weights: Dict[str, float] = {
@@ -34,6 +37,7 @@ class EnsembleRequest(BaseModel):
         "lstm": 0.10
     }
 
+
 class EnsembleResult(BaseModel):
     ensemble_sharpe: float
     ensemble_ic: float
@@ -43,16 +47,19 @@ class EnsembleResult(BaseModel):
     effective_n_models: float
     weights: Dict[str, float]
 
+
 class ImportancePoint(BaseModel):
     feature: str
     importance: float
     std_err: float
+
 
 class MetaLabelRequest(BaseModel):
     enabled: bool = True
     confidence_threshold: float = 0.65
     primary_model: str = "lightgbm"
     secondary_model: str = "random_forest"
+
 
 class MetaLabelResult(BaseModel):
     enabled: bool
@@ -90,7 +97,17 @@ def get_training_curves(model: str = "lightgbm") -> List[TrainingPoint]:
             f["fwd_return_1d"] = labels["fwd_return_1d"]
         f = f.dropna(subset=["fwd_return_1d"])
 
-        feature_cols = [c for c in f.columns if c not in ["fwd_return_1d", "fwd_return_5d", "fwd_return_20d", "ticker", "open", "high", "low", "close", "volume"]]
+        feature_cols = [
+            c for c in f.columns if c not in [
+                "fwd_return_1d",
+                "fwd_return_5d",
+                "fwd_return_20d",
+                "ticker",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume"]]
         if not feature_cols:
             return []
 
@@ -202,7 +219,17 @@ def get_model_importance(model: str = "lightgbm") -> List[ImportancePoint]:
             f["fwd_return_1d"] = labels["fwd_return_1d"]
         f = f.dropna(subset=["fwd_return_1d"])
 
-        feature_cols = [c for c in f.columns if c not in ["fwd_return_1d", "fwd_return_5d", "fwd_return_20d", "ticker", "open", "high", "low", "close", "volume"]]
+        feature_cols = [
+            c for c in f.columns if c not in [
+                "fwd_return_1d",
+                "fwd_return_5d",
+                "fwd_return_20d",
+                "ticker",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume"]]
         if not feature_cols:
             return []
 
@@ -256,7 +283,17 @@ def get_prediction_distribution(model: str = "lightgbm"):
             f["fwd_return_1d"] = labels["fwd_return_1d"]
         f = f.dropna(subset=["fwd_return_1d"])
 
-        feature_cols = [c for c in f.columns if c not in ["fwd_return_1d", "fwd_return_5d", "fwd_return_20d", "ticker", "open", "high", "low", "close", "volume"]]
+        feature_cols = [
+            c for c in f.columns if c not in [
+                "fwd_return_1d",
+                "fwd_return_5d",
+                "fwd_return_20d",
+                "ticker",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume"]]
         if not feature_cols:
             return {"status": "NO_FEATURES"}
 
@@ -317,7 +354,17 @@ def toggle_meta_labeling(request: MetaLabelRequest) -> MetaLabelResult:
             f["fwd_return_1d"] = labels["fwd_return_1d"]
         f = f.dropna(subset=["fwd_return_1d"])
 
-        feature_cols = [c for c in f.columns if c not in ["fwd_return_1d", "fwd_return_5d", "fwd_return_20d", "ticker", "open", "high", "low", "close", "volume"]]
+        feature_cols = [
+            c for c in f.columns if c not in [
+                "fwd_return_1d",
+                "fwd_return_5d",
+                "fwd_return_20d",
+                "ticker",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume"]]
         if not feature_cols:
             return MetaLabelResult(
                 enabled=request.enabled, confidence_threshold=request.confidence_threshold,
@@ -400,7 +447,17 @@ def train_model(req: TrainRequest):
             f["fwd_return_1d"] = labels["fwd_return_1d"]
         f = f.dropna(subset=["fwd_return_1d"])
 
-        feature_cols = [c for c in f.columns if c not in ["fwd_return_1d", "fwd_return_5d", "fwd_return_20d", "ticker", "open", "high", "low", "close", "volume"]]
+        feature_cols = [
+            c for c in f.columns if c not in [
+                "fwd_return_1d",
+                "fwd_return_5d",
+                "fwd_return_20d",
+                "ticker",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume"]]
         if not feature_cols:
             return {"status": "FAILED", "error": "No features available"}
 

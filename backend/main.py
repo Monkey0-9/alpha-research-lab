@@ -88,20 +88,20 @@ def health():
 
 
 # Register all 12 institutional modules + backtest router
-app.include_router(dashboard.router,          prefix="/api/dashboard",          tags=["00 Dashboard"])
-app.include_router(data.router,               prefix="/api/data",               tags=["01 Data"])
-app.include_router(features.router,           prefix="/api/features",           tags=["02 Features"])
-app.include_router(alpha_discovery.router,    prefix="/api/alpha-discovery",    tags=["03 Alpha Discovery"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["00 Dashboard"])
+app.include_router(data.router, prefix="/api/data", tags=["01 Data"])
+app.include_router(features.router, prefix="/api/features", tags=["02 Features"])
+app.include_router(alpha_discovery.router, prefix="/api/alpha-discovery", tags=["03 Alpha Discovery"])
 app.include_router(statistical_engine.router, prefix="/api/statistical-engine", tags=["04 Statistical Engine"])
-app.include_router(model_lab.router,          prefix="/api/model-lab",          tags=["05 Model Lab"])
-app.include_router(validation.router,         prefix="/api/validation",         tags=["06 Validation"])
-app.include_router(quality_gate.router,       prefix="/api/quality-gate",       tags=["07 Quality Gate"])
-app.include_router(portfolio.router,          prefix="/api/portfolio",          tags=["08 Portfolio"])
-app.include_router(execution.router,          prefix="/api/execution",          tags=["09 Execution"])
-app.include_router(risk.router,               prefix="/api/risk",               tags=["10 Risk"])
-app.include_router(live_research.router,      prefix="/api/live-research",      tags=["11 Live Research"])
-app.include_router(monitoring.router,         prefix="/api/monitoring",         tags=["12 Monitoring"])
-app.include_router(backtest.router,           prefix="/api/backtest",           tags=["Backtest Engine"])
+app.include_router(model_lab.router, prefix="/api/model-lab", tags=["05 Model Lab"])
+app.include_router(validation.router, prefix="/api/validation", tags=["06 Validation"])
+app.include_router(quality_gate.router, prefix="/api/quality-gate", tags=["07 Quality Gate"])
+app.include_router(portfolio.router, prefix="/api/portfolio", tags=["08 Portfolio"])
+app.include_router(execution.router, prefix="/api/execution", tags=["09 Execution"])
+app.include_router(risk.router, prefix="/api/risk", tags=["10 Risk"])
+app.include_router(live_research.router, prefix="/api/live-research", tags=["11 Live Research"])
+app.include_router(monitoring.router, prefix="/api/monitoring", tags=["12 Monitoring"])
+app.include_router(backtest.router, prefix="/api/backtest", tags=["Backtest Engine"])
 app.include_router(native_engine.router)
 
 

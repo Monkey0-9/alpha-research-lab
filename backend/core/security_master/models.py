@@ -59,7 +59,8 @@ class Security:
     asset_class: AssetClass = AssetClass.EQUITY
     is_active: bool = True
     delisting_date: Optional[str] = None
-    ticker_history: List[Tuple[str, str, Optional[str]]] = field(default_factory=list) # [(ticker, start_date, end_date)]
+    ticker_history: List[Tuple[str, str, Optional[str]]] = field(
+        default_factory=list)  # [(ticker, start_date, end_date)]
     corporate_actions: List[CorporateAction] = field(default_factory=list)
 
     def get_ticker_as_of(self, as_of_date: str) -> str:

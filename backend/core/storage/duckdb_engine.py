@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class DuckDBEngine:
-    """Analytical query engine backed by DuckDB for zero-copy Parquet and Arrow processing."""
+    """Analytical query engine backed by DuckDB for Parquet & Arrow."""
 
     def __init__(self, db_path: str = ":memory:"):
         self.conn = duckdb.connect(database=db_path)
@@ -28,14 +28,21 @@ class DuckDBEngine:
         except Exception as e:
             logger.debug(f"DuckDB configuration adjustment: {e}")
 
-    def register_parquet(self, view_name: str, parquet_path: Union[str, Path]) -> None:
+    def register_parquet(
+        self, view_name: str, parquet_path: Union[str, Path]
+    ) -> None:
         """Register a parquet file or directory as a virtual SQL table/view."""
         p_str = str(Path(parquet_path).resolve()).replace("\\", "/")
-        query = f"CREATE OR REPLACE VIEW {view_name} AS SELECT * FROM read_parquet('{p_str}');"
+        query = (
+            f"CREATE OR REPLACE VIEW {view_name} "
+            f"AS SELECT * FROM read_parquet('{p_str}');"
+        )
         self.conn.execute(query)
         logger.info(f"Registered view '{view_name}' from {p_str}")
 
-    def query_arrow(self, sql: str, params: Optional[List[Any]] = None) -> pa.Table:
+    def query_arrow(
+        self, sql: str, params: Optional[List[Any]] = None
+    ) -> pa.Table:
         """Execute query and return Apache Arrow Table (zero-copy)."""
         rel = self.conn.execute(sql, params or [])
         res = rel.arrow()
@@ -43,12 +50,16 @@ class DuckDBEngine:
             return res.read_all()
         return res
 
-    def query_polars(self, sql: str, params: Optional[List[Any]] = None) -> pl.DataFrame:
+    def query_polars(
+        self, sql: str, params: Optional[List[Any]] = None
+    ) -> pl.DataFrame:
         """Execute query and return Polars DataFrame."""
         arrow_table = self.query_arrow(sql, params)
         return pl.from_arrow(arrow_table)
 
-    def query_pandas(self, sql: str, params: Optional[List[Any]] = None) -> pd.DataFrame:
+    def query_pandas(
+        self, sql: str, params: Optional[List[Any]] = None
+    ) -> pd.DataFrame:
         """Execute query and return Pandas DataFrame."""
         rel = self.conn.execute(sql, params or [])
         return rel.df()
@@ -62,8 +73,8 @@ class DuckDBEngine:
     ) -> pa.Table:
         """
         Strict multi-temporal Point-in-Time extraction.
-        Guarantees that NO record published or revised after as_of_time enters the sample.
-        Predicate: available_time <= as_of_time
+        Guarantees that NO record published or revised after as_of_time
+        enters the sample. Predicate: available_time <= as_of_time
         """
         p_str = str(Path(parquet_path).resolve()).replace("\\", "/")
         cols_str = ", ".join(columns) if columns else "*"
@@ -90,12 +101,16 @@ class DuckDBEngine:
         price_col: str = "close",
     ) -> pl.DataFrame:
         """
-        Compute forward returns vectorized inside DuckDB using window functions.
+        Compute forward returns inside DuckDB using window functions.
         Avoids loading entire universe prices into Python RAM.
         """
         p_str = str(Path(parquet_path).resolve()).replace("\\", "/")
         fwd_clauses = [
-            f"(LEAD({price_col}, {h}) OVER (PARTITION BY security_id ORDER BY observation_time) / NULLIF({price_col}, 0.0) - 1.0) AS fwd_ret_{h}d"
+            (
+                f"(LEAD({price_col}, {h}) OVER "
+                f"(PARTITION BY security_id ORDER BY observation_time) "
+                f"/ NULLIF({price_col}, 0.0) - 1.0) AS fwd_ret_{h}d"
+            )
             for h in horizons
         ]
         clauses_str = ", ".join(fwd_clauses)
@@ -112,7 +127,9 @@ class DuckDBEngine:
         """
         return self.query_polars(sql)
 
-    def calculate_universe_summary(self, parquet_path: Union[str, Path]) -> Dict[str, Any]:
+    def calculate_universe_summary(
+        self, parquet_path: Union[str, Path]
+    ) -> Dict[str, Any]:
         """Compute quick summary statistics of a dataset via DuckDB."""
         p_str = str(Path(parquet_path).resolve()).replace("\\", "/")
         sql = f"""
@@ -129,7 +146,10 @@ class DuckDBEngine:
         if df.empty:
             return {}
         row = df.iloc[0].to_dict()
-        return {k: str(v) if not isinstance(v, (int, float)) else v for k, v in row.items()}
+        return {
+            k: str(v) if not isinstance(v, (int, float)) else v
+            for k, v in row.items()
+        }
 
 
 _DUCKDB_ENGINE: Optional[DuckDBEngine] = None

@@ -93,7 +93,13 @@ def test_execution_endpoints():
     assert res.status_code == 200
     assert "average_slippage_bps" in res.json()
 
-    ac_res = client.post("/api/execution/almgren-chriss", json={"order_size": 50000, "adv": 2000000, "urgency": 1.0, "intervals": 5})
+    ac_res = client.post(
+        "/api/execution/almgren-chriss",
+        json={
+            "order_size": 50000,
+            "adv": 2000000,
+            "urgency": 1.0,
+            "intervals": 5})
     assert ac_res.status_code == 200
     assert len(ac_res.json()["holdings"]) == 6
 
@@ -150,8 +156,12 @@ def test_statistical_engine_endpoints():
 
 
 def test_backtest_run():
-    res = client.post("/api/backtest/run", json={"start_date": "2022-01-01", "end_date": "2023-12-31", "model_type": "lightgbm"})
+    res = client.post(
+        "/api/backtest/run",
+        json={
+            "start_date": "2022-01-01",
+            "end_date": "2023-12-31",
+            "model_type": "lightgbm"})
     assert res.status_code == 200
     data = res.json()
     assert "sharpe" in data or "annualized_sharpe" in data
-

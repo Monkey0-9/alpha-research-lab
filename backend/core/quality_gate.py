@@ -44,10 +44,7 @@ CAPACITY_VALIDATED -> PAPER -> PRODUCTION_CANDIDATE -> APPROVED (RETIRED / REJEC
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
-from native.native_bridge import accelerator
+from typing import Dict, Any, Optional
 
 
 CRITERIA_DEFINITIONS = [
@@ -56,7 +53,8 @@ CRITERIA_DEFINITIONS = [
     {"id": "C3", "name": "FDR Control", "desc": "Benjamini-Hochberg adjusted q < 0.05", "weight": 15},
     {"id": "C4", "name": "Alpha Decay Profile", "desc": "Monotonic decay, half-life > 5 days", "weight": 10},
     {"id": "C5", "name": "Turnover Budget", "desc": "Daily turnover < 15% of AUM", "weight": 10},
-    {"id": "C6", "name": "Correlation Filter", "desc": "Pairwise IC correlation < 0.6 with existing alphas", "weight": 10},
+    {"id": "C6", "name": "Correlation Filter",
+     "desc": "Pairwise IC correlation < 0.6 with existing alphas", "weight": 10},
     {"id": "C7", "name": "Drawdown Control", "desc": "Alpha-specific max drawdown < 20%", "weight": 10},
     {"id": "C8", "name": "Regime Robustness", "desc": "Positive IC in at least 4 of 6 regimes", "weight": 5},
     {"id": "C9", "name": "Capacity Check", "desc": "Alpha holds at target AUM capacity", "weight": 5},
@@ -146,8 +144,10 @@ def run_hierarchical_quality_gate(
     oos_pass = has_oos_manifest and (oos_sharpe >= 0.70) and (oos_ic >= 0.03)
     stage_results["OOS_VALIDATION"] = {
         "passed": oos_pass,
-        "detail": f"OOS Sharpe: {oos_sharpe:.2f} (min 0.70), OOS IC: {oos_ic:.3f} (min 0.03), Manifest: {has_oos_manifest}"
-    }
+        "detail": (
+            f"OOS Sharpe: {oos_sharpe:.2f} (min 0.70), "
+            f"OOS IC: {oos_ic:.3f} (min 0.03), Manifest: {has_oos_manifest}"
+        )}
 
     # Stage 4: CPCV (Requires at least 50% positive paths across purged combinatorial splits)
     cpcv_pass = has_cpcv and (cpcv_positive_ratio >= 0.50)
@@ -195,8 +195,11 @@ def run_hierarchical_quality_gate(
     falsify_pass = has_falsification_pass and not is_falsified
     stage_results["FALSIFICATION"] = {
         "passed": falsify_pass,
-        "detail": "Adversarial stress and placebo tests verified." if falsify_pass else "Falsification failure detected."
-    }
+        "detail": (
+            "Adversarial stress and placebo tests verified."
+            if falsify_pass
+            else "Falsification failure detected."
+        )}
 
     # Evaluate all analytical stages (1 through 10)
     all_analytical_pass = all(stage_results[k]["passed"] for k in stage_results)
@@ -228,9 +231,11 @@ def run_hierarchical_quality_gate(
         claim_ceiling = ClaimCeiling.PAPER_VALIDATED
 
     stage_results["PROMOTION"] = {
-        "passed": (claim_ceiling in [ClaimCeiling.CAPACITY_VERIFIED_CANDIDATE, ClaimCeiling.PRODUCTION_CANDIDATE] and all_analytical_pass),
-        "detail": f"Current Stage: {current_stage.value}, Claim Ceiling: {claim_ceiling.value}"
-    }
+        "passed": (
+            claim_ceiling in [
+                ClaimCeiling.CAPACITY_VERIFIED_CANDIDATE,
+                ClaimCeiling.PRODUCTION_CANDIDATE] and all_analytical_pass),
+        "detail": f"Current Stage: {current_stage.value}, Claim Ceiling: {claim_ceiling.value}"}
 
     # Calculate weighted gate score (0-100)
     total_score = sum(
@@ -322,7 +327,12 @@ def evaluate_alpha(metrics: Dict[str, Any]) -> Dict[str, Any]:
         fdr_pvalue=float(metrics.get("fdr_q", metrics.get("fdr_pvalue", 1.0))),
         alpha_decay_halflife=float(metrics.get("decay_halflife", metrics.get("alpha_decay_halflife", 0.0))),
         regime_robustness=float(metrics.get("regime_robustness", 0.0)),
-        cpcv_positive_ratio=float(metrics.get("cpcv_positive_ratio", 0.60 if float(metrics.get("oos_sharpe", 0.0)) >= 0.7 else 0.0)),
+        cpcv_positive_ratio=float(
+            metrics.get(
+                "cpcv_positive_ratio",
+                0.60 if float(metrics.get("oos_sharpe", 0.0)) >= 0.7 else 0.0
+            )
+        ),
         pbo_value=float(metrics.get("pbo", 0.08 if float(metrics.get("oos_sharpe", 0.0)) >= 0.7 else 0.50)),
         dsr_value=float(metrics.get("dsr", 0.98 if float(metrics.get("oos_sharpe", 0.0)) >= 1.0 else 0.50)),
         trial_count=int(metrics.get("trial_count", 1)),

@@ -28,7 +28,7 @@ def vol_target_sizing(
 def kelly_criterion_sizing(
     win_rate: float,
     win_loss_ratio: float,
-    fraction: float = 0.5, # Half-Kelly for risk management
+    fraction: float = 0.5,  # Half-Kelly for risk management
     max_position: float = 0.25
 ) -> float:
     """

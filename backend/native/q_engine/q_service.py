@@ -239,7 +239,8 @@ class QAnalyticsEngine:
             elif "rollZScore" in expr or "mavg" in expr:
                 trades = self.get_sample_trades()
                 z = self.roll_zscore(trades["price"], 20).dropna()
-                records = [{"index": i, "price": trades["price"].iloc[i], "zscore": round(float(z.iloc[i]), 3)} for i in range(min(20, len(z)))]
+                records = [{"index": i, "price": trades["price"].iloc[i], "zscore": round(
+                    float(z.iloc[i]), 3)} for i in range(min(20, len(z)))]
                 desc = "Executed KDB+/Q Fast Rolling Z-Score: (price - mavg[20; price]) % dev[20; price]"
             else:
                 # Default generic q query on trades

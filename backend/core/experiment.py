@@ -3,9 +3,9 @@ Pre-Registration & Immutable Experiment Lineage Engine (Reproducibility 2.0).
 
 Enforces institutional pre-registration protocol:
 1. Hypotheses, feature sets, validation schemes, seeds, and hyperparameter configs
-   are declared and cryptographically frozen prior to execution.
+are declared and cryptographically frozen prior to execution.
 2. Captures real Git commit SHA, environment lock hash, dataset ID, dataset version,
-   and the TRUE cryptographic SHA-256 digest of the actual dataset artifact on disk.
+and the TRUE cryptographic SHA-256 digest of the actual dataset artifact on disk.
 3. Every evaluated hypothesis/candidate during GP or search is logged into TrialRegistry.
 4. Deterministic re-execution validates numerical reproducibility with zero metric drift.
 """
@@ -29,12 +29,10 @@ _DEFAULT_DATA_FILE = Path(__file__).resolve().parents[2] / "data" / "sp500_daily
 
 class ExperimentImmutableError(Exception):
     """Raised when an attempt is made to modify a frozen pre-registered experiment."""
-    pass
 
 
 class ExperimentIntegrityError(Exception):
     """Raised when SHA-256 checksum or manifest verification fails."""
-    pass
 
 
 def compute_sha256(data: Any) -> str:
@@ -288,7 +286,9 @@ class ExperimentRegistry:
             stored_path = str(target_path)
         else:
             # Deterministic fallback when mock or external store
-            data_hash = compute_sha256({"dataset_id": spec.dataset_id, "version": spec.dataset_version, "features": sorted(spec.features)})
+            data_hash = compute_sha256({"dataset_id": spec.dataset_id,
+                                        "version": spec.dataset_version,
+                                        "features": sorted(spec.features)})
             stored_path = str(target_path) if target_path else ""
 
         git_sha = code_version_override or get_git_commit_sha()

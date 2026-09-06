@@ -117,7 +117,8 @@ def test_alpha_book_manager_workflow():
 
     # 3. Add orthogonal alpha with genuine independent signal
     independent_noise = np.random.normal(0, 0.02, n)
-    independent_alpha = fwd_returns + independent_noise - (np.corrcoef(fwd_returns + independent_noise, alpha1)[0, 1] * alpha1)
+    independent_alpha = fwd_returns + independent_noise - \
+        (np.corrcoef(fwd_returns + independent_noise, alpha1)[0, 1] * alpha1)
     res3 = manager.add_alpha("Alpha_Reversal", independent_alpha, forward_returns=fwd_returns)
     assert res3["decision"] in {"ACCEPTED_RAW", "ACCEPTED_RESIDUAL"}
     assert manager.num_alphas == 2

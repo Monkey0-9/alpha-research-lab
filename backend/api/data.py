@@ -14,12 +14,14 @@ from core.data_pipeline import data_pipeline
 
 router = APIRouter()
 
+
 class PipelineSyncRequest(BaseModel):
     provider: str = "yfinance"
     tickers: Optional[List[str]] = None
     start: str = "2020-01-01"
     end: Optional[str] = None
     force_update: bool = True
+
 
 class PipelineSyncResponse(BaseModel):
     status: str
@@ -30,6 +32,7 @@ class PipelineSyncResponse(BaseModel):
     clean_pct: float
     quality_score: float
     elapsed_seconds: float
+
 
 class LiveQuoteResponse(BaseModel):
     ticker: str
@@ -46,11 +49,13 @@ class LiveQuoteResponse(BaseModel):
     timestamp: str
     status: str
 
+
 class MarketOverviewResponse(BaseModel):
     timestamp: str
     provider: str
     market_status: str
     indices: List[Dict[str, Any]]
+
 
 class DataSourceStatus(BaseModel):
     name: str
@@ -60,6 +65,7 @@ class DataSourceStatus(BaseModel):
     last_sync: str
     coverage_tickers: int
     error_rate_pct: float
+
 
 class TickerInfo(BaseModel):
     ticker: str
@@ -71,6 +77,7 @@ class TickerInfo(BaseModel):
     data_end: str
     status: str
 
+
 class OHLCVPoint(BaseModel):
     date: str
     open: float
@@ -79,10 +86,12 @@ class OHLCVPoint(BaseModel):
     close: float
     volume: int
 
+
 class OHLCVResponse(BaseModel):
     ticker: str
     count: int
     data: List[OHLCVPoint]
+
 
 class DataQualityMetric(BaseModel):
     ticker: str
@@ -92,11 +101,13 @@ class DataQualityMetric(BaseModel):
     zero_volume_days: int
     quality_score: float
 
+
 class DataQualityReport(BaseModel):
     overall_quality_score: float
     total_records: int
     clean_pct: float
     metrics_per_ticker: List[DataQualityMetric]
+
 
 class DAGNode(BaseModel):
     id: str
@@ -106,18 +117,22 @@ class DAGNode(BaseModel):
     records: int
     latency_ms: float
 
+
 class DAGEdge(BaseModel):
     source: str
     target: str
+
 
 class DAGLineage(BaseModel):
     nodes: List[DAGNode]
     edges: List[DAGEdge]
 
+
 class PITQuery(BaseModel):
     ticker: str = "AAPL"
     as_of_date: str = "2023-06-15"
     fields: Optional[List[str]] = ["close", "volume", "return_1d"]
+
 
 class PITResponse(BaseModel):
     ticker: str
@@ -335,12 +350,41 @@ def get_data_lineage() -> DAGLineage:
         status = data_pipeline.get_status()
         records = status.get("records_count", 0)
         nodes = [
-            DAGNode(id="raw_market", label="Raw Market Feeds", stage="INGESTION", status="HEALTHY", records=records, latency_ms=0.0),
-            DAGNode(id="clean_pit", label="Clean Parquet PIT Datastore", stage="CLEANING", status="HEALTHY", records=records, latency_ms=0.0),
-            DAGNode(id="feature_calc", label="Feature Calculator", stage="FEATURES", status="HEALTHY", records=records * 30, latency_ms=0.0),
-            DAGNode(id="signal_gen", label="Alpha Signal Engine", stage="SIGNALS", status="HEALTHY", records=records, latency_ms=0.0),
-            DAGNode(id="quality_gate", label="Quality Gate", stage="AUDIT", status="HEALTHY", records=0, latency_ms=0.0)
-        ]
+            DAGNode(
+                id="raw_market",
+                label="Raw Market Feeds",
+                stage="INGESTION",
+                status="HEALTHY",
+                records=records,
+                latency_ms=0.0),
+            DAGNode(
+                id="clean_pit",
+                label="Clean Parquet PIT Datastore",
+                stage="CLEANING",
+                status="HEALTHY",
+                records=records,
+                latency_ms=0.0),
+            DAGNode(
+                id="feature_calc",
+                label="Feature Calculator",
+                stage="FEATURES",
+                status="HEALTHY",
+                records=records * 30,
+                latency_ms=0.0),
+            DAGNode(
+                id="signal_gen",
+                label="Alpha Signal Engine",
+                stage="SIGNALS",
+                status="HEALTHY",
+                records=records,
+                latency_ms=0.0),
+            DAGNode(
+                id="quality_gate",
+                label="Quality Gate",
+                stage="AUDIT",
+                status="HEALTHY",
+                records=0,
+                latency_ms=0.0)]
         edges = [
             DAGEdge(source="raw_market", target="clean_pit"),
             DAGEdge(source="clean_pit", target="feature_calc"),
@@ -362,7 +406,11 @@ def query_pit(request: PITQuery) -> PITResponse:
         last_row = df.iloc[-1]
         for f in (request.fields or ["close", "volume"]):
             if f in last_row:
-                sample_data[f] = round(float(last_row[f]), 4) if isinstance(last_row[f], (float, int)) else str(last_row[f])
+                sample_data[f] = round(
+                    float(
+                        last_row[f]), 4) if isinstance(
+                    last_row[f], (float, int)) else str(
+                    last_row[f])
 
     return PITResponse(
         ticker=request.ticker,
@@ -389,7 +437,13 @@ def get_data_metadata():
             "format": "Parquet + PIT Memory Store"
         }
     except Exception:
-        return {"universe": "sp500", "universe_size": 0, "start_date": "", "end_date": "", "features_available": 0, "format": "Parquet + PIT Memory Store"}
+        return {
+            "universe": "sp500",
+            "universe_size": 0,
+            "start_date": "",
+            "end_date": "",
+            "features_available": 0,
+            "format": "Parquet + PIT Memory Store"}
 
 
 @router.get("/security-master")
@@ -490,7 +544,8 @@ def post_price_series(req: PriceSeriesRequest):
         n = 30
         dates = pd.date_range("2024-01-01", periods=n, freq="B")
         base_price = 180.0
-        raw_prices = [base_price * (1.0 + 0.005 * i) if i < 15 else (base_price * (1.0 + 0.005 * i)) / 4.0 for i in range(n)]
+        raw_prices = [base_price * (1.0 + 0.005 * i) if i < 15 else (base_price *
+                                                                     (1.0 + 0.005 * i)) / 4.0 for i in range(n)]
 
         raw_df = pd.DataFrame({
             "timestamp": dates,

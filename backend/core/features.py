@@ -243,9 +243,9 @@ def _compute_ticker_features(sub: pd.DataFrame, ticker: str, set_multiindex: boo
     ema26 = c.ewm(span=26, adjust=False).mean()
     macd_line = ema12 - ema26
     macd_signal = macd_line.ewm(span=9, adjust=False).mean()
-    feat["macd"]        = macd_line.shift(1)
+    feat["macd"] = macd_line.shift(1)
     feat["macd_signal"] = macd_signal.shift(1)
-    feat["macd_hist"]   = (macd_line - macd_signal).shift(1)
+    feat["macd_hist"] = (macd_line - macd_signal).shift(1)
 
     # --- Bollinger Bands ---
     bb_mid = c.rolling(20).mean()
@@ -255,13 +255,13 @@ def _compute_ticker_features(sub: pd.DataFrame, ticker: str, set_multiindex: boo
     bb_width = (bb_upper - bb_lower) / bb_mid
     bb_pos = (c - bb_lower) / (bb_upper - bb_lower + 1e-9)
     feat["bb_position"] = bb_pos.shift(1)
-    feat["bb_width"]    = bb_width.shift(1)
+    feat["bb_width"] = bb_width.shift(1)
 
     # --- Volume ---
     vma20 = v.rolling(20).mean()
-    feat["volume_ma_20"]   = vma20.shift(1)
-    feat["volume_ratio"]   = (v / (vma20 + 1e-9)).shift(1)
-    feat["dollar_volume"]  = (c * v).rolling(5).mean().shift(1)
+    feat["volume_ma_20"] = vma20.shift(1)
+    feat["volume_ratio"] = (v / (vma20 + 1e-9)).shift(1)
+    feat["dollar_volume"] = (c * v).rolling(5).mean().shift(1)
 
     # --- Autocorrelation ---
     for lag in [5, 20]:
@@ -319,7 +319,15 @@ def add_cross_sectional_ranks(features_df: pd.DataFrame) -> pd.DataFrame:
     rank_cols = ["momentum_20d", "volatility_20d", "dollar_volume", "return_20d"]
     for col in rank_cols:
         if col in features_df.columns:
-            name = col.replace("momentum_", "momentum_rank_").replace("volatility_", "vol_rank_").replace("dollar_volume", "size_rank").replace("return_", "ret_rank_")
+            name = col.replace(
+                "momentum_",
+                "momentum_rank_").replace(
+                "volatility_",
+                "vol_rank_").replace(
+                "dollar_volume",
+                "size_rank").replace(
+                "return_",
+                "ret_rank_")
             features_df[name] = features_df.groupby(level="date")[col].rank(pct=True)
     return features_df
 

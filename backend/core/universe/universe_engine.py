@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Set
+from typing import List, Optional, Set
 import pandas as pd
 from core.security_master.master import security_master
 
@@ -19,7 +19,7 @@ class UniverseMembership:
     universe_id: str         # "SP500", "NASDAQ100", "RUSSELL2000"
     security_id: str         # Permanent security identifier
     effective_from: str      # YYYY-MM-DD
-    effective_to: Optional[str] = None # None if currently active
+    effective_to: Optional[str] = None  # None if currently active
     source: str = "Standard & Poor's Indices"
 
 

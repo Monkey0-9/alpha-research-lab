@@ -8,7 +8,6 @@ Verifies:
 5. Integration with double-entry portfolio ledger accounting invariants.
 """
 import numpy as np
-import pandas as pd
 
 from native.native_bridge import accelerator
 from core.portfolio_ledger import PortfolioLedger

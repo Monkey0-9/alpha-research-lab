@@ -11,7 +11,6 @@ Tests A through H:
 - Test G: Delete dataset artifact -> DATASET_UNAVAILABLE
 - Test H: Restore exact dataset -> MATCH
 """
-import copy
 import shutil
 import tempfile
 from pathlib import Path
@@ -42,7 +41,6 @@ def test_env():
 
         # Build realistic sample dataset
         np.random.seed(42)
-        n_rows = 300
         dates = pd.date_range("2022-01-01", periods=100, freq="B")
         rows = []
         for d in dates:

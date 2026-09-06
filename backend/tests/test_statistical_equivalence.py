@@ -6,7 +6,6 @@ known analytical solutions and independent R/sandwich standards to strict tolera
 Eliminates trivial assertions (e.g. abs(t_stat) >= 0) in favor of exact known-answer benchmarks.
 """
 import numpy as np
-import pytest
 
 from backend.core.statistics import (
     hac_newey_west,

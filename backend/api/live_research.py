@@ -13,6 +13,7 @@ from core.paper_trading import paper_trader
 
 router = APIRouter()
 
+
 class PaperStatus(BaseModel):
     is_running: bool
     status: str
@@ -25,12 +26,14 @@ class PaperStatus(BaseModel):
     active_orders: int
     fill_rate_pct: float
 
+
 class PNLPoint(BaseModel):
     date: str
     daily_pnl: float
     cumulative_pnl: float
     benchmark_pnl: float
     expected_backtest_pnl: float
+
 
 class SignalLog(BaseModel):
     timestamp: str
@@ -42,12 +45,14 @@ class SignalLog(BaseModel):
     executed_action: str
     status: str
 
+
 class PromotionCheckItem(BaseModel):
     criterion: str
     target: str
     current: str
     passed: bool
     importance: str
+
 
 class PromotionChecklist(BaseModel):
     strategy_name: str
@@ -57,12 +62,14 @@ class PromotionChecklist(BaseModel):
     readiness_score_pct: float
     checklist: List[PromotionCheckItem]
 
+
 class ComparisonMetric(BaseModel):
     metric: str
     backtest_value: float
     paper_live_value: float
     delta: float
     status: str
+
 
 class ComparisonData(BaseModel):
     strategy_name: str
@@ -190,10 +197,30 @@ def get_promotion_criteria() -> PromotionChecklist:
         days = (datetime.now() - start).days
 
         items = [
-            PromotionCheckItem(criterion="Paper Trading Track Record", target=">= 30 Trading Days", current=f"{days} Days", passed=days >= 30, importance="MANDATORY"),
-            PromotionCheckItem(criterion="Realized Paper PnL", target="> 0%", current=f"{pnl_pct:.1f}%", passed=pnl_pct > 0, importance="MANDATORY"),
-            PromotionCheckItem(criterion="Maximum Drawdown Limit", target="<= 10.0%", current="N/A", passed=False, importance="MANDATORY"),
-            PromotionCheckItem(criterion="Execution Slippage Drag", target="<= 5.0 bps", current="N/A", passed=False, importance="MANDATORY"),
+            PromotionCheckItem(
+                criterion="Paper Trading Track Record",
+                target=">= 30 Trading Days",
+                current=f"{days} Days",
+                passed=days >= 30,
+                importance="MANDATORY"),
+            PromotionCheckItem(
+                criterion="Realized Paper PnL",
+                target="> 0%",
+                current=f"{pnl_pct:.1f}%",
+                passed=pnl_pct > 0,
+                importance="MANDATORY"),
+            PromotionCheckItem(
+                criterion="Maximum Drawdown Limit",
+                target="<= 10.0%",
+                current="N/A",
+                passed=False,
+                importance="MANDATORY"),
+            PromotionCheckItem(
+                criterion="Execution Slippage Drag",
+                target="<= 5.0 bps",
+                current="N/A",
+                passed=False,
+                importance="MANDATORY"),
         ]
 
         passed_count = sum(1 for i in items if i.passed)
@@ -224,10 +251,17 @@ def get_live_vs_backtest() -> ComparisonData:
         pnl_pct = (nav / max(initial, 1) - 1.0) * 100
 
         metrics = [
-            ComparisonMetric(metric="Realized PnL (%)", backtest_value=0.0, paper_live_value=round(pnl_pct, 2), delta=round(pnl_pct, 2), status="LIVE" if pnl_pct != 0 else "NO_DATA"),
-            ComparisonMetric(metric="Position Count", backtest_value=0.0, paper_live_value=float(len(state.get("positions", []))), delta=0.0, status="LIVE"),
-            ComparisonMetric(metric="Gross Exposure", backtest_value=0.0, paper_live_value=round(state.get("gross_exposure", 0), 3), delta=0.0, status="LIVE"),
-        ]
+            ComparisonMetric(
+                metric="Realized PnL (%)", backtest_value=0.0, paper_live_value=round(
+                    pnl_pct, 2), delta=round(
+                    pnl_pct, 2), status="LIVE" if pnl_pct != 0 else "NO_DATA"), ComparisonMetric(
+                metric="Position Count", backtest_value=0.0, paper_live_value=float(
+                    len(
+                        state.get(
+                            "positions", []))), delta=0.0, status="LIVE"), ComparisonMetric(
+                metric="Gross Exposure", backtest_value=0.0, paper_live_value=round(
+                    state.get(
+                        "gross_exposure", 0), 3), delta=0.0, status="LIVE"), ]
 
         return ComparisonData(
             strategy_name="LIVE_PAPER_TRADING",
@@ -236,7 +270,11 @@ def get_live_vs_backtest() -> ComparisonData:
             metrics=metrics
         )
     except Exception:
-        return ComparisonData(strategy_name="LIVE_PAPER_TRADING", correlation_to_backtest=0, tracking_error_annualized=0, metrics=[])
+        return ComparisonData(
+            strategy_name="LIVE_PAPER_TRADING",
+            correlation_to_backtest=0,
+            tracking_error_annualized=0,
+            metrics=[])
 
 
 @router.get("/paper-portfolio")
@@ -250,6 +288,12 @@ def promote_strategy(payload: Optional[Dict[str, Any]] = None):
     """Promote strategy — requires real governance workflow. Returns NOT_IMPLEMENTED."""
     return {
         "status": "NOT_IMPLEMENTED",
-        "message": "Strategy promotion requires real governance workflow integration. Not available without live trading data.",
-        "strategy_name": (payload or {}).get("strategy_name", ""),
+        "message": (
+            "Strategy promotion requires real governance workflow integration. "
+            "Not available without live trading data."
+        ),
+        "strategy_name": (
+            payload or {}).get(
+            "strategy_name",
+            ""),
     }

@@ -4,11 +4,9 @@ Validates that the quantitative discovery and validation pipeline strictly rejec
 pure Gaussian white noise and flags backtest overfitting.
 """
 import numpy as np
-import pytest
 from core.metrics import information_coefficient
 from core.statistics import deflated_sharpe_ratio
-from core.quality_gate import run_quality_gate, ClaimCeiling
-from core.pbo import compute_pbo
+from core.quality_gate import run_quality_gate
 
 
 def test_pure_noise_rejected_by_statistical_tests():

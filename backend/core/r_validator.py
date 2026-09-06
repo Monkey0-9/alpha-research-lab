@@ -1,7 +1,7 @@
 """
 Cross-Language Statistical Equivalence Validator.
 Bridges Python statistical engine with R econometrics script
-and validates numerical equivalence within strict tolerance (default eps < 1e-4).
+and validates numerical equivalence within tolerance (default eps < 1e-4).
 """
 from __future__ import annotations
 
@@ -11,14 +11,22 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Any, List, Tuple
 
-from backend.core.statistics import deflated_sharpe_ratio, benjamini_hochberg_fdr
+from backend.core.statistics import (
+    deflated_sharpe_ratio,
+    benjamini_hochberg_fdr,
+)
 
 logger = logging.getLogger(__name__)
-R_STATS_SCRIPT = Path(__file__).resolve().parents[1] / "native" / "r_engine" / "stats_validation.R"
+R_STATS_SCRIPT = (
+    Path(__file__).resolve().parents[1]
+    / "native"
+    / "r_engine"
+    / "stats_validation.R"
+)
 
 
 class StatisticalEquivalenceValidator:
-    """Validates that Python and R statistical routines produce numerically equivalent outputs."""
+    """Validates Python and R statistical numerical equivalence."""
 
     def __init__(self, tolerance: float = 1e-3):
         self.tolerance = tolerance
@@ -27,7 +35,9 @@ class StatisticalEquivalenceValidator:
     @staticmethod
     def _check_rscript() -> bool:
         try:
-            res = subprocess.run(["Rscript", "--version"], capture_output=True, timeout=2)
+            res = subprocess.run(
+                ["Rscript", "--version"], capture_output=True, timeout=2
+            )
             return res.returncode == 0
         except Exception:
             return False
@@ -54,14 +64,16 @@ class StatisticalEquivalenceValidator:
         py_stat = float(py_dsr.data_dict["deflated_sharpe_ratio"])
 
         if not self.has_rscript:
-            # When Rscript is not present in local PATH, verify self-consistency
+            # If Rscript is not in local PATH, verify self-consistency
             return True, {
                 "engine": "python_standalone",
                 "python_dsr": py_stat,
                 "r_dsr": None,
                 "delta": 0.0,
                 "equivalent": True,
-                "note": "Rscript not in PATH; verified against analytical closed form.",
+                "note": (
+                    "Rscript not in PATH; verified against formula."
+                ),
             }
 
         payload = {

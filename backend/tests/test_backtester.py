@@ -47,4 +47,3 @@ def test_trade_pnl_deterministic_and_turnover_exact():
     # Turnover must be dynamically calculated, not hardcoded 0.25
     assert isinstance(res1.turnover, float)
     assert 0.0 < res1.turnover <= 1.0
-

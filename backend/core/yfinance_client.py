@@ -226,7 +226,8 @@ class YFinanceClient:
             return quote_data
 
         except Exception as e:
-            logger.warning(f"Error fetching live quote for {sym} via yfinance: {e}. Failing over to Robinhood real-time engine...")
+            logger.warning(
+                f"Error fetching live quote for {sym} via yfinance: {e}. Failing over to Robinhood real-time engine...")
             try:
                 from core.robinhood_client import robinhood_client
                 rh_sym = {"^VIX": "VIXY", "^TNX": "TLT"}.get(sym, sym)

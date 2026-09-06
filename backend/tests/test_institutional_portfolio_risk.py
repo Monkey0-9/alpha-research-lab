@@ -10,7 +10,6 @@ Validates:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from core.portfolio import ledoit_wolf_covariance, convex_portfolio_optimizer
 from core.portfolio_ledger import PortfolioLedger, FillEvent
@@ -148,7 +147,10 @@ def test_cornish_fisher_var_penalizes_fat_tails():
     skewed_cf_var = cornish_fisher_var(skewed_rets, confidence=0.99)
 
     # Cornish-Fisher VaR must penalize the severe negative skewness with a higher VaR
-    assert skewed_cf_var > normal_cf_var, f"Skewed VaR ({skewed_cf_var:.4f}) must be higher than Normal VaR ({normal_cf_var:.4f})"
+    assert skewed_cf_var > normal_cf_var, (
+        f"Skewed VaR ({skewed_cf_var:.4f}) must be higher than "
+        f"Normal VaR ({normal_cf_var:.4f})"
+    )
 
 
 def test_historical_stress_tester_crisis_scenarios():

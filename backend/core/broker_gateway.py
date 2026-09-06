@@ -15,9 +15,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
-import numpy as np
 
-from core.portfolio_ledger import PortfolioLedger, FillEvent
+from core.portfolio_ledger import PortfolioLedger
 
 logger = logging.getLogger(__name__)
 
@@ -48,27 +47,22 @@ class BrokerGateway(ABC):
         limit_price: Optional[float] = None
     ) -> BrokerOrder:
         """Submit new order for execution."""
-        pass
 
     @abstractmethod
     def cancel_order(self, order_id: str) -> bool:
         """Cancel an open order."""
-        pass
 
     @abstractmethod
     def get_open_orders(self) -> List[BrokerOrder]:
         """Retrieve all pending orders."""
-        pass
 
     @abstractmethod
     def get_positions(self) -> Dict[str, float]:
         """Return symbol -> current shares map."""
-        pass
 
     @abstractmethod
     def get_account_balance(self) -> Dict[str, float]:
         """Return dict with cash, portfolio_value, buying_power, etc."""
-        pass
 
     @abstractmethod
     def reconcile_with_ledger(
@@ -77,7 +71,6 @@ class BrokerGateway(ABC):
         current_prices: Dict[str, float]
     ) -> Dict[str, Any]:
         """Verify broker reported positions and cash match ledger state."""
-        pass
 
 
 class SimulatedBrokerGateway(BrokerGateway):
