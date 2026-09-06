@@ -26,6 +26,13 @@ class ActionType(str, enum.Enum):
     DELISTING = "DELISTING"
 
 
+class PriceSeriesType(str, enum.Enum):
+    RAW_PRICE = "RAW_PRICE"
+    SPLIT_ADJUSTED = "SPLIT_ADJUSTED"
+    TOTAL_RETURN = "TOTAL_RETURN"
+    TRADEABLE_PRICE = "TRADEABLE_PRICE"
+
+
 @dataclass
 class CorporateAction:
     action_id: str
@@ -43,6 +50,11 @@ class Security:
     ticker: str               # Current primary symbol
     name: str                 # Legal entity name
     exchange: str             # NASDAQ, NYSE, etc.
+    figi: Optional[str] = None
+    cusip: Optional[str] = None
+    sedol: Optional[str] = None
+    isin: Optional[str] = None
+    country: str = "US"
     currency: str = "USD"
     asset_class: AssetClass = AssetClass.EQUITY
     is_active: bool = True

@@ -234,9 +234,54 @@ class PortfolioLedger:
             credit_account="Assets:Cash",
             amount=daily_fee,
             description=f"Short borrow financing accrual on ${short_mv:,.2f} short liabilities",
-            timestamp=ts
+            timestamp=ts,
         )
         return daily_fee
+
+    def record_execution(
+        self,
+        security_id: str,
+        ticker: str,
+        shares: float,
+        price: float,
+        commission: float = 0.0,
+        event_id: str = "",
+        timestamp: Optional[str] = None,
+    ) -> None:
+        """Convenience method to record a trade fill execution directly."""
+        fill = FillEvent(
+            order_id=event_id or f"ORD-{len(self.fills_history)+1:06d}",
+            security_id=security_id,
+            ticker=ticker,
+            timestamp=timestamp or datetime.now(timezone.utc).isoformat(),
+            quantity=shares,
+            price=price,
+            fees=commission,
+        )
+        self.record_fill(fill)
+
+    def accrue_borrow_fee(
+        self,
+        security_id: str = "",
+        borrow_fee: float = 0.0,
+        event_id: str = "",
+        timestamp: Optional[str] = None,
+    ) -> float:
+        """Accrue an explicit dollar borrow fee on a short liability."""
+        if borrow_fee > 0:
+            self.accrued_borrow_fees += borrow_fee
+            self.cash -= borrow_fee
+            ts = timestamp or datetime.now(timezone.utc).isoformat()
+            self._append_journal(
+                entry_type="BORROW_FEE",
+                debit_account="Expenses:BorrowCost",
+                credit_account="Assets:Cash",
+                amount=borrow_fee,
+                description=f"Borrow fee {event_id} on {security_id}".strip(),
+                timestamp=ts
+            )
+            return borrow_fee
+        return 0.0
 
     def mark_to_market(self, current_prices: Dict[str, float], timestamp: str) -> PortfolioSnapshot:
         """

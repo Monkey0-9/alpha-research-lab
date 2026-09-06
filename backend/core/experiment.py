@@ -75,12 +75,39 @@ def get_git_commit_sha() -> str:
     return "f445c2f23edf9e8451bb945d69d62ef9a8c7b180"
 
 
-def get_env_lock_hash() -> str:
-    """Retrieve hash of locked environment dependencies (requirements.txt)."""
+def is_git_working_tree_clean() -> bool:
+    """Check whether git working directory has uncommitted modifications."""
+    try:
+        res = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if res.returncode == 0:
+            return len(res.stdout.strip()) == 0
+    except Exception:
+        pass
+    return True
+
+
+def get_environment_fingerprint() -> Dict[str, Any]:
+    """Capture complete platform, python runtime, and package environment fingerprint."""
+    import sys
+    import platform
     req_path = Path(__file__).resolve().parents[1] / "requirements.txt"
-    if req_path.exists():
-        return compute_file_sha256(req_path)
-    return compute_sha256({"env": "quantalpha-v1.0-default"})
+    req_hash = compute_file_sha256(req_path) if req_path.exists() else "none"
+    return {
+        "python_version": sys.version.split()[0],
+        "platform": platform.platform(),
+        "architecture": platform.architecture()[0],
+        "requirements_hash": req_hash,
+    }
+
+
+def get_env_lock_hash() -> str:
+    """Retrieve composite cryptographic hash of locked runtime environment."""
+    return compute_sha256(get_environment_fingerprint())
 
 
 @dataclass

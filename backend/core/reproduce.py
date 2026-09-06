@@ -156,6 +156,7 @@ def reproduce_experiment(
     config_override: Optional[Dict[str, Any]] = None,
     code_version_override: Optional[str] = None,
     ast_hash_override: Optional[str] = None,
+    env_hash_override: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Reproduce a frozen experiment with end-to-end cryptographic and numerical validation.
@@ -195,12 +196,47 @@ def reproduce_experiment(
             "is_exact_match": False,
         }
 
+    # 1b. Verify Manifest Freeze & Seal Integrity (Tamper Detection)
+    if manifest.is_frozen and manifest.manifest_hash:
+        expected_manifest_body = {
+            "spec_hash": manifest.spec.spec_hash,
+            "data_hash": manifest.data_hash,
+            "git_commit": manifest.git_commit,
+            "env_lock_hash": manifest.env_lock_hash,
+            "config_hash": manifest.config_hash,
+            "alpha_ast_hash": manifest.alpha_ast_hash,
+            "random_seed": manifest.random_seed,
+            "metrics": manifest.metrics,
+            "status": manifest.execution_status
+        }
+        recomputed_manifest_hash = compute_sha256(expected_manifest_body)
+        if recomputed_manifest_hash != manifest.manifest_hash:
+            return {
+                "experiment_id": experiment_id,
+                "status": "MANIFEST_TAMPER_DETECTED",
+                "reason": f"Cryptographic manifest seal broken! Registered {manifest.manifest_hash[:12]}, computed {recomputed_manifest_hash[:12]}.",
+                "spec_integrity_verified": False,
+                "dataset_checksum_verified": False,
+                "is_exact_match": False,
+            }
+
     # 2. Check Code / Feature Version Match
     if code_version_override is not None and code_version_override != manifest.git_commit:
         return {
             "experiment_id": experiment_id,
             "status": "CODE_VERSION_FAILURE",
             "reason": f"Code version mismatch: registered {manifest.git_commit[:12]}, received {code_version_override[:12]}.",
+            "spec_integrity_verified": True,
+            "dataset_checksum_verified": False,
+            "is_exact_match": False,
+        }
+
+    # 2b. Check Environment Lock Hash
+    if env_hash_override is not None and env_hash_override != manifest.env_lock_hash:
+        return {
+            "experiment_id": experiment_id,
+            "status": "ENVIRONMENT_HASH_FAILURE",
+            "reason": f"Runtime environment altered: registered {manifest.env_lock_hash[:12]}, received {env_hash_override[:12]}.",
             "spec_integrity_verified": True,
             "dataset_checksum_verified": False,
             "is_exact_match": False,

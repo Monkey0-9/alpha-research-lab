@@ -174,6 +174,46 @@ def ledoit_wolf_covariance(returns_matrix: np.ndarray) -> tuple[np.ndarray, floa
     return shrunk_cov, float(delta)
 
 
+def oas_covariance(returns_matrix: np.ndarray) -> tuple[np.ndarray, float]:
+    """
+    Oracle Approximating Shrinkage (OAS) covariance estimator (Chen, Wiesel, Eldar, Hero 2010).
+    Shrinks sample covariance S towards F = (tr(S)/n) * I.
+    Yields lower MSE than Ledoit-Wolf for Gaussian and elliptically contoured returns.
+    Returns: (shrunk_cov_matrix, shrinkage_intensity)
+    """
+    X = np.asarray(returns_matrix, dtype=np.float64)
+    t, n = X.shape
+    if t < 3 or n < 2:
+        return np.cov(X, rowvar=False), 0.0
+
+    # Demean returns
+    X = X - np.mean(X, axis=0)
+
+    # Sample covariance S (unbiased)
+    S = (X.T @ X) / (t - 1)
+
+    # Target F: scaled identity matrix F = mu * I where mu = tr(S) / n
+    tr_S = float(np.trace(S))
+    mu = tr_S / n
+    F = mu * np.eye(n)
+
+    # tr(S^2)
+    tr_S2 = float(np.trace(S @ S))
+
+    # OAS formula for optimal shrinkage rho
+    num = (1.0 - 2.0 / n) * tr_S2 + (tr_S ** 2)
+    den = (t + 1.0 - 2.0 / n) * (tr_S2 - (tr_S ** 2) / n)
+
+    if den > 1e-12:
+        rho = num / den
+        delta = max(0.0, min(1.0, rho))
+    else:
+        delta = 0.0
+
+    shrunk_cov = (1.0 - delta) * S + delta * F
+    return shrunk_cov, float(delta)
+
+
 def convex_portfolio_optimizer(
     alpha_signal: np.ndarray,
     cov_matrix: np.ndarray,

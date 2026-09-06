@@ -61,3 +61,27 @@ def test_level5_reproducibility_audit():
     assert audit_res["sharpe_difference"] < 1e-4
     assert audit_res["status"] == "REPRODUCED_MATCH"
     assert audit_res["is_exact_match"] is True
+
+    # 6. Test Adversarial Failure Modes
+    # 6a. Code version mismatch
+    mismatch_code = reproduce_experiment(exp_id, code_version_override="0000000000000000000000000000000000000000")
+    assert mismatch_code["status"] == "CODE_VERSION_FAILURE"
+
+    # 6b. Environment lock mismatch
+    mismatch_env = reproduce_experiment(exp_id, env_hash_override="corrupted_env_hash_12345")
+    assert mismatch_env["status"] == "ENVIRONMENT_HASH_FAILURE"
+
+    # 6c. Alpha AST hash mismatch
+    mismatch_ast = reproduce_experiment(exp_id, ast_hash_override="corrupted_ast_hash_99999")
+    assert mismatch_ast["status"] == "AST_HASH_FAILURE"
+
+    # 6d. Config hash mismatch
+    mismatch_cfg = reproduce_experiment(exp_id, config_override={"tampered": True, "seed": 999})
+    assert mismatch_cfg["status"] == "CONFIG_HASH_FAILURE"
+
+    # 6e. Tamper with frozen manifest hash directly
+    original_manifest_hash = manifest.manifest_hash
+    manifest.manifest_hash = "fake_tampered_manifest_seal"
+    tamper_res = reproduce_experiment(exp_id)
+    assert tamper_res["status"] == "MANIFEST_TAMPER_DETECTED"
+    manifest.manifest_hash = original_manifest_hash

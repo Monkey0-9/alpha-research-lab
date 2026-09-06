@@ -304,15 +304,20 @@ class NativeAccelerator:
             "expected_impact_cost": total_shares * volatility * 0.0005
         }
 
+    almgren_chriss_trajectory = fast_almgren_chriss
+
     @staticmethod
     def fast_twap_simulation(
         total_shares: float,
         prices: np.ndarray,
         volumes: np.ndarray,
         spread_bps: float = 5.0,
-        max_participation_rate: float = 0.10
+        max_participation_rate: float = 0.10,
+        max_participation: Optional[float] = None,
     ) -> Dict[str, Any]:
         """C++ accelerated TWAP order execution simulation with volume participation capping."""
+        if max_participation is not None:
+            max_participation_rate = max_participation
         n_bars = len(prices)
         if _cpp_lib is not None and hasattr(_cpp_lib, "cpp_simulate_twap") and n_bars > 0:
             p_arr = np.ascontiguousarray(prices, dtype=np.float64)

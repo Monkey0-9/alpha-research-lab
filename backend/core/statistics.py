@@ -119,6 +119,7 @@ def deflated_sharpe_ratio(
     skew: Optional[float] = None,
     kurt: Optional[float] = None,
     n_obs: Optional[int] = None,
+    n_observations: Optional[int] = None,
 ) -> DSRResultVal:
     """
     Deflated Sharpe Ratio (DSR) as defined by Marcos López de Prado.
@@ -134,7 +135,7 @@ def deflated_sharpe_ratio(
         s_val = float(ss.skew(ret)) if t_len > 2 else 0.0
         k_val = float(ss.kurtosis(ret, fisher=False)) if t_len > 3 else 3.0
     else:
-        t_len = n_obs if n_obs is not None else 1260
+        t_len = n_obs if n_obs is not None else (n_observations if n_observations is not None else 1260)
         s_val = skew if skew is not None else 0.0
         k_val = kurt if kurt is not None else 3.0
 
@@ -313,16 +314,23 @@ def hansens_spa_test(
     Evaluates whether the best performing candidate alpha/trading strategy genuinely outperforms
     the benchmark after rigorously correcting for data snooping across all M candidates.
     """
-    candidates = np.asarray(candidate_excess_returns, dtype=np.float64)
-    if candidates.ndim == 1:
-        candidates = candidates[:, np.newaxis]
-
-    n, m = candidates.shape
+    cand = np.asarray(candidate_excess_returns, dtype=np.float64)
     if benchmark_returns is not None:
-        bench = np.asarray(benchmark_returns, dtype=np.float64).flatten()
-        d_mat = candidates - bench[:, np.newaxis]
+        bench = np.asarray(benchmark_returns, dtype=np.float64)
+        if bench.ndim == 2 and cand.ndim == 1:
+            # Single candidate compared to M alternative benchmark models
+            d_mat = cand[:, np.newaxis] - bench
+        elif bench.ndim == 1 and cand.ndim == 2:
+            # M candidates compared to single benchmark series
+            d_mat = cand - bench[:, np.newaxis]
+        elif bench.ndim == 1 and cand.ndim == 1:
+            d_mat = (cand - bench)[:, np.newaxis]
+        else:
+            d_mat = cand - bench
     else:
-        d_mat = candidates
+        d_mat = cand[:, np.newaxis] if cand.ndim == 1 else cand
+
+    n, m = d_mat.shape
 
     if n < 10 or m == 0:
         return {
@@ -400,17 +408,41 @@ def hansens_spa_test(
     p_white_u = float(np.mean(t_boot_u >= t_spa_clamped))
     p_spa_l = float(np.mean(t_boot_l >= t_spa_clamped))
 
-    return {
+    res = {
         "status": "SUCCESS",
         "t_stat": round(t_spa, 4),
         "p_value_spa": round(p_spa_c, 4),
         "p_value_white": round(p_white_u, 4),
         "p_value_lower": round(p_spa_l, 4),
+        "p_value": round(p_spa_c, 4),
         "best_model_index": best_idx,
         "best_model_excess_mean": round(float(d_bar[best_idx]), 6),
         "passes_spa": p_spa_c < 0.05 and t_spa > 0,
+        "superiority_demonstrated": p_spa_c < 0.05 and t_spa > 0,
         "num_models": m,
         "sample_length": n,
         "mean_block_size": mean_block_size,
     }
+    return res
+
+
+def whites_reality_check(
+    candidate_excess_returns: np.ndarray,
+    benchmark_returns: Optional[np.ndarray] = None,
+    mean_block_size: int = 10,
+    n_bootstraps: int = 1000,
+    seed: Optional[int] = 42,
+) -> Dict[str, Any]:
+    """White's Reality Check (2000) for data snooping across candidate strategies."""
+    res = hansens_spa_test(
+        candidate_excess_returns=candidate_excess_returns,
+        benchmark_returns=benchmark_returns,
+        mean_block_size=mean_block_size,
+        n_bootstraps=n_bootstraps,
+        seed=seed,
+    )
+    w_res = dict(res)
+    w_res["p_value"] = res.get("p_value_white", 1.0)
+    w_res["superiority_demonstrated"] = bool(w_res["p_value"] < 0.05 and res.get("t_stat", 0.0) > 0)
+    return w_res
 
