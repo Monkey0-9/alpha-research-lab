@@ -1,8 +1,8 @@
 # QuantAlpha — Implementation Progress & Architecture Status
 
-**Status: 100% COMPLETE — PRODUCTION READY**
+**Status: V0.1 Research Foundation Verified — 131 tests passing locally; production-readiness audit in progress.**
 **Audit Date: September 2026**
-**Platform Caliber: Tier-1 Institutional Quantitative Workstation (Citadel, Two Sigma, Point72, Bloomberg Terminal Standard)**
+**Architecture: Institution-inspired quantitative research and alpha discovery platform with PIT-aware data handling, adversarial validation, statistical multiple-testing controls, native C/C++/Rust acceleration, portfolio/risk research and reproducible experiment lineage.**
 
 ---
 

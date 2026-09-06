@@ -5,7 +5,7 @@ All endpoints return REAL computations from actual model training.
 No hardcoded results, no synthetic data.
 """
 from __future__ import annotations
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 import numpy as np
@@ -28,10 +28,10 @@ class FoldResult(BaseModel):
     train_end: str
     test_start: str
     test_end: str
-    train_sharpe: float
-    oos_sharpe: float
-    oos_ic: float
-    oos_return: float
+    train_sharpe: Optional[float] = None
+    oos_sharpe: Optional[float] = None
+    oos_ic: Optional[float] = None
+    oos_return: Optional[float] = None
     status: str
 
 class WalkForwardResponse(BaseModel):

@@ -1,6 +1,6 @@
-# QuantAlpha — Institutional Quantitative Research & Alpha Production Platform
+# QuantAlpha — Institution-Inspired Quantitative Research & Alpha Discovery Platform
 
-An institutional-grade quantitative alpha research, portfolio optimization, execution simulation, and production risk monitoring platform. QuantAlpha integrates a high-performance Python FastAPI quantitative research backend with real-market data ingestion from **Yahoo Finance (`yfinance`)** and **Robinhood (`robin_stocks`)**, native C/C++/Rust accelerators, and a Next.js 16 / React 19 quantitative research portal.
+Institution-inspired quantitative research and alpha discovery platform with PIT-aware data handling, adversarial validation, statistical multiple-testing controls, native C/C++/Rust acceleration, portfolio/risk research and reproducible experiment lineage. QuantAlpha integrates a high-performance Python FastAPI quantitative research backend with real-market data provider abstractions (**Yahoo Finance `yfinance`** and **Robinhood `robin_stocks`**), native C/C++/Rust accelerators, and a Next.js 16 / React 19 quantitative research portal.
 
 ---
 
@@ -26,9 +26,9 @@ The platform is organized into 13 synchronized modules covering the quantitative
 
 ---
 
-## 📡 Real-Market Data Infrastructure (Yahoo Finance & Robinhood)
+## 📡 Real-Market Research Data Pipeline (Yahoo Finance & Robinhood)
 
-QuantAlpha includes an automated, institutional-grade market data pipeline in `backend/core/` and `backend/api/data.py`:
+QuantAlpha includes an automated real-market research data pipeline and provider abstraction in `backend/core/` and `backend/api/data.py`:
 
 ```
                     ┌─────────────────────────┐

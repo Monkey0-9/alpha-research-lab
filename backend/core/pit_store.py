@@ -1,23 +1,27 @@
 """
-Point-in-Time (PIT) Multi-Temporal Data Store.
+Point-in-Time (PIT) Multi-Temporal Data Store (True PIT 2.0).
 
-Guarantees true financial PIT isolation using multi-temporal timestamps:
-- observation_time: Period end or event occurrence time.
-- publication_time: When the number was reported by the source.
-- available_time: When the record was ingested and accessible to the trading engine.
-- effective_time: When the corporate/economic event took legal effect.
-- revision_time: Restatement timestamp.
+Guarantees true financial PIT isolation using multi-temporal timestamps across:
+1. Market observations (close price, volume, high, low, open)
+2. Market bar availability (enforces market close 16:00 publication delays)
+3. Fundamental accounting records (observation, publication, availability, revision)
+4. Historical universe constituent membership (effective_from, effective_to)
+5. Corporate actions and adjustment timelines
 
-Prevents restatement leakage, publication delay leakage, and lookahead bias.
+Prevents restatement leakage, publication delay leakage, and survivorship bias.
 A strategy querying on May 1 cannot observe Q1 earnings published on May 7.
+A strategy querying on May 1 at 14:00 cannot observe May 1 close price bars published at 16:00.
 """
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import time
 from typing import List, Optional, Dict, Any
 import pandas as pd
 from core.data_loader import load_sp500_data
+from core.universe.universe_engine import universe_engine
+from core.security_master.master import security_master
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +42,7 @@ class PITRecord:
 
 class PointInTimeStore:
     def __init__(self, data_df: Optional[pd.DataFrame] = None):
+        self._has_custom_data = data_df is not None
         raw = data_df if data_df is not None else load_sp500_data()
         self._df = raw.copy()
         if "date" in self._df.columns and "ticker" in self._df.columns:
@@ -86,25 +91,49 @@ class PointInTimeStore:
     def get_snapshot(
         self,
         as_of_date: str,
-        tickers: Optional[List[str]] = None
+        tickers: Optional[List[str]] = None,
+        universe_id: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Return the state of all tickers known precisely at as_of_date.
-        For market bars: observation close date must be on or before as_of_date.
+        Return the state of tickers known precisely at as_of_date with multi-temporal availability.
+        Enforces market close publication delays:
+        - If query timestamp has an explicit intraday time prior to 16:00:00, that date's close bar
+          is NOT yet available, and only previous close bars (<= T-1) are observable.
+        - If universe_id is provided, constituents are strictly filtered by historical membership.
         """
         ts = pd.Timestamp(as_of_date)
+
+        # Multi-temporal availability filter:
+        # If timestamp has intraday time < 16:00:00 US/Eastern close, current date close is not yet published!
+        has_intraday_time = (ts.time() != time(0, 0))
+        if has_intraday_time and ts.hour < 16:
+            # Cut off at previous calendar/business day
+            effective_cutoff_date = ts.floor("D") - pd.Timedelta(days=1)
+        else:
+            effective_cutoff_date = ts.floor("D")
+
         dates = pd.to_datetime(self._df.index.get_level_values("date"))
-        mask = dates <= ts
+        mask = dates <= effective_cutoff_date
         sub = self._df[mask]
 
-        if tickers:
-            ticker_mask = sub.index.get_level_values("ticker").isin(tickers)
+        # Apply historical universe membership if requested
+        if universe_id:
+            active_universe = set(universe_engine.get_active_tickers(universe_id, as_of_date=str(ts.date())))
+            if tickers:
+                active_tickers = list(active_universe.intersection(set(tickers)))
+            else:
+                active_tickers = list(active_universe)
+        else:
+            active_tickers = tickers
+
+        if active_tickers:
+            ticker_mask = sub.index.get_level_values("ticker").isin(active_tickers)
             sub = sub[ticker_mask]
 
         if sub.empty:
             return pd.DataFrame()
 
-        # Get latest available record for each ticker on or before ts
+        # Return latest available record for each ticker on or before effective_cutoff_date
         return sub.groupby(level="ticker").last()
 
     def get_fundamental_as_of(
@@ -158,8 +187,16 @@ class PointInTimeStore:
         except KeyError:
             return pd.DataFrame()
 
-    def get_universe_on(self, as_of_date: str) -> List[str]:
-        """Return list of active symbols known on date t."""
+    def get_universe_on(self, as_of_date: str, universe_id: Optional[str] = "SP500") -> List[str]:
+        """
+        Return list of active symbols known on date t from historical universe master.
+        Eliminates survivorship bias by consulting historical addition/removal history.
+        """
+        if not self._has_custom_data and universe_id is not None:
+            historical_members = universe_engine.get_active_tickers(universe_id, as_of_date=as_of_date)
+            if historical_members:
+                return historical_members
+        # Fallback or custom data: return observed tickers from current store on or before as_of_date
         ts = pd.Timestamp(as_of_date)
         dates = pd.to_datetime(self._df.index.get_level_values("date"))
         sub = self._df[dates <= ts]

@@ -1,12 +1,31 @@
 /**
- * C++ Ultra-Fast Execution & Market Impact Engine
- * Implements Almgren-Chriss optimal liquidation trajectory & TWAP/VWAP simulator.
+ * C++ Institutional Quant Compute & Discrete Event Simulation Engine.
+ * 
+ * Modular components:
+ * - MarketEvent: Microstructure quotes, depth, and volume
+ * - Order: Full order lifecycle (PENDING, PARTIALLY_FILLED, FILLED, CANCELLED)
+ * - Fill: Execution fills with commissions, slippage, and non-linear market impact
+ * - Position: Tracking long/short inventory, cost basis, and borrow drag
+ * - Portfolio: Cash ledger, gross/net leverage, margin financing, and NAV accounting
+ * - ExecutionModel: Almgren-Chriss optimal trajectories, TWAP, VWAP, and ADV participation caps
+ * - TransactionCost: Brokerage fees, SEC fees, borrow financing drag
  */
 
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <unordered_map>
+#include <string>
+
+#include "include/market_event.hpp"
+#include "include/order.hpp"
+#include "include/fill.hpp"
+#include "include/position.hpp"
+#include "include/portfolio.hpp"
+#include "include/execution_model.hpp"
+#include "include/transaction_cost.hpp"
+#include "include/backtest_engine.hpp"
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
@@ -18,9 +37,6 @@ extern "C" {
 
 /**
  * Almgren-Chriss optimal trajectory computation.
- * Total shares X over T intervals, risk aversion lambda, volatility sigma,
- * temporary impact eta, permanent impact gamma.
- * returns array of share trade sizes tau_k in out_trades.
  */
 EXPORT void cpp_almgren_chriss_trajectory(
     double total_shares,
@@ -35,7 +51,7 @@ EXPORT void cpp_almgren_chriss_trajectory(
 ) {
     if (intervals <= 0) return;
 
-    double tau = 1.0; // unit time step
+    double tau = 1.0;
     double kappa2 = (risk_aversion * volatility * volatility) / (temp_impact * (1.0 - 0.5 * perm_impact * tau));
     double kappa = std::sqrt(std::max(1e-9, kappa2));
 
@@ -46,14 +62,11 @@ EXPORT void cpp_almgren_chriss_trajectory(
     double expected_cost = 0.5 * perm_impact * total_shares * total_shares;
 
     for (int j = 1; j <= intervals; ++j) {
-        double t_j = j * tau;
         double remaining_time = (intervals - j) * tau;
         double xj = total_shares * std::sinh(kappa * remaining_time) / (sinh_kappa_T + 1e-12);
         out_holdings[j] = xj;
         double trade = out_holdings[j - 1] - xj;
         out_trades[j - 1] = trade;
-
-        // Add temporary impact cost
         expected_cost += temp_impact * (trade / tau) * (trade / tau) * tau;
     }
 
@@ -62,7 +75,6 @@ EXPORT void cpp_almgren_chriss_trajectory(
 
 /**
  * Fast TWAP Execution Simulator.
- * Simulates order fill across intervals with slippage and volume constraint.
  */
 EXPORT void cpp_simulate_twap(
     double total_shares,
@@ -80,16 +92,14 @@ EXPORT void cpp_simulate_twap(
     double target_per_bar = total_shares / n_bars;
     double remaining = total_shares;
     double total_dollar_spent = 0.0;
-    double benchmark_dollar = total_shares * bar_prices[0];
 
     for (int i = 0; i < n_bars; ++i) {
         double vol_cap = bar_volumes[i] * max_participation_rate;
         double execution_size = std::min(remaining, std::min(target_per_bar * 1.25, vol_cap));
         if (i == n_bars - 1) {
-            execution_size = remaining; // force fill
+            execution_size = remaining;
         }
 
-        // Half spread + linear impact
         double impact_bps = (spread_bps * 0.5) + (execution_size / (bar_volumes[i] + 1e-9)) * 50.0;
         double fill_price = bar_prices[i] * (1.0 + impact_bps / 10000.0);
 
@@ -98,6 +108,7 @@ EXPORT void cpp_simulate_twap(
 
         total_dollar_spent += execution_size * fill_price;
         remaining -= execution_size;
+
         if (remaining <= 0.0) {
             for (int k = i + 1; k < n_bars; ++k) {
                 out_executed_shares[k] = 0.0;
@@ -113,7 +124,6 @@ EXPORT void cpp_simulate_twap(
 
 /**
  * Fast VWAP Execution Simulator.
- * Simulates order fill across intervals matching historical volume curve.
  */
 EXPORT void cpp_simulate_vwap(
     double total_shares,
@@ -160,8 +170,9 @@ EXPORT void cpp_simulate_vwap(
 
 /**
  * Event-Driven Discrete Portfolio & Execution Engine.
- * Processes MarketEvent -> OrderEvent -> FillEvent -> Cash/Position Update -> Daily NAV
- * Enforces commission, bid/ask spread, non-linear market impact, and borrow costs.
+ * Implements strict order processing loop:
+ * MarketEvent -> OrderEvent -> FillEvent -> Cash/Position Ledger -> NAV
+ * Enforces commissions, non-linear market impact, and short borrow financing drag.
  */
 EXPORT void cpp_event_driven_backtest(
     int n_steps,
@@ -178,13 +189,16 @@ EXPORT void cpp_event_driven_backtest(
     double* out_cash,
     double* out_cumulative_fees,
     double* out_step_pnl,
-    double* out_summary_metrics // [total_return, sharpe_ratio, max_drawdown, turnover]
+    double* out_summary_metrics
 ) {
     if (n_steps <= 0) return;
 
-    double cash = initial_cash;
-    double current_position = 0.0;
-    double cumulative_fees = 0.0;
+    quantalpha::BacktestEngine engine(initial_cash);
+    engine.costs.commission_bps = commission_bps;
+    engine.costs.borrow_cost_annual_bps = borrow_cost_annual_bps;
+    engine.execution_model.half_spread_bps = spread_bps * 0.5;
+    engine.execution_model.impact_coefficient = impact_coeff;
+
     double prev_nav = initial_cash;
     double peak_nav = initial_cash;
     double max_dd = 0.0;
@@ -193,62 +207,56 @@ EXPORT void cpp_event_driven_backtest(
     std::vector<double> daily_returns;
     daily_returns.reserve(n_steps);
 
+    std::string default_sym = "ASSET";
+
     for (int t = 0; t < n_steps; ++t) {
         double p = prices[t];
         double v = std::max(1.0, volumes[t]);
         double target = target_shares[t];
-        double delta_shares = target - current_position;
+        double current_pos = engine.portfolio.positions[default_sym].shares;
+        double delta_shares = target - current_pos;
 
-        double step_fee = 0.0;
+        quantalpha::MarketEvent event{
+            t * 86400LL * 1000000000LL,
+            default_sym,
+            p * (1.0 - (spread_bps * 0.5) / 10000.0),
+            p * (1.0 + (spread_bps * 0.5) / 10000.0),
+            p,
+            v
+        };
 
-        // Process Order & Fill if position adjustment requested
+        // 1. Process Order & Execution Model
         if (std::abs(delta_shares) > 1e-6) {
-            total_traded_volume += std::abs(delta_shares) * p;
-            double participation = std::abs(delta_shares) / v;
-            double impact_rate = (spread_bps * 0.5 + impact_coeff * participation * 100.0) / 10000.0;
-
-            double fill_price = (delta_shares > 0) ? (p * (1.0 + impact_rate)) : (p * (1.0 - impact_rate));
-            double trade_dollar = delta_shares * fill_price;
-            double commission = std::abs(trade_dollar) * (commission_bps / 10000.0);
-
-            step_fee += commission;
-            cash -= (trade_dollar + commission);
-            current_position += delta_shares;
+            quantalpha::OrderSide side = (delta_shares > 0) ? quantalpha::OrderSide::BUY : quantalpha::OrderSide::SELL;
+            quantalpha::Fill fill = engine.process_order(default_sym, side, std::abs(delta_shares), event);
+            total_traded_volume += fill.shares * fill.price;
         }
 
-        // Apply short borrow financing drag
-        if (current_position < 0.0) {
-            double short_value = std::abs(current_position * p);
-            double daily_borrow_fee = short_value * (borrow_cost_annual_bps / 10000.0) / 252.0;
-            step_fee += daily_borrow_fee;
-            cash -= daily_borrow_fee;
-        }
+        // 2. Daily Financing and Borrow drag
+        std::unordered_map<std::string, double> current_prices = {{default_sym, p}};
+        engine.apply_financing_and_borrow(current_prices);
 
-        cumulative_fees += step_fee;
-        double nav = cash + current_position * p;
+        // 3. Mark-to-market NAV calculation
+        double nav = engine.portfolio.total_nav(current_prices);
         double step_pnl = nav - prev_nav;
 
         out_nav[t] = nav;
-        out_positions[t] = current_position;
-        out_cash[t] = cash;
-        out_cumulative_fees[t] = cumulative_fees;
+        out_positions[t] = engine.portfolio.positions[default_sym].shares;
+        out_cash[t] = engine.portfolio.cash;
+        out_cumulative_fees[t] = engine.portfolio.cumulative_commissions + engine.portfolio.cumulative_borrow_costs;
         out_step_pnl[t] = step_pnl;
 
-        // Track drawdown
         if (nav > peak_nav) peak_nav = nav;
         double dd = (peak_nav > 0) ? ((peak_nav - nav) / peak_nav) : 0.0;
         if (dd > max_dd) max_dd = dd;
 
-        // Daily return
         double ret = (prev_nav > 0) ? (step_pnl / prev_nav) : 0.0;
         daily_returns.push_back(ret);
-
         prev_nav = nav;
     }
 
-    // Compute Summary Metrics
     double total_return = (initial_cash > 0) ? ((out_nav[n_steps - 1] - initial_cash) / initial_cash) : 0.0;
-    
+
     double mean_ret = 0.0;
     for (double r : daily_returns) mean_ret += r;
     mean_ret /= n_steps;
@@ -268,4 +276,3 @@ EXPORT void cpp_event_driven_backtest(
 }
 
 }
-

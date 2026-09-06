@@ -19,6 +19,7 @@ from core.data_loader import load_sp500_data
 from core.features import build_features
 from core.labels import generate_labels
 from core.metrics import calculate_full_metrics
+from core.universe.universe_engine import universe_engine
 from native.native_bridge import accelerator
 
 logger = logging.getLogger(__name__)
@@ -229,6 +230,11 @@ class EventDrivenBacktester:
 
             # 4. Construct Long/Short portfolio: Top 20% long, Bottom 20% short
             rebal_slice = test_data_scored.xs(test_data_scored.index.get_level_values("date")[0], level="date", drop_level=False)
+            active_members = universe_engine.get_active_tickers("SP500", as_of_date=t_train_end.strftime("%Y-%m-%d"))
+            if active_members:
+                univ_slice = rebal_slice[rebal_slice.index.get_level_values("ticker").isin(active_members)]
+                if not univ_slice.empty:
+                    rebal_slice = univ_slice
             ranked = rebal_slice.sort_values(by="prediction", ascending=False)
 
             n_select = min(self.max_positions // 2, len(ranked) // 4)

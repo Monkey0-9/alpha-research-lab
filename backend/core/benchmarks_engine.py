@@ -141,7 +141,8 @@ class BenchmarkEngine:
         t0 = time.perf_counter()
         for _ in range(repeat):
             cpp_res = NativeAccelerator.fast_event_driven_backtest(
-                prices, volumes, targets, initial_cash=1000000.0
+                prices, volumes, targets, initial_cash=1000000.0,
+                commission_bps=5.0, spread_bps=0.0, impact_coeff=0.0, borrow_cost_annual_bps=0.0
             )
         cpp_time = (time.perf_counter() - t0) / repeat * 1000.0
 

@@ -60,7 +60,14 @@ class TimeSeriesValidator:
         dates = pd.to_datetime(self.df.index.get_level_values("date").unique()).sort_values()
         total_days = len(dates)
         if total_days < 100:
-            raise ValueError(f"Insufficient historical data ({total_days} days) for validation.")
+            return {
+                "status": "INSUFFICIENT_DATA",
+                "reason": f"Insufficient historical data ({total_days} days) for walk-forward validation; minimum required is 100.",
+                "folds": [],
+                "mean_oos_sharpe": None,
+                "sharpe_std": None,
+                "consistency_ratio": None
+            }
 
         if total_days < 500:
             min_train = max(40, int(total_days * 0.35))
@@ -101,9 +108,24 @@ class TimeSeriesValidator:
 
             model = lgb.LGBMRegressor(n_estimators=30, max_depth=3, learning_rate=0.05, random_state=42, verbose=-1)
             model.fit(X_tr, y_tr)
+            preds_tr = model.predict(X_tr)
             preds = model.predict(X_te)
 
-            # Strategy return: long top 30%, short bottom 30%
+            # In-sample strategy return for train_sharpe
+            train_sub_copy = train_sub.copy()
+            train_sub_copy["pred"] = preds_tr
+            tr_daily_rets = []
+            for d in train_dates[-60:]:  # sample recent training window
+                d_slice_tr = train_sub_copy.xs(d, level="date") if d in train_sub_copy.index.get_level_values("date") else pd.DataFrame()
+                if len(d_slice_tr) >= 4:
+                    q_h = d_slice_tr["pred"].quantile(0.7)
+                    q_l = d_slice_tr["pred"].quantile(0.3)
+                    l_r = d_slice_tr[d_slice_tr["pred"] >= q_h][self.target_col].mean()
+                    s_r = d_slice_tr[d_slice_tr["pred"] <= q_l][self.target_col].mean()
+                    tr_daily_rets.append(0.5 * (np.nan_to_num(l_r, 0.0) - np.nan_to_num(s_r, 0.0)))
+            train_sr = sharpe_ratio(tr_daily_rets) if len(tr_daily_rets) > 5 else 0.0
+
+            # Out-of-sample strategy return: long top 30%, short bottom 30%
             test_sub_copy = test_sub.copy()
             test_sub_copy["pred"] = preds
             daily_rets = []
@@ -127,6 +149,7 @@ class TimeSeriesValidator:
                 "train_end": train_dates[-1].strftime("%Y-%m-%d"),
                 "test_start": test_dates[0].strftime("%Y-%m-%d"),
                 "test_end": test_dates[-1].strftime("%Y-%m-%d"),
+                "train_sharpe": round(train_sr, 2),
                 "oos_return": round(fold_ret, 4),
                 "oos_sharpe": round(fold_sr, 2),
                 "oos_ic": round(fold_ic, 3),
@@ -139,10 +162,11 @@ class TimeSeriesValidator:
         consistency = float(np.mean(np.array(oos_sharpes) > 0.5)) if oos_sharpes else 0.0
 
         return {
+            "status": "SUCCESS" if folds else "INSUFFICIENT_DATA",
             "folds": folds,
-            "mean_oos_sharpe": round(mean_sr, 2),
-            "sharpe_std": round(sr_std, 2),
-            "consistency_ratio": round(consistency, 2)
+            "mean_oos_sharpe": round(mean_sr, 2) if folds else None,
+            "sharpe_std": round(sr_std, 2) if folds else None,
+            "consistency_ratio": round(consistency, 2) if folds else None
         }
 
     def run_purged_kfold(self, n_splits: int = 5, purge_window: int = 21, embargo: int = 5) -> Dict[str, Any]:
@@ -223,10 +247,10 @@ def walk_forward_cv(features=None, target=None, model_type="lightgbm", n_folds=1
             train_end=t_end,
             test_start=te_start,
             test_end=te_end,
-            train_sharpe=f.get("train_sharpe", 1.8),
-            oos_sharpe=f.get("oos_sharpe", 1.4),
-            oos_ic=f.get("oos_ic", 0.06),
-            oos_return=f.get("oos_return", 0.04)
+            train_sharpe=f.get("train_sharpe"),
+            oos_sharpe=f.get("oos_sharpe"),
+            oos_ic=f.get("oos_ic"),
+            oos_return=f.get("oos_return")
         ))
     return fold_objs
 

@@ -18,6 +18,7 @@ import pandas as pd
 import scipy.stats as ss
 
 from core.metrics import sharpe_ratio, max_drawdown, calmar_ratio
+from core.experiment import trial_registry, TrialRecord, compute_sha256
 
 logger = logging.getLogger(__name__)
 
@@ -622,11 +623,24 @@ class GeneticAlphaEngine:
 
         for gen in range(self.generations):
             evaluated = []
-            for indiv in population:
+            for idx, indiv in enumerate(population):
                 res = evaluate_alpha(
                     indiv, df, target_col=target_col, parsimony_coefficient=self.parsimony
                 )
                 evaluated.append((indiv, res))
+                formula = indiv.to_formula()
+                ast_hash = compute_sha256({"formula": formula})
+                trial_registry.record_trial(TrialRecord(
+                    trial_id=f"GP-GEN{gen:02d}-IND{idx:03d}",
+                    experiment_id=f"GP-SEARCH-GEN{gen}",
+                    hypothesis_name=f"Alpha_{formula[:30]}",
+                    formula=formula,
+                    ast_hash=ast_hash,
+                    in_sample_ic=res.ic,
+                    in_sample_sharpe=res.sharpe,
+                    complexity=res.complexity,
+                    generation=gen
+                ))
 
             evaluated.sort(key=lambda x: x[1].fitness, reverse=True)
 
