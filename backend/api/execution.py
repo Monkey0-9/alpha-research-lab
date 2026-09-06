@@ -5,7 +5,9 @@ All endpoints return REAL computations or explicit NOT_IMPLEMENTED.
 No hardcoded results, no synthetic data.
 """
 from __future__ import annotations
+import time
 from typing import List, Dict, Any
+import numpy as np
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from core.execution import almgren_chriss_impact, simulate_twap_vwap
@@ -17,20 +19,17 @@ class ACRequest(BaseModel):
     adv: float = Field(5_000_000.0, description="Average daily volume")
     urgency: float = Field(1.0, description="Execution urgency")
     intervals: int = Field(10, description="Number of intervals")
-
 class OrderSimRequest(BaseModel):
     order_size: float = Field(50_000.0, description="Total shares")
     benchmark_price: float = Field(150.0, description="Arrival price")
     algo: str = Field("TWAP", description="Algo")
     intervals: int = Field(10, description="Execution intervals")
-
 class ImpactRequest(BaseModel):
     ticker: str = "AAPL"
     order_size: float = 50_000.0
     adv: float = 45_000_000.0
     volatility: float = 0.22
     urgency: float = 1.0
-
 class ImpactResult(BaseModel):
     ticker: str
     order_size: float
@@ -41,7 +40,6 @@ class ImpactResult(BaseModel):
     estimated_dollar_cost: float
     optimal_execution_minutes: float
     schedule: List[Dict[str, Any]]
-
 class AlgoInfo(BaseModel):
     algo: str
     name: str
@@ -51,7 +49,6 @@ class AlgoInfo(BaseModel):
     market_impact_bps: float
     recommended_order_size: str
     status: str
-
 class FillQualityPoint(BaseModel):
     time: str
     arrival_price: float
@@ -375,8 +372,6 @@ def get_ledger_audit():
 @router.get("/microstructure-live")
 def get_live_microstructure_telemetry(ticker: str = "AAPL"):
     """Evaluate real-time market microstructure using C OFI and C Microprice kernels."""
-    import time
-    import numpy as np
     try:
         from native.native_bridge import accelerator
     except ImportError:
@@ -455,5 +450,3 @@ def get_live_microstructure_telemetry(ticker: str = "AAPL"):
         },
         "recent_snapshots": snapshots
     }
-
-

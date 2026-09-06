@@ -3,10 +3,7 @@ Stage 1 Data Foundation Unit Tests.
 Tests DuckDB analytical engine, Arrow zero-copy query, True PIT extraction,
 Dataset Registry cryptographic hashing, and Data Quality Engine fail-closed behavior.
 """
-import tempfile
-from pathlib import Path
 from datetime import datetime, timezone, timedelta
-import numpy as np
 import pandas as pd
 import pyarrow as pa
 import polars as pl

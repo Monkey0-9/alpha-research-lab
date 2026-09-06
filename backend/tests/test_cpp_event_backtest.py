@@ -2,7 +2,6 @@
 Unit tests for C++ Event-Driven Portfolio & Discrete Execution Simulator.
 """
 import numpy as np
-import pytest
 
 from backend.native.native_bridge import NativeAccelerator
 

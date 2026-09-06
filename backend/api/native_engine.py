@@ -177,7 +177,7 @@ def get_q_bars(bar_seconds: int = 60, limit: int = 50) -> Dict[str, Any]:
 
     return {
         "engine": "KDB+/Q Bar Aggregator",
-        "query": f"select open, high, low, close, volume, vwap by {bar_seconds} xbar time from trades",
+        "query": "qSQL: select open, high, low, close, volume, vwap by " + str(int(bar_seconds)) + " xbar time from trades",
         "elapsed_microseconds": elapsed_micros,
         "bars_count": len(bars),
         "data": bars.to_dict(orient="records")

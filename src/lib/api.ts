@@ -1113,5 +1113,3 @@ export async function getQAsofSync(ticker: string = 'AAPL'): Promise<{
     ]
   });
 }
-
-

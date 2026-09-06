@@ -452,27 +452,27 @@ def get_features_native_telemetry():
 
     # C Kalman filter benchmark
     t0 = time.perf_counter_ns()
-    kf_res = accelerator.fast_kalman_filter(sample, 1e-5, 1e-3)
+    accelerator.fast_kalman_filter(sample, 1e-5, 1e-3)
     c_kalman_micros = round((time.perf_counter_ns() - t0) / 1000.0, 2)
 
     # C Hurst exponent benchmark
     t0 = time.perf_counter_ns()
-    h_res = accelerator.fast_hurst_exponent(sample, 100)
+    accelerator.fast_hurst_exponent(sample, 100)
     c_hurst_micros = round((time.perf_counter_ns() - t0) / 1000.0, 2)
 
     # C EWMA vol benchmark
     t0 = time.perf_counter_ns()
-    ewma_res = accelerator.fast_ewma_volatility(returns, 0.94)
+    accelerator.fast_ewma_volatility(returns, 0.94)
     c_ewma_micros = round((time.perf_counter_ns() - t0) / 1000.0, 2)
 
     # Q Vector VWAP benchmark
     t0 = time.perf_counter_ns()
-    q_vwap = q_engine.calc_vwap(sample, np.random.randint(100, 1000, len(sample)))
+    q_engine.calc_vwap(sample, np.random.randint(100, 1000, len(sample)))
     q_vwap_micros = round((time.perf_counter_ns() - t0) / 1000.0, 2)
 
     # Q Vector OFI benchmark
     t0 = time.perf_counter_ns()
-    q_ofi = q_engine.calc_ofi()
+    q_engine.calc_ofi()
     q_ofi_micros = round((time.perf_counter_ns() - t0) / 1000.0, 2)
 
     return {
@@ -516,4 +516,3 @@ def get_features_native_telemetry():
             }
         ]
     }
-

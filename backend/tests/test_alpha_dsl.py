@@ -4,7 +4,6 @@ Unit tests for Alpha DSL, Typed AST, Mathematical Canonicalization, and Deduplic
 import pytest
 from backend.core.alpha_dsl import (
     AlphaParser,
-    TypeChecker,
     AlphaRegistry,
     TypeCheckError,
     DuplicateAlphaError,

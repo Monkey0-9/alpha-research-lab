@@ -13,10 +13,10 @@ import logging
 import time
 from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 import numpy as np
 
-from backend.native.native_bridge import NativeAccelerator, _c_lib, _cpp_lib, _rust_lib
+from backend.native.native_bridge import NativeAccelerator
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class BenchmarkEngine:
                 if i < window - 1:
                     py_res.append(0.0)
                 else:
-                    win = data[i - window + 1 : i + 1]
+                    win = data[i - window + 1: i + 1]
                     m = sum(win) / window
                     v = sum((x - m) ** 2 for x in win) / max(1, window - 1)
                     s = (v ** 0.5) if v > 1e-9 else 1e-6

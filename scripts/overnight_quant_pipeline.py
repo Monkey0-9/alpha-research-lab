@@ -21,7 +21,6 @@ import datetime
 import hashlib
 import json
 import logging
-import os
 import sys
 from pathlib import Path
 from typing import Dict, Any
@@ -47,8 +46,8 @@ def run_overnight_pipeline(dry_run: bool = False, universe: str = "SP500") -> Di
 
     # ── STAGE 1: Security Master & Corporate Action Sync ───────────────────────
     logger.info("STAGE 1/8: Synchronizing Permanent Security Master Symbology (FIGI/CUSIP/SEDOL)...")
-    from core.security_master.models import Security, CorporateAction, ActionType
-    from core.security_master.corporate_actions import CorporateActionEngine
+    from backend.core.security_master.models import CorporateAction, ActionType
+    from backend.core.security_master.corporate_actions import CorporateActionEngine
 
     corp_engine = CorporateActionEngine()
     corp_engine.register_action(CorporateAction(
@@ -62,8 +61,8 @@ def run_overnight_pipeline(dry_run: bool = False, universe: str = "SP500") -> Di
 
     # ── STAGE 2: Market Data Ingestion & Cleaning ─────────────────────────────
     logger.info("STAGE 2/8: Ingesting Market Data & Executing KDB+/Q Tick Aggregation...")
-    from core.data_loader import load_sp500_data
-    from native.q_engine.q_service import q_engine
+    from backend.core.data_loader import load_sp500_data
+    from backend.native.q_engine.q_service import q_engine
 
     raw_data = load_sp500_data()
     n_records = len(raw_data)
@@ -78,7 +77,7 @@ def run_overnight_pipeline(dry_run: bool = False, universe: str = "SP500") -> Di
     # ── STAGE 3: Orthogonalized Feature Generation ────────────────────────────
     logger.info("STAGE 3/8: Calculating C-Accelerated Features & Gram-Schmidt Orthogonalization...")
     import numpy as np
-    from native.native_bridge import accelerator
+    from backend.native.native_bridge import accelerator
 
     tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "JPM", "V"]
     available = [t for t in tickers if t in raw_data.index.get_level_values("ticker")]
@@ -99,7 +98,7 @@ def run_overnight_pipeline(dry_run: bool = False, universe: str = "SP500") -> Di
 
     # ── STAGE 4: Alpha Discovery & Multiple-Testing Accounting ────────────────
     logger.info("STAGE 4/8: Running Alpha Discovery & C-Accelerated GP Evolution...")
-    from core.alpha_gp import GeneticAlphaEngine
+    from backend.core.alpha_gp import GeneticAlphaEngine
     gp_engine = GeneticAlphaEngine(population_size=10, generations=2, tournament_size=3)
     gp_alphas = gp_engine.evolve(raw_data.iloc[-300:], target_col="return_1d")
     n_trials = 250
@@ -109,9 +108,9 @@ def run_overnight_pipeline(dry_run: bool = False, universe: str = "SP500") -> Di
 
     # ── STAGE 5: Statistical Governance & Multiple-Testing Haircuts ───────────
     logger.info("STAGE 5/8: Statistical Governance Battery (CPCV, PBO, DSR, Hansen SPA)...")
-    from core.statistics import deflated_sharpe_ratio, hansens_spa_test
-    from core.pbo import compute_pbo
-    from core.cpcv import CombinatorialPurgedCV
+    from backend.core.statistics import deflated_sharpe_ratio
+    from backend.core.pbo import compute_pbo
+    from backend.core.cpcv import CombinatorialPurgedCV
 
     # 1. Deflated Sharpe Ratio
     dsr_val = deflated_sharpe_ratio(
@@ -137,7 +136,7 @@ def run_overnight_pipeline(dry_run: bool = False, universe: str = "SP500") -> Di
 
     # ── STAGE 6: Convex Portfolio Optimization ────────────────────────────────
     logger.info("STAGE 6/8: Solving Convex QP Optimization Under Institutional Limits...")
-    from core.portfolio import convex_portfolio_optimizer, ledoit_wolf_covariance
+    from backend.core.portfolio import convex_portfolio_optimizer, ledoit_wolf_covariance
     cov_shrunk, delta = ledoit_wolf_covariance(returns_df.values)
     raw_alpha = returns_df.mean().values * 252
 
@@ -157,7 +156,7 @@ def run_overnight_pipeline(dry_run: bool = False, universe: str = "SP500") -> Di
 
     # ── STAGE 7: C++ Microstructure Event Execution & C Microprice / OFI ─────
     logger.info("STAGE 7/8: C++ Discrete Event Execution & C Microstructure Simulation...")
-    from core.portfolio_ledger import PortfolioLedger
+    from backend.core.portfolio_ledger import PortfolioLedger
 
     # C Microprice and Level-1 OFI calculation
     bids = np.array([149.95, 149.98, 150.00, 150.02, 150.05], dtype=np.float64)

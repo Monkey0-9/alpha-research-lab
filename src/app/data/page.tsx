@@ -94,7 +94,7 @@ export default function DataInfrastructurePage() {
   useEffect(() => {
     async function load() {
       try {
-        const [srcRes, qualRes, ovRes, quoteRes, pipeRes, secRes, priceRes] = await Promise.all([
+        const [srcRes, qualRes, ovRes, quoteRes, pipeRes, secRes, priceRes, barsRes, asofRes] = await Promise.all([
           api.getDataSources(),
           api.getDataQuality(),
           api.getMarketOverview(),
@@ -102,6 +102,8 @@ export default function DataInfrastructurePage() {
           api.getPipelineStatus(),
           api.getSecurityMaster(20).catch(() => null),
           api.getPriceSeries("AAPL", "SPLIT_AND_DIVIDEND_ADJUSTED").catch(() => null),
+          api.getQDataBars("AAPL", 60).catch(() => null),
+          api.getQAsofSync("AAPL").catch(() => null),
         ]);
         setSources(srcRes?.sources || []);
         setQuality(qualRes);
@@ -116,7 +118,12 @@ export default function DataInfrastructurePage() {
         if (priceRes) {
           setPriceSeriesData(priceRes);
         }
-        fetchQData("AAPL", 60);
+        if (barsRes) {
+          setQBarsData(barsRes);
+        }
+        if (asofRes) {
+          setQAsofData(asofRes);
+        }
       } catch (err) {
         console.error("Failed to initialize Data Infrastructure page:", err);
       } finally {

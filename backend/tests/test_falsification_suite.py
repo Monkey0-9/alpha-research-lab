@@ -2,7 +2,6 @@
 Unit tests for the Alpha Falsification Engine.
 """
 import numpy as np
-import pytest
 
 from backend.core.falsification_engine import FalsificationEngine
 

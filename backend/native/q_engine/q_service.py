@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
 
@@ -179,7 +179,7 @@ class QAnalyticsEngine:
         q = q.sort_values(["sym", "time"]).reset_index(drop=True)
 
         results = []
-        for sym, group in q.groupby("sym"):
+        for _sym, group in q.groupby("sym"):
             g = group.copy()
             b = g["bid"].values
             a = g["ask"].values

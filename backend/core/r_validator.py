@@ -9,8 +9,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-import numpy as np
+from typing import Dict, Any, List, Tuple
 
 from backend.core.statistics import deflated_sharpe_ratio, benjamini_hochberg_fdr
 

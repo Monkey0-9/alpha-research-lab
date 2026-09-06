@@ -2,14 +2,12 @@
 Test Suite: High-Performance C Native Kernels and KDB+/Q Vector Engine
 Validates sub-microsecond C computational primitives, Q vector algebra, and API endpoints.
 """
-import pytest
 import numpy as np
 import pandas as pd
 from fastapi.testclient import TestClient
 
 from backend.main import app
 from backend.native.native_bridge import accelerator, _c_lib
-from backend.native.q_engine.q_service import q_engine
 
 client = TestClient(app)
 

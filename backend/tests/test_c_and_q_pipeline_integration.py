@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from backend.main import app
 from backend.core.features import build_features
-from backend.core.alpha_gp import TimeSeriesOpNode, FeatureNode, ConstantNode, parse_formula
+from backend.core.alpha_gp import TimeSeriesOpNode, FeatureNode
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def sample_market_df():
 def test_c_and_q_features_in_feature_matrix(sample_market_df):
     """Verify C-accelerated and Q-integrated features calculate cleanly in the feature matrix."""
     feat_matrix = build_features(sample_market_df)
-    
+
     # Check that native C Kalman features exist and are populated
     assert "kalman_fair_value" in feat_matrix.columns
     assert "kalman_residual" in feat_matrix.columns
