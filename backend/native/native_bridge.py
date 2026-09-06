@@ -12,9 +12,14 @@ from typing import Dict, Any, Optional
 import numpy as np
 import pandas as pd
 
-from native.q_engine.q_service import q_engine
-from native.r_engine.r_service import r_engine
-from native.ocaml_engine.ocaml_service import ocaml_engine
+try:
+    from backend.native.q_engine.q_service import q_engine
+    from backend.native.r_engine.r_service import r_engine
+    from backend.native.ocaml_engine.ocaml_service import ocaml_engine
+except ImportError:
+    from native.q_engine.q_service import q_engine
+    from native.r_engine.r_service import r_engine
+    from native.ocaml_engine.ocaml_service import ocaml_engine
 
 logger = logging.getLogger(__name__)
 
