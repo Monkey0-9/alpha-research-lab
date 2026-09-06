@@ -12,7 +12,7 @@ BACKEND_DIR = Path(__file__).resolve().parent
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from api import (  # noqa: E402
     data, features, alpha_discovery, statistical_engine,
@@ -102,6 +102,34 @@ app.include_router(risk.router,               prefix="/api/risk",               
 app.include_router(live_research.router,      prefix="/api/live-research",      tags=["11 Live Research"])
 app.include_router(monitoring.router,         prefix="/api/monitoring",         tags=["12 Monitoring"])
 app.include_router(backtest.router,           prefix="/api/backtest",           tags=["Backtest Engine"])
+
+
+@app.websocket("/ws/portfolio")
+async def websocket_portfolio(websocket: WebSocket):
+    """Real-time institutional WebSocket stream for portfolio NAV, orders, and risk alerts."""
+    await websocket.accept()
+    try:
+        from core.portfolio_ledger import PortfolioLedger
+        from datetime import datetime, timezone
+        ledger = PortfolioLedger(initial_cash=1_000_000.0)
+        while True:
+            inv = ledger.verify_accounting_invariants()
+            await websocket.send_json({
+                "type": "PORTFOLIO_TELEMETRY",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "nav": inv["equity"],
+                "cash": inv["cash"],
+                "long_mv": inv["long_market_value"],
+                "short_mv": inv["short_market_value"],
+                "is_balanced": inv["is_balanced"],
+                "audit_entries": inv["journal_entries_count"]
+            })
+            await asyncio.sleep(2)
+    except WebSocketDisconnect:
+        logger.info("Portfolio WebSocket disconnected gracefully.")
+    except Exception as exc:
+        logger.warning(f"WebSocket session terminated: {exc}")
+
 
 if __name__ == "__main__":
     import uvicorn

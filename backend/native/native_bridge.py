@@ -305,6 +305,58 @@ class NativeAccelerator:
         }
 
     @staticmethod
+    def fast_twap_simulation(
+        total_shares: float,
+        prices: np.ndarray,
+        volumes: np.ndarray,
+        spread_bps: float = 5.0,
+        max_participation_rate: float = 0.10
+    ) -> Dict[str, Any]:
+        """C++ accelerated TWAP order execution simulation with volume participation capping."""
+        n_bars = len(prices)
+        if _cpp_lib is not None and hasattr(_cpp_lib, "cpp_simulate_twap") and n_bars > 0:
+            p_arr = np.ascontiguousarray(prices, dtype=np.float64)
+            v_arr = np.ascontiguousarray(volumes, dtype=np.float64)
+            exec_prices = np.zeros(n_bars, dtype=np.float64)
+            exec_shares = np.zeros(n_bars, dtype=np.float64)
+            total_slippage = ctypes.c_double(0.0)
+
+            _cpp_lib.cpp_simulate_twap(
+                total_shares,
+                n_bars,
+                p_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                v_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                max_participation_rate,
+                spread_bps,
+                exec_prices.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                exec_shares.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                ctypes.byref(total_slippage)
+            )
+            return {
+                "engine": "C++-TWAP-Simulator",
+                "executed_shares": exec_shares.tolist(),
+                "executed_prices": exec_prices.tolist(),
+                "total_slippage_bps": float(total_slippage.value)
+            }
+        # Vectorized Fallback
+        target_per_bar = total_shares / max(1, n_bars)
+        exec_shares = []
+        exec_prices = []
+        rem = total_shares
+        for i in range(n_bars):
+            vol_cap = volumes[i] * max_participation_rate
+            sz = min(rem, min(target_per_bar, vol_cap)) if i < n_bars - 1 else min(rem, vol_cap)
+            exec_shares.append(sz)
+            exec_prices.append(prices[i] * (1.0 + (spread_bps * 0.5) / 10000.0))
+            rem -= sz
+        return {
+            "engine": "Python-TWAP-Fallback",
+            "executed_shares": exec_shares,
+            "executed_prices": exec_prices,
+            "total_slippage_bps": spread_bps * 0.5
+        }
+
+    @staticmethod
     def fast_vwap_simulation(
         total_shares: float,
         prices: np.ndarray,

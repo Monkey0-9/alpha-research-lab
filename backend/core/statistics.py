@@ -299,3 +299,118 @@ def stationary_block_bootstrap(
             bootstrapped[b, t] = arr[idx]
 
     return bootstrapped
+
+
+def hansens_spa_test(
+    candidate_excess_returns: np.ndarray,
+    benchmark_returns: Optional[np.ndarray] = None,
+    mean_block_size: int = 10,
+    n_bootstraps: int = 1000,
+    seed: Optional[int] = 42,
+) -> Dict[str, Any]:
+    """
+    Hansen's (2005) Test for Superior Predictive Ability (SPA) and White's Reality Check.
+    Evaluates whether the best performing candidate alpha/trading strategy genuinely outperforms
+    the benchmark after rigorously correcting for data snooping across all M candidates.
+    """
+    candidates = np.asarray(candidate_excess_returns, dtype=np.float64)
+    if candidates.ndim == 1:
+        candidates = candidates[:, np.newaxis]
+
+    n, m = candidates.shape
+    if benchmark_returns is not None:
+        bench = np.asarray(benchmark_returns, dtype=np.float64).flatten()
+        d_mat = candidates - bench[:, np.newaxis]
+    else:
+        d_mat = candidates
+
+    if n < 10 or m == 0:
+        return {
+            "status": "INSUFFICIENT_DATA",
+            "t_stat": 0.0,
+            "p_value_spa": 1.0,
+            "p_value_white": 1.0,
+            "best_model_index": 0,
+            "passes_spa": False,
+            "num_models": m,
+            "sample_length": n,
+        }
+
+    # 1. Sample mean excess return per model
+    d_bar = np.mean(d_mat, axis=0)  # shape (m,)
+
+    # 2. Generate stationary bootstrap sample indices
+    rng = np.random.default_rng(seed)
+    prob_new_block = 1.0 / max(1.0, float(mean_block_size))
+
+    boot_indices = np.empty((n_bootstraps, n), dtype=np.int64)
+    for b in range(n_bootstraps):
+        idx = rng.integers(0, n)
+        boot_indices[b, 0] = idx
+        for t in range(1, n):
+            if rng.random() < prob_new_block:
+                idx = rng.integers(0, n)
+            else:
+                idx = (idx + 1) % n
+            boot_indices[b, t] = idx
+
+    # 3. Bootstrap sample means for each model
+    d_bar_boot = np.empty((n_bootstraps, m), dtype=np.float64)
+    for b in range(n_bootstraps):
+        d_bar_boot[b, :] = np.mean(d_mat[boot_indices[b]], axis=0)
+
+    # 4. Standard error estimates from bootstrap distribution
+    # omega_k = std(sqrt(n) * (d_bar_boot - d_bar))
+    omega = np.std(np.sqrt(n) * (d_bar_boot - d_bar), axis=0, ddof=1)
+    omega = np.maximum(1e-8, omega)
+
+    # 5. Studentized sample test statistic
+    studentized_d_bar = (np.sqrt(n) * d_bar) / omega
+    t_spa = float(np.max(studentized_d_bar))
+    t_spa_clamped = max(0.0, t_spa)
+    best_idx = int(np.argmax(studentized_d_bar))
+
+    # 6. Hansen's centering adjustment (Hansen 2005)
+    # Demonstrably poor models (d_bar_k < -threshold) are shifted to their negative sample mean d_bar_k
+    # so they do not artificially inflate the bootstrap maximum.
+    # Models not demonstrably poor are centered at 0 (the null boundary).
+    threshold = np.sqrt(2.0 * np.log(max(1.01, np.log(max(3.0, float(n)))))) * omega / np.sqrt(n)
+
+    mu_c = np.where(d_bar < -threshold, d_bar, 0.0)   # Hansen consistent null centering
+    mu_u = np.zeros(m, dtype=np.float64)              # White Reality Check (all models centered at 0)
+    mu_l = np.minimum(0.0, d_bar)                     # Lower bound (all sub-zero models shifted)
+
+    # 7. Compute studentized bootstrap statistics under each null hypothesis
+    t_boot_c = np.empty(n_bootstraps, dtype=np.float64)
+    t_boot_u = np.empty(n_bootstraps, dtype=np.float64)
+    t_boot_l = np.empty(n_bootstraps, dtype=np.float64)
+
+    for b in range(n_bootstraps):
+        diff = d_bar_boot[b] - d_bar
+        stat_c = np.max(np.sqrt(n) * (diff + mu_c) / omega)
+        stat_u = np.max(np.sqrt(n) * (diff + mu_u) / omega)
+        stat_l = np.max(np.sqrt(n) * (diff + mu_l) / omega)
+
+        t_boot_c[b] = max(0.0, stat_c)
+        t_boot_u[b] = max(0.0, stat_u)
+        t_boot_l[b] = max(0.0, stat_l)
+
+    # 8. Empirical p-values
+    p_spa_c = float(np.mean(t_boot_c >= t_spa_clamped))
+    p_white_u = float(np.mean(t_boot_u >= t_spa_clamped))
+    p_spa_l = float(np.mean(t_boot_l >= t_spa_clamped))
+
+    return {
+        "status": "SUCCESS",
+        "t_stat": round(t_spa, 4),
+        "p_value_spa": round(p_spa_c, 4),
+        "p_value_white": round(p_white_u, 4),
+        "p_value_lower": round(p_spa_l, 4),
+        "best_model_index": best_idx,
+        "best_model_excess_mean": round(float(d_bar[best_idx]), 6),
+        "passes_spa": p_spa_c < 0.05 and t_spa > 0,
+        "num_models": m,
+        "sample_length": n,
+        "mean_block_size": mean_block_size,
+    }
+

@@ -18,6 +18,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union, Set
 
+import numpy as np
+import pandas as pd
+
 logger = logging.getLogger(__name__)
 
 REGISTRY_DIR = Path(__file__).resolve().parents[2] / "data" / "alpha_registry"
@@ -48,6 +51,11 @@ class OpType(str, enum.Enum):
     ZSCORE = "ZSCORE"
     WINSORIZE = "WINSORIZE"
     NEUTRALIZE = "NEUTRALIZE"
+    CS_RANK = "CS_RANK"
+    CS_ZSCORE = "CS_ZSCORE"
+    CS_NEUTRALIZE = "CS_NEUTRALIZE"
+    CS_SCALE = "CS_SCALE"
+    CS_DEMEAN = "CS_DEMEAN"
     # Time-Series Operations
     TS_MEAN = "TS_MEAN"
     TS_STD = "TS_STD"
@@ -55,6 +63,18 @@ class OpType(str, enum.Enum):
     TS_CORR = "TS_CORR"
     TS_COV = "TS_COV"
     DECAY = "DECAY"
+    TS_DECAY_LINEAR = "TS_DECAY_LINEAR"
+    TS_WMA = "TS_WMA"
+    TS_ZSCORE = "TS_ZSCORE"
+    TS_SKEW = "TS_SKEW"
+    TS_KURT = "TS_KURT"
+    TS_MIN = "TS_MIN"
+    TS_MAX = "TS_MAX"
+    TS_ARGMIN = "TS_ARGMIN"
+    TS_ARGMAX = "TS_ARGMAX"
+    TS_DELTA = "TS_DELTA"
+    TS_DELAY = "TS_DELAY"
+    SIGNED_POWER = "SIGNED_POWER"
     # Comparison & Logical
     GT = "GT"
     LT = "LT"
@@ -157,7 +177,7 @@ class TypeChecker:
             return node.node_type
 
         # 2. Cross-Sectional Transformations
-        if node.op in {OpType.RANK, OpType.ZSCORE, OpType.WINSORIZE}:
+        if node.op in {OpType.RANK, OpType.ZSCORE, OpType.WINSORIZE, OpType.CS_RANK, OpType.CS_ZSCORE, OpType.CS_DEMEAN}:
             if len(arg_types) != 1:
                 raise TypeCheckError(f"Operation {node.op.value} requires 1 argument.")
             if arg_types[0] == DslType.BOOLEAN:
@@ -165,20 +185,34 @@ class TypeChecker:
             node.node_type = arg_types[0]
             return node.node_type
 
-        if node.op == OpType.NEUTRALIZE:
+        if node.op in {OpType.NEUTRALIZE, OpType.CS_NEUTRALIZE}:
             if len(arg_types) != 2:
-                raise TypeCheckError("NEUTRALIZE requires (target, factor).")
+                raise TypeCheckError(f"{node.op.value} requires (target, factor).")
             if arg_types[0] == DslType.BOOLEAN or arg_types[1] == DslType.BOOLEAN:
-                raise TypeCheckError("NEUTRALIZE operands cannot be Boolean.")
+                raise TypeCheckError(f"{node.op.value} operands cannot be Boolean.")
+            node.node_type = arg_types[0]
+            return node.node_type
+
+        if node.op == OpType.CS_SCALE:
+            if len(arg_types) != 2:
+                raise TypeCheckError("CS_SCALE requires (expression, target_leverage).")
+            if arg_types[1] != DslType.SCALAR:
+                raise TypeCheckError("CS_SCALE target_leverage must be Scalar.")
             node.node_type = arg_types[0]
             return node.node_type
 
         # 3. Time-Series Operators
-        if node.op in {OpType.TS_MEAN, OpType.TS_STD, OpType.TS_RANK, OpType.DECAY}:
+        if node.op in {
+            OpType.TS_MEAN, OpType.TS_STD, OpType.TS_RANK, OpType.DECAY,
+            OpType.TS_DECAY_LINEAR, OpType.TS_WMA, OpType.TS_ZSCORE,
+            OpType.TS_SKEW, OpType.TS_KURT, OpType.TS_MIN, OpType.TS_MAX,
+            OpType.TS_ARGMIN, OpType.TS_ARGMAX, OpType.TS_DELTA, OpType.TS_DELAY,
+            OpType.SIGNED_POWER,
+        }:
             if len(arg_types) != 2:
-                raise TypeCheckError(f"{node.op.value} requires (expression, window).")
+                raise TypeCheckError(f"{node.op.value} requires (expression, window/parameter).")
             if arg_types[1] != DslType.SCALAR:
-                raise TypeCheckError(f"{node.op.value} lookback window must be Scalar.")
+                raise TypeCheckError(f"{node.op.value} parameter must be Scalar.")
             if arg_types[0] == DslType.BOOLEAN:
                 raise TypeCheckError(f"Cannot apply {node.op.value} to Boolean.")
             node.node_type = arg_types[0]
@@ -362,3 +396,160 @@ class AlphaRegistry:
 
 
 alpha_registry = AlphaRegistry()
+
+
+class AlphaEvaluator:
+    """
+    Vectorized Execution Engine for Alpha Expressions across Panel Matrices.
+    Supports time-series rolling operations, cross-sectional rankings/neutralizations,
+    and mathematical operators across multiple assets and timestamps.
+    """
+
+    @classmethod
+    def evaluate(cls, expr_or_node: Union[str, ASTNode], data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        if isinstance(expr_or_node, str):
+            node = AlphaParser.parse(expr_or_node)
+        else:
+            node = expr_or_node
+        res = cls._eval_node(node, data)
+        if isinstance(res, pd.DataFrame):
+            return res
+        # If scalar, broadcast across the shape of the first dataframe in data
+        first_df = next(iter(data.values()))
+        return pd.DataFrame(res, index=first_df.index, columns=first_df.columns)
+
+    @classmethod
+    def _eval_node(cls, node: ASTNode, data: Dict[str, pd.DataFrame]) -> Union[pd.DataFrame, float]:
+        if node.val is not None:
+            if isinstance(node.val, (int, float)):
+                return float(node.val)
+            name = str(node.val).lower()
+            for k, v in data.items():
+                if k.lower() == name:
+                    return v.copy()
+            raise KeyError(f"Feature '{node.val}' not found in input data matrices {list(data.keys())}")
+
+        if not node.op:
+            raise ValueError("Malformed ASTNode with no operation or value.")
+
+        evaluated_args = [cls._eval_node(arg, data) for arg in node.args]
+        op = node.op
+
+        # Unary operations
+        if op == OpType.LOG:
+            return np.log(np.maximum(1e-7, evaluated_args[0]))
+        elif op == OpType.ABS:
+            return np.abs(evaluated_args[0])
+        elif op == OpType.SIGN:
+            return np.sign(evaluated_args[0])
+
+        # Binary Arithmetic
+        elif op == OpType.ADD:
+            return evaluated_args[0] + evaluated_args[1]
+        elif op == OpType.SUB:
+            return evaluated_args[0] - evaluated_args[1]
+        elif op == OpType.MUL:
+            return evaluated_args[0] * evaluated_args[1]
+        elif op == OpType.DIV:
+            denom = evaluated_args[1]
+            if isinstance(denom, pd.DataFrame):
+                denom = denom.replace(0, np.nan)
+            elif denom == 0:
+                denom = np.nan
+            return evaluated_args[0] / denom
+
+        # Cross-Sectional Operations
+        elif op in {OpType.RANK, OpType.CS_RANK}:
+            df = evaluated_args[0]
+            return df.rank(axis=1, pct=True) - 0.5
+        elif op in {OpType.ZSCORE, OpType.CS_ZSCORE}:
+            df = evaluated_args[0]
+            mean = df.mean(axis=1)
+            std = df.std(axis=1).replace(0, np.nan)
+            return df.sub(mean, axis=0).div(std, axis=0).fillna(0.0)
+        elif op == OpType.CS_DEMEAN:
+            df = evaluated_args[0]
+            return df.sub(df.mean(axis=1), axis=0)
+        elif op == OpType.WINSORIZE:
+            df = evaluated_args[0]
+            lower = df.quantile(0.01, axis=1)
+            upper = df.quantile(0.99, axis=1)
+            return df.clip(lower=lower, upper=upper, axis=0)
+        elif op == OpType.CS_SCALE:
+            df = evaluated_args[0]
+            target = float(evaluated_args[1])
+            l1 = df.abs().sum(axis=1).replace(0, np.nan)
+            return df.div(l1, axis=0).fillna(0.0) * target
+        elif op in {OpType.NEUTRALIZE, OpType.CS_NEUTRALIZE}:
+            y = evaluated_args[0]
+            x = evaluated_args[1]
+            out = y.copy()
+            for idx in y.index:
+                y_row = y.loc[idx].values
+                x_row = x.loc[idx].values
+                valid = ~np.isnan(y_row) & ~np.isnan(x_row)
+                if np.sum(valid) > 2:
+                    xv = x_row[valid]
+                    yv = y_row[valid]
+                    var_x = float(np.var(xv))
+                    if var_x > 1e-9:
+                        beta = float(np.cov(xv, yv)[0, 1] / var_x)
+                        alpha_val = float(np.mean(yv) - beta * np.mean(xv))
+                        res = y_row.copy()
+                        res[valid] = yv - (alpha_val + beta * xv)
+                        out.loc[idx] = res
+            return out
+
+        # Time-Series Operations
+        elif op == OpType.TS_MEAN:
+            w = int(evaluated_args[1])
+            return evaluated_args[0].rolling(window=w, min_periods=max(1, w // 2)).mean()
+        elif op == OpType.TS_STD:
+            w = int(evaluated_args[1])
+            return evaluated_args[0].rolling(window=w, min_periods=max(2, w // 2)).std().fillna(0.0)
+        elif op == OpType.TS_MIN:
+            w = int(evaluated_args[1])
+            return evaluated_args[0].rolling(window=w, min_periods=1).min()
+        elif op == OpType.TS_MAX:
+            w = int(evaluated_args[1])
+            return evaluated_args[0].rolling(window=w, min_periods=1).max()
+        elif op == OpType.TS_DELTA:
+            w = int(evaluated_args[1])
+            return evaluated_args[0].diff(periods=w).fillna(0.0)
+        elif op == OpType.TS_DELAY:
+            w = int(evaluated_args[1])
+            return evaluated_args[0].shift(periods=w)
+        elif op == OpType.TS_ZSCORE:
+            w = int(evaluated_args[1])
+            df = evaluated_args[0]
+            rmean = df.rolling(window=w, min_periods=max(2, w // 2)).mean()
+            rstd = df.rolling(window=w, min_periods=max(2, w // 2)).std().replace(0, np.nan)
+            return ((df - rmean) / rstd).fillna(0.0)
+        elif op in {OpType.DECAY, OpType.TS_DECAY_LINEAR}:
+            w = int(evaluated_args[1])
+            df = evaluated_args[0]
+            weights = np.arange(1, w + 1, dtype=np.float64)
+            weights /= weights.sum()
+            return df.rolling(window=w, min_periods=1).apply(
+                lambda x: np.dot(x[-len(weights):], weights[-len(x):]) / np.sum(weights[-len(x):]),
+                raw=True
+            )
+        elif op == OpType.TS_RANK:
+            w = int(evaluated_args[1])
+            df = evaluated_args[0]
+            return df.rolling(window=w, min_periods=max(2, w // 2)).apply(
+                lambda x: float(pd.Series(x).rank(pct=True).iloc[-1]),
+                raw=False
+            )
+        elif op == OpType.SIGNED_POWER:
+            df = evaluated_args[0]
+            power = float(evaluated_args[1])
+            return np.sign(df) * (np.abs(df) ** power)
+        elif op == OpType.GT:
+            return (evaluated_args[0] > evaluated_args[1]).astype(float)
+        elif op == OpType.LT:
+            return (evaluated_args[0] < evaluated_args[1]).astype(float)
+        elif op == OpType.EQ:
+            return (evaluated_args[0] == evaluated_args[1]).astype(float)
+
+        raise NotImplementedError(f"Evaluator does not support operator {op.value}")

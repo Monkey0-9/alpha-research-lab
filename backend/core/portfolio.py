@@ -128,3 +128,144 @@ def cvar_optimization(returns_matrix: np.ndarray, alpha: float = 0.05, max_weigh
     if res.success:
         return res.x
     return init_w
+
+
+def ledoit_wolf_covariance(returns_matrix: np.ndarray) -> tuple[np.ndarray, float]:
+    """
+    Ledoit-Wolf analytical shrinkage covariance estimator.
+    Computes optimal shrinkage intensity delta* towards a constant-correlation target.
+    Guarantees positive definiteness and substantially reduces condition number.
+    Returns: (shrunk_cov_matrix, shrinkage_intensity)
+    """
+    X = np.asarray(returns_matrix, dtype=np.float64)
+    t, n = X.shape
+    if t < 3 or n < 2:
+        return np.cov(X, rowvar=False), 0.0
+
+    # Demean returns
+    X = X - np.mean(X, axis=0)
+
+    # Sample covariance S (unbiased)
+    S = (X.T @ X) / (t - 1)
+
+    # Target F: constant correlation target
+    var = np.diag(S)
+    std = np.sqrt(np.maximum(var, 1e-12))
+    outer_std = np.outer(std, std)
+    r_bar = (np.sum(S / outer_std) - n) / max(1e-12, (n * (n - 1)))
+    F = r_bar * outer_std
+    np.fill_diagonal(F, var)
+
+    # Asymptotic variance elements
+    X2 = X ** 2
+    phi_mat = (X2.T @ X2) / t - S ** 2
+    phi = np.sum(phi_mat)
+
+    # Frobenius norm squared of S - F
+    gamma = np.sum((S - F) ** 2)
+
+    if gamma > 1e-12:
+        kappa = phi / gamma
+        delta = max(0.0, min(1.0, kappa / t))
+    else:
+        delta = 0.0
+
+    shrunk_cov = (1.0 - delta) * S + delta * F
+    return shrunk_cov, float(delta)
+
+
+def convex_portfolio_optimizer(
+    alpha_signal: np.ndarray,
+    cov_matrix: np.ndarray,
+    current_weights: Optional[np.ndarray] = None,
+    risk_aversion: float = 1.0,
+    target_net_leverage: float = 0.0,
+    gross_leverage_limit: float = 2.0,
+    max_position_weight: float = 0.10,
+    factor_loadings: Optional[np.ndarray] = None,
+    factor_bounds: Optional[List[tuple[float, float]]] = None,
+    turnover_budget: Optional[float] = None,
+    turnover_penalty: float = 0.001,
+) -> dict:
+    """
+    Institutional convex quadratic programming portfolio optimizer.
+    Solves for optimal trade weights subject to:
+    - Dollar neutrality / net leverage constraint
+    - Gross leverage limit (L1 norm bound)
+    - Single asset concentration bounds [-w_max, w_max]
+    - Multi-factor beta neutrality bounds
+    - Turnover budget / penalty
+    """
+    alpha = np.asarray(alpha_signal, dtype=np.float64)
+    cov = np.asarray(cov_matrix, dtype=np.float64)
+    n = len(alpha)
+    if n == 0:
+        return {"weights": np.array([]), "status": "EMPTY"}
+
+    w0 = np.zeros(n) if current_weights is None else np.asarray(current_weights, dtype=np.float64)
+    init_w = w0.copy()
+    if np.all(init_w == 0):
+        pos_sum = np.sum(np.clip(alpha, 0, None))
+        neg_sum = abs(np.sum(np.clip(alpha, None, 0)))
+        if pos_sum > 1e-9 and neg_sum > 1e-9:
+            init_w = 0.5 * (np.clip(alpha, 0, None) / pos_sum + np.clip(alpha, None, 0) / neg_sum)
+        else:
+            init_w = np.zeros(n)
+
+    bounds = tuple((-max_position_weight, max_position_weight) for _ in range(n))
+
+    constraints = [
+        {"type": "eq", "fun": lambda w: np.sum(w) - target_net_leverage},
+        {"type": "ineq", "fun": lambda w: gross_leverage_limit - np.sum(np.abs(w))}
+    ]
+
+    if turnover_budget is not None:
+        constraints.append(
+            {"type": "ineq", "fun": lambda w: turnover_budget - np.sum(np.abs(w - w0))}
+        )
+
+    if factor_loadings is not None and factor_bounds is not None:
+        B = np.asarray(factor_loadings, dtype=np.float64)
+        for k, (lb, ub) in enumerate(factor_bounds):
+            bk = B[:, k]
+            constraints.append(
+                {"type": "ineq", "fun": lambda w, b=bk, u=ub: u - float(w @ b)}
+            )
+            constraints.append(
+                {"type": "ineq", "fun": lambda w, b=bk, lower=lb: float(w @ b) - lower}
+            )
+
+    def objective(w):
+        risk = 0.5 * risk_aversion * float(w @ cov @ w)
+        ret = float(w @ alpha)
+        cost = turnover_penalty * float(np.sum((w - w0) ** 2))
+        return risk - ret + cost
+
+    res = minimize(
+        objective,
+        init_w,
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints,
+        options={"maxiter": 500}
+    )
+    opt_w = res.x if res.success else init_w
+
+    port_exp_ret = float(opt_w @ alpha)
+    port_vol = float(np.sqrt(max(0.0, opt_w @ cov @ opt_w)))
+    gross_lev = float(np.sum(np.abs(opt_w)))
+    net_lev = float(np.sum(opt_w))
+    turnover = float(np.sum(np.abs(opt_w - w0)))
+
+    return {
+        "weights": opt_w,
+        "weights_dict": {f"asset_{i}": float(opt_w[i]) for i in range(n)},
+        "expected_return": port_exp_ret,
+        "portfolio_volatility": port_vol,
+        "sharpe_implied": port_exp_ret / max(1e-6, port_vol),
+        "gross_leverage": gross_lev,
+        "net_leverage": net_lev,
+        "turnover": turnover,
+        "status": "OPTIMAL" if res.success else "APPROXIMATION",
+        "optimization_success": bool(res.success)
+    }

@@ -266,13 +266,16 @@ def get_ohlcv(
 ) -> OHLCVResponse:
     """Fetch real OHLCV data for selected ticker."""
     df = get_data(ticker=ticker, start=start, end=end)
-    records = []
     if df.empty:
         try:
             from core.yfinance_client import yfinance_client
             df = yfinance_client.fetch_ohlcv(ticker, start=start, end=end)
         except Exception:
             df = pd.DataFrame()
+    if df.empty:
+        # Fallback to available cached data for ticker without strict date filtering
+        df = get_data(ticker=ticker)
+    records = []
     if not df.empty:
         for d, row in df.iterrows():
             d_str = d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d)
