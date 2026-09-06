@@ -11,6 +11,7 @@ import ast
 import copy
 import logging
 import random
+import warnings
 from typing import Dict, Any, List, Optional, Tuple
 
 import numpy as np
@@ -305,10 +306,13 @@ class TimeSeriesCorrNode(ASTNode):
         return f"ts_corr({self.left.to_formula()}, {self.right.to_formula()}, {self.window})"
 
     def evaluate(self, df: pd.DataFrame) -> pd.Series:
-        l_u = self.left.evaluate(df).unstack(level="ticker")
-        r_u = self.right.evaluate(df).unstack(level="ticker")
-        corrs = l_u.rolling(self.window, min_periods=3).corr(r_u)
-        return corrs.stack().reindex(df.index).fillna(0.0).clip(-1.0, 1.0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                l_u = self.left.evaluate(df).unstack(level="ticker")
+                r_u = self.right.evaluate(df).unstack(level="ticker")
+                corrs = l_u.rolling(self.window, min_periods=3).corr(r_u)
+                return corrs.stack().reindex(df.index).fillna(0.0).clip(-1.0, 1.0)
 
     def complexity(self) -> int:
         return 3 + self.left.complexity() + self.right.complexity()
@@ -580,15 +584,20 @@ def evaluate_alpha(
     turnovers: List[float] = []
     num_trades = 0
 
-    for _, d_slice in eval_df.groupby(level="date"):
-        if len(d_slice) >= 6:
-            s_rank = d_slice["signal"].rank()
-            t_rank = d_slice["target"].rank()
-            corr = float(s_rank.corr(t_rank))
-            if not np.isnan(corr):
-                daily_ics.append(corr)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        for _, d_slice in eval_df.groupby(level="date"):
+            if len(d_slice) >= 6:
+                s_rank = d_slice["signal"].rank()
+                t_rank = d_slice["target"].rank()
+                s_std = float(s_rank.std())
+                t_std = float(t_rank.std())
+                if s_std > 1e-9 and t_std > 1e-9:
+                    corr = float(s_rank.corr(t_rank))
+                    if not np.isnan(corr):
+                        daily_ics.append(corr)
 
-            # L/S simulation: Top 20% long, Bottom 20% short
+                # L/S simulation: Top 20% long, Bottom 20% short
             q_high = d_slice["signal"].quantile(0.8)
             q_low = d_slice["signal"].quantile(0.2)
 

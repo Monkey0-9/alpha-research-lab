@@ -32,7 +32,7 @@ class ModelTrainer:
                     y_train: np.ndarray,
                     X_val: Optional[np.ndarray] = None,
                     y_val: Optional[np.ndarray] = None) -> Ridge:
-        model = Ridge(alpha=50.0)
+        model = Ridge(alpha=50.0, solver="lsqr")
         model.fit(X_train, y_train)
         return model
 
@@ -78,7 +78,7 @@ class ModelTrainer:
                    X_val: Optional[np.ndarray] = None,
                    y_val: Optional[np.ndarray] = None,
                    seq_len: int = 20) -> Any:
-        model = Ridge(alpha=10.0)
+        model = Ridge(alpha=10.0, solver="lsqr")
         model.fit(X_train, y_train)
         return model
 
@@ -87,7 +87,7 @@ class ModelTrainer:
                           y_train: np.ndarray,
                           X_val: Optional[np.ndarray] = None,
                           y_val: Optional[np.ndarray] = None) -> Any:
-        model = Ridge(alpha=5.0)
+        model = Ridge(alpha=5.0, solver="lsqr")
         model.fit(X_train, y_train)
         return model
 

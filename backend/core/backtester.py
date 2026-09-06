@@ -79,22 +79,23 @@ class BacktestResults(dict):
 
 
 def _safe_freq(freq: str) -> str:
-    # Normalize legacy pandas Month-End and other aliases
-    # Try the freq directly first
-    try:
-        pd.date_range("2020-01-01", "2020-02-01", freq=freq)
-        return freq
-    except Exception:
-        pass
-    # Map old aliases to new ones (pandas 2.x)
-    alias_map = {"M": "ME", "Q": "QE", "Y": "YE", "ME": "ME", "QE": "QE", "YE": "YE"}
+    # Normalize legacy pandas Month-End and other aliases (pandas 2.x)
+    alias_map = {"M": "ME", "Q": "QE", "Y": "YE", "A": "YE", "ME": "ME", "QE": "QE", "YE": "YE"}
     mapped = alias_map.get(freq)
     if mapped:
         try:
             pd.date_range("2020-01-01", "2020-02-01", freq=mapped)
             return mapped
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Mapped frequency '%s' invalid: %s", mapped, exc)
+
+    # Try the freq directly
+    try:
+        pd.date_range("2020-01-01", "2020-02-01", freq=freq)
+        return freq
+    except Exception as exc:
+        logger.debug("Direct frequency '%s' invalid: %s", freq, exc)
+
     # Try old-style aliases as fallback
     fallback_map = {"ME": "M", "QE": "Q", "YE": "Y", "W-SUN": "W"}
     fb = fallback_map.get(freq)
@@ -102,8 +103,8 @@ def _safe_freq(freq: str) -> str:
         try:
             pd.date_range("2020-01-01", "2020-02-01", freq=fb)
             return fb
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Fallback frequency '%s' invalid: %s", fb, exc)
     return "MS"  # Month Start as safe default
 
 
@@ -213,7 +214,7 @@ class EventDrivenBacktester:
 
             # 3. Train Model
             if model_type == "ridge":
-                clf = Ridge(alpha=100.0)
+                clf = Ridge(alpha=100.0, solver="lsqr")
                 clf.fit(X_train, y_train)
                 preds = clf.predict(X_test)
             else:

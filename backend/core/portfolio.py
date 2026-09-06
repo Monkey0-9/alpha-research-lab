@@ -10,6 +10,7 @@ and quasi-diagonalization (López de Prado).
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import List, Optional
 import numpy as np
 import pandas as pd
@@ -40,7 +41,9 @@ def mean_variance_optimization(
         port_var = np.dot(w, np.dot(cov_matrix, w))
         return 0.5 * risk_aversion * port_var - port_ret
 
-    res = minimize(objective, init_w, method="SLSQP", bounds=bounds, constraints=constraints)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", (UserWarning, RuntimeWarning))
+        res = minimize(objective, init_w, method="SLSQP", bounds=bounds, constraints=constraints)
     if res.success:
         return res.x
     return init_w
@@ -124,7 +127,9 @@ def cvar_optimization(returns_matrix: np.ndarray, alpha: float = 0.05, max_weigh
         cvar = -np.mean(sorted_rets[:cutoff_idx])
         return cvar
 
-    res = minimize(cvar_objective, init_w, method="SLSQP", bounds=bounds, constraints=constraints)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", (UserWarning, RuntimeWarning))
+        res = minimize(cvar_objective, init_w, method="SLSQP", bounds=bounds, constraints=constraints)
     if res.success:
         return res.x
     return init_w
@@ -281,14 +286,16 @@ def convex_portfolio_optimizer(
         cost = turnover_penalty * float(np.sum((w - w0) ** 2))
         return risk - ret + cost
 
-    res = minimize(
-        objective,
-        init_w,
-        method="SLSQP",
-        bounds=bounds,
-        constraints=constraints,
-        options={"maxiter": 500}
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", (UserWarning, RuntimeWarning))
+        res = minimize(
+            objective,
+            init_w,
+            method="SLSQP",
+            bounds=bounds,
+            constraints=constraints,
+            options={"maxiter": 500}
+        )
     opt_w = res.x if res.success else init_w
 
     port_exp_ret = float(opt_w @ alpha)
