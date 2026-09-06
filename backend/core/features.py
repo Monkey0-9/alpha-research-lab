@@ -14,6 +14,14 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+try:
+    from native.native_bridge import accelerator
+except ImportError:
+    try:
+        from backend.native.native_bridge import accelerator
+    except ImportError:
+        accelerator = None
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -30,7 +38,21 @@ def _rsi(series: pd.Series, period: int = 14) -> pd.Series:
 
 
 def _rolling_hurst(series: pd.Series, window: int = 100) -> pd.Series:
-    """Fast vectorized proxy for Hurst exponent via rolling variance scaling."""
+    """True rescaled range Hurst exponent accelerated by native C kernel with fallback."""
+    if accelerator is not None and hasattr(accelerator, "fast_hurst_exponent") and len(series) >= 20:
+        try:
+            arr = np.ascontiguousarray(series.values, dtype=np.float64)
+            h_val = accelerator.fast_hurst_exponent(arr, window)
+            if not np.isnan(h_val) and 0.0 < h_val < 1.0:
+                # Rolling window C calculation
+                res = np.full(len(series), 0.5, dtype=np.float64)
+                for i in range(window, len(series)):
+                    sub = arr[i - window:i]
+                    res[i] = accelerator.fast_hurst_exponent(sub, window)
+                return pd.Series(res, index=series.index).clip(0.1, 0.9)
+        except Exception:
+            pass
+
     r = series.pct_change()
     var_short = r.rolling(10).var()
     var_long = r.rolling(window).var()
@@ -180,14 +202,41 @@ def _compute_ticker_features(sub: pd.DataFrame, ticker: str, set_multiindex: boo
     for n in [20, 60, 120]:
         feat[f"momentum_{n}d"] = (c / c.shift(n) - 1).shift(1)
 
-    # --- Volatility ---
+    # --- Volatility (C-accelerated with fallback) ---
     r1 = c.pct_change()
     for n in [20, 60]:
-        feat[f"volatility_{n}d"] = r1.rolling(n).std().shift(1)
+        if accelerator is not None and hasattr(accelerator, "fast_rolling_vol"):
+            try:
+                r1_arr = np.ascontiguousarray(r1.fillna(0.0).values, dtype=np.float64)
+                vol_c = accelerator.fast_rolling_vol(r1_arr, n)
+                feat[f"volatility_{n}d"] = pd.Series(vol_c, index=c.index).shift(1)
+            except Exception:
+                feat[f"volatility_{n}d"] = r1.rolling(n).std().shift(1)
+        else:
+            feat[f"volatility_{n}d"] = r1.rolling(n).std().shift(1)
+
+    # --- Native C High-Performance Features ---
+    if accelerator is not None:
+        try:
+            c_arr = np.ascontiguousarray(c.values, dtype=np.float64)
+            if hasattr(accelerator, "fast_kalman_filter") and len(c_arr) >= 10:
+                kf_res = accelerator.fast_kalman_filter(c_arr, 1e-5, 1e-3)
+                kf_vals = kf_res["filtered_state"] if isinstance(kf_res, dict) else kf_res
+                feat["kalman_fair_value"] = pd.Series(kf_vals, index=c.index).shift(1)
+                feat["kalman_residual"] = (c.shift(1) - feat["kalman_fair_value"])
+            if hasattr(accelerator, "fast_ewma_volatility"):
+                r1_clean = np.ascontiguousarray(r1.fillna(0.0).values, dtype=np.float64)
+                ewma_v = accelerator.fast_ewma_volatility(r1_clean, 0.94)
+                feat["ewma_volatility_20d"] = pd.Series(ewma_v, index=c.index).shift(1)
+            if hasattr(accelerator, "fast_zscore") and len(c_arr) >= 20:
+                z_c = accelerator.fast_zscore(c_arr, 20)
+                feat["c_zscore_20d"] = pd.Series(z_c, index=c.index).shift(1)
+        except Exception:
+            pass
 
     # --- RSI ---
     feat["rsi_14"] = _rsi(c, 14).shift(1)
-    feat["rsi_7"]  = _rsi(c, 7).shift(1)
+    feat["rsi_7"] = _rsi(c, 7).shift(1)
 
     # --- MACD ---
     ema12 = c.ewm(span=12, adjust=False).mean()
@@ -306,7 +355,8 @@ FEATURE_NAMES: List[str] = [
     "price_ma_10_ratio", "price_ma_50_ratio", "price_ma_200_ratio",
     "hl_range_20d", "gap_pct",
     "trend_strength_20d",
-    "mom_composite",
+    # Native C-accelerated features
+    "kalman_fair_value", "kalman_residual", "ewma_volatility_20d", "c_zscore_20d",
     # Cross-sectional (added later)
     "momentum_rank_20d", "vol_rank_volatility_20d", "size_rank", "ret_rank_20d",
 ]

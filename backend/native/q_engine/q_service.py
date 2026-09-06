@@ -103,13 +103,22 @@ class QAnalyticsEngine:
         s = prices.rolling(window).std()
         return (prices - m) / (s + 1e-9)
 
-    def asof_join(self, trades: Optional[pd.DataFrame] = None, quotes: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    def asof_join(
+        self,
+        trades: Optional[pd.DataFrame] = None,
+        quotes: Optional[pd.DataFrame] = None,
+        ticker: Optional[str] = None
+    ) -> pd.DataFrame:
         """
         Q equivalent: aj[`sym`time; trades; quotes]
         Merges trades with the latest preceding NBBO quote for each symbol.
         """
         t = (trades if trades is not None else self.get_sample_trades()).copy()
         q = (quotes if quotes is not None else self.get_sample_quotes()).copy()
+
+        if ticker:
+            t = t[t["sym"] == ticker.upper()]
+            q = q[q["sym"] == ticker.upper()]
 
         t["time"] = pd.to_datetime(t["time"])
         q["time"] = pd.to_datetime(q["time"])
@@ -126,13 +135,23 @@ class QAnalyticsEngine:
         merged["depth_imbalance"] = (merged["bsize"] - merged["asize"]) / (merged["bsize"] + merged["asize"] + 1e-9)
         return merged
 
-    def resample_bars_q(self, trades_df: Optional[pd.DataFrame] = None, bar_seconds: int = 60) -> pd.DataFrame:
+    def resample_bars_q(
+        self,
+        trades_df: Optional[pd.DataFrame] = None,
+        bar_seconds: int = 60,
+        ticker: Optional[str] = None,
+        interval_seconds: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Q equivalent:
         select open: first price, high: max price, low: min price, close: last price,
         volume: sum size, vwap: size wavg price by bar: barSize xbar time, sym from trades
         """
+        sec = interval_seconds if interval_seconds is not None else bar_seconds
         t = (trades_df if trades_df is not None else self.get_sample_trades()).copy()
+        if ticker:
+            t = t[t["sym"] == ticker.upper()]
+
         t["time"] = pd.to_datetime(t["time"])
 
         def _agg_group(g):
@@ -146,7 +165,7 @@ class QAnalyticsEngine:
                 "ticks": len(g)
             })
 
-        t["bar"] = t["time"].dt.floor(f"{bar_seconds}s")
+        t["bar"] = t["time"].dt.floor(f"{sec}s")
         bars = t.groupby(["sym", "bar"]).apply(_agg_group, include_groups=False).reset_index()
         return bars
 

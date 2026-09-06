@@ -541,3 +541,72 @@ def post_price_series(req: PriceSeriesRequest):
     except Exception as e:
         return {"status": "ERROR", "error": str(e)}
 
+
+@router.get("/q-bars")
+def get_q_resampled_bars(ticker: str = "AAPL", interval_seconds: int = 60):
+    """High-frequency tick-to-bar aggregation using KDB+/Q vector xbar algebra."""
+    try:
+        from native.q_engine.q_service import q_engine
+    except ImportError:
+        from backend.native.q_engine.q_service import q_engine
+
+    bars_df = q_engine.resample_bars_q(ticker=ticker, interval_seconds=interval_seconds)
+    records = []
+    for _, row in bars_df.iterrows():
+        time_val = str(row.get("bar", row.get("time", "")))
+        records.append({
+            "time": time_val,
+            "sym": str(row.get("sym", ticker)),
+            "open": round(float(row["open"]), 2),
+            "high": round(float(row["high"]), 2),
+            "low": round(float(row["low"]), 2),
+            "close": round(float(row["close"]), 2),
+            "volume": int(row["volume"]),
+            "vwap": round(float(row["vwap"]), 2),
+        })
+
+    return {
+        "status": "COMPLETED",
+        "ticker": ticker.upper(),
+        "engine": "KDB+/Q (calcBars vector xbar)",
+        "interval_seconds": interval_seconds,
+        "bars_count": len(records),
+        "bars": records
+    }
+
+
+@router.get("/q-asof-sync")
+def get_q_asof_sync(ticker: str = "AAPL"):
+    """Temporal trades and quotes synchronization using KDB+/Q aj[`sym`time; trades; quotes]."""
+    try:
+        from native.q_engine.q_service import q_engine
+    except ImportError:
+        from backend.native.q_engine.q_service import q_engine
+
+    matched_df = q_engine.asof_join(ticker=ticker)
+    records = []
+    for _, row in matched_df.tail(20).iterrows():
+        bid_val = float(row.get("bid", 0.0))
+        ask_val = float(row.get("ask", 0.0))
+        spread_val = round(ask_val - bid_val, 4)
+        eff_spread = round(float(row.get("eff_spread_bps", 0.0)), 4)
+        records.append({
+            "time": str(row.get("time", "")),
+            "sym": str(row.get("sym", ticker)),
+            "trade_price": round(float(row.get("price", 0.0)), 2),
+            "trade_size": int(row.get("size", 0)),
+            "bid": round(bid_val, 2),
+            "ask": round(ask_val, 2),
+            "spread": spread_val,
+            "effective_spread": eff_spread,
+        })
+
+    return {
+        "status": "COMPLETED",
+        "ticker": ticker.upper(),
+        "engine": "KDB+/Q (aj[`sym`time; trades; quotes])",
+        "matched_count": len(records),
+        "records": records
+    }
+
+

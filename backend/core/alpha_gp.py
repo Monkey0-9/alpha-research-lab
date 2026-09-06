@@ -20,12 +20,21 @@ import scipy.stats as ss
 from core.metrics import sharpe_ratio, max_drawdown, calmar_ratio
 from core.experiment import trial_registry, TrialRecord, compute_sha256
 
+try:
+    from native.native_bridge import accelerator
+except ImportError:
+    try:
+        from backend.native.native_bridge import accelerator
+    except ImportError:
+        accelerator = None
+
 logger = logging.getLogger(__name__)
 
 FEATURE_NAMES = [
     "close", "open", "high", "low", "volume",
     "return_1d", "return_5d", "return_20d",
-    "volatility_20d", "momentum_20d", "rsi_14"
+    "volatility_20d", "momentum_20d", "rsi_14",
+    "kalman_fair_value", "ewma_volatility_20d", "c_zscore_20d"
 ]
 
 WINDOWS = [5, 10, 20, 60]
@@ -183,14 +192,81 @@ class TimeSeriesOpNode(ASTNode):
         val = self.child.evaluate(df)
         u = val.unstack(level="ticker")
         if self.op in ("ts_mean", "mean"):
-            res = u.rolling(self.window, min_periods=2).mean()
+            if accelerator is not None and hasattr(accelerator, "fast_rolling_mean"):
+                try:
+                    res_dict = {
+                        col: accelerator.fast_rolling_mean(
+                            np.ascontiguousarray(u[col].fillna(0.0).values, dtype=np.float64), self.window
+                        )
+                        for col in u.columns
+                    }
+                    res = pd.DataFrame(res_dict, index=u.index)
+                except Exception:
+                    res = u.rolling(self.window, min_periods=2).mean()
+            else:
+                res = u.rolling(self.window, min_periods=2).mean()
         elif self.op in ("ts_std", "std"):
-            res = u.rolling(self.window, min_periods=2).std()
+            if accelerator is not None and hasattr(accelerator, "fast_rolling_vol"):
+                try:
+                    res_dict = {
+                        col: accelerator.fast_rolling_vol(
+                            np.ascontiguousarray(u[col].fillna(0.0).values, dtype=np.float64), self.window
+                        )
+                        for col in u.columns
+                    }
+                    res = pd.DataFrame(res_dict, index=u.index)
+                except Exception:
+                    res = u.rolling(self.window, min_periods=2).std()
+            else:
+                res = u.rolling(self.window, min_periods=2).std()
         elif self.op in ("ts_zscore", "zscore"):
-            mean = u.rolling(self.window, min_periods=2).mean()
-            std = u.rolling(self.window, min_periods=2).std()
-            res = (u - mean) / (std + 1e-6)
-            res = res.clip(-5.0, 5.0)
+            if accelerator is not None and hasattr(accelerator, "fast_zscore"):
+                try:
+                    res_dict = {
+                        col: accelerator.fast_zscore(
+                            np.ascontiguousarray(u[col].fillna(0.0).values, dtype=np.float64), self.window
+                        )
+                        for col in u.columns
+                    }
+                    res = pd.DataFrame(res_dict, index=u.index).clip(-5.0, 5.0)
+                except Exception:
+                    mean = u.rolling(self.window, min_periods=2).mean()
+                    std = u.rolling(self.window, min_periods=2).std()
+                    res = ((u - mean) / (std + 1e-6)).clip(-5.0, 5.0)
+            else:
+                mean = u.rolling(self.window, min_periods=2).mean()
+                std = u.rolling(self.window, min_periods=2).std()
+                res = ((u - mean) / (std + 1e-6)).clip(-5.0, 5.0)
+        elif self.op in ("ts_kalman", "kalman"):
+            if accelerator is not None and hasattr(accelerator, "fast_kalman_filter"):
+                try:
+                    res_dict = {}
+                    for col in u.columns:
+                        kf_out = accelerator.fast_kalman_filter(
+                            np.ascontiguousarray(u[col].fillna(0.0).values, dtype=np.float64), 1e-5, 1e-3
+                        )
+                        res_dict[col] = kf_out["filtered_state"] if isinstance(kf_out, dict) else kf_out
+                    res = pd.DataFrame(res_dict, index=u.index)
+                except Exception:
+                    res = u.ewm(span=self.window).mean()
+            else:
+                res = u.ewm(span=self.window).mean()
+        elif self.op in ("ts_hurst", "hurst"):
+            if accelerator is not None and hasattr(accelerator, "fast_hurst_exponent"):
+                try:
+                    res_dict = {}
+                    for col in u.columns:
+                        arr = np.ascontiguousarray(u[col].fillna(0.0).values, dtype=np.float64)
+                        out = np.full(len(arr), 0.5, dtype=np.float64)
+                        w = min(self.window, len(arr))
+                        for i in range(w, len(arr)):
+                            out[i] = accelerator.fast_hurst_exponent(arr[i - w:i], w)
+                        res_dict[col] = out
+                    res = pd.DataFrame(res_dict, index=u.index).clip(0.1, 0.9)
+                except Exception:
+                    res = u.rolling(self.window).var()
+            else:
+                res = u.rolling(self.window).var()
         elif self.op in ("ts_delta", "delta"):
             res = u.diff(self.window)
         elif self.op in ("ts_momentum", "momentum"):
@@ -299,7 +375,7 @@ def parse_formula(formula_str: str) -> ASTNode:
                     win = int(args[2].value)
                 return TimeSeriesCorrNode(left, right, win)
 
-            if fn_name in ("ts_mean", "ts_std", "ts_zscore", "ts_rank", "ts_delta", "ts_momentum", "ts_decay"):
+            if fn_name in ("ts_mean", "ts_std", "ts_zscore", "ts_rank", "ts_delta", "ts_momentum", "ts_decay", "ts_kalman", "ts_hurst"):
                 child = args[0] if args else FeatureNode("close")
                 win = 20
                 if len(args) > 1 and isinstance(args[1], ConstantNode):
@@ -336,8 +412,10 @@ def generate_random_ast(max_depth: int = 3, current_depth: int = 0) -> ASTNode:
         right = generate_random_ast(max_depth, current_depth + 1)
         return BinaryOpNode(op, left, right)
     elif r < 0.7:
-        # TS op
-        op = random.choice(["ts_mean", "ts_std", "ts_zscore", "ts_rank", "ts_delta", "ts_momentum"])
+        # TS op (including C-accelerated Kalman and Hurst kernels)
+        op = random.choice([
+            "ts_mean", "ts_std", "ts_zscore", "ts_rank", "ts_delta", "ts_momentum", "ts_kalman", "ts_hurst"
+        ])
         child = generate_random_ast(max_depth, current_depth + 1)
         win = random.choice(WINDOWS)
         return TimeSeriesOpNode(op, child, win)

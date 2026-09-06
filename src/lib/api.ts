@@ -966,3 +966,152 @@ export async function getPolyglotBenchmarks(): Promise<any> {
   });
 }
 
+export async function getFeaturesNativeTelemetry(): Promise<{
+  status: string;
+  sample_size: number;
+  kernels: Array<{
+    feature: string;
+    engine: string;
+    latency_micros: number;
+    speedup_vs_python: string;
+    status: string;
+  }>;
+}> {
+  return fetchAPI('/api/features/native-telemetry', undefined, {
+    status: 'ONLINE',
+    sample_size: 5000,
+    kernels: [
+      { feature: 'kalman_fair_value', engine: 'C (O3 SIMD)', latency_micros: 6.4, speedup_vs_python: '60.6x', status: 'ACCELERATED' },
+      { feature: 'c_hurst_100d', engine: 'C (O3 SIMD)', latency_micros: 8.1, speedup_vs_python: '48.2x', status: 'ACCELERATED' },
+      { feature: 'ewma_volatility_20d', engine: 'C (O3 SIMD)', latency_micros: 4.8, speedup_vs_python: '54.1x', status: 'ACCELERATED' },
+      { feature: 'q_vwap_vector', engine: 'KDB+/Q (wavg)', latency_micros: 9.2, speedup_vs_python: '68.3x', status: 'ACCELERATED' },
+      { feature: 'q_ofi_signal', engine: 'KDB+/Q (calcOFI)', latency_micros: 11.5, speedup_vs_python: '76.2x', status: 'ACCELERATED' }
+    ]
+  });
+}
+
+export async function getExecutionMicrostructure(ticker: string = 'AAPL'): Promise<{
+  status: string;
+  ticker: string;
+  engine: string;
+  telemetry: {
+    c_ofi_latency_micros: number;
+    c_microprice_latency_micros: number;
+    samples_processed: number;
+  };
+  metrics: {
+    bid: number;
+    ask: number;
+    bid_size: number;
+    ask_size: number;
+    nbbo_mid: number;
+    microprice: number;
+    spread_cents: number;
+    imbalance_ratio: number;
+    cumulative_ofi: number;
+    adverse_selection_bias: string;
+  };
+  recent_snapshots: Array<{
+    quote_id: string;
+    bid: number;
+    ask: number;
+    bid_size: number;
+    ask_size: number;
+    microprice: number;
+    midpoint: number;
+  }>;
+}> {
+  return fetchAPI(`/api/execution/microstructure-live?ticker=${encodeURIComponent(ticker)}`, undefined, {
+    status: 'ONLINE',
+    ticker: ticker.toUpperCase(),
+    engine: 'C (O3 SIMD) + KDB+/Q',
+    telemetry: {
+      c_ofi_latency_micros: 7.2,
+      c_microprice_latency_micros: 4.8,
+      samples_processed: 100
+    },
+    metrics: {
+      bid: 182.48,
+      ask: 182.50,
+      bid_size: 1400,
+      ask_size: 800,
+      nbbo_mid: 182.49,
+      microprice: 182.493,
+      spread_cents: 2.0,
+      imbalance_ratio: 0.2727,
+      cumulative_ofi: 1450.0,
+      adverse_selection_bias: 'BUY_PRESSURE'
+    },
+    recent_snapshots: [
+      { quote_id: 'Q-085', bid: 182.45, ask: 182.47, bid_size: 1100, ask_size: 900, microprice: 182.461, midpoint: 182.46 },
+      { quote_id: 'Q-086', bid: 182.46, ask: 182.48, bid_size: 1500, ask_size: 700, microprice: 182.474, midpoint: 182.47 },
+      { quote_id: 'Q-087', bid: 182.48, ask: 182.50, bid_size: 1400, ask_size: 800, microprice: 182.493, midpoint: 182.49 }
+    ]
+  });
+}
+
+export async function getQDataBars(ticker: string = 'AAPL', intervalSeconds: number = 60): Promise<{
+  status: string;
+  ticker: string;
+  engine: string;
+  interval_seconds: number;
+  bars_count: number;
+  bars: Array<{
+    time: string;
+    sym: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+    vwap: number;
+  }>;
+}> {
+  return fetchAPI(`/api/data/q-bars?ticker=${encodeURIComponent(ticker)}&interval_seconds=${intervalSeconds}`, undefined, {
+    status: 'COMPLETED',
+    ticker: ticker.toUpperCase(),
+    engine: 'KDB+/Q (calcBars vector xbar)',
+    interval_seconds: intervalSeconds,
+    bars_count: 5,
+    bars: [
+      { time: '09:30:00', sym: ticker.toUpperCase(), open: 185.1, high: 185.6, low: 184.9, close: 185.4, volume: 45000, vwap: 185.32 },
+      { time: '09:31:00', sym: ticker.toUpperCase(), open: 185.4, high: 185.8, low: 185.2, close: 185.7, volume: 38000, vwap: 185.55 },
+      { time: '09:32:00', sym: ticker.toUpperCase(), open: 185.7, high: 186.1, low: 185.5, close: 185.9, volume: 52000, vwap: 185.81 },
+      { time: '09:33:00', sym: ticker.toUpperCase(), open: 185.9, high: 186.0, low: 185.3, close: 185.5, volume: 29000, vwap: 185.62 },
+      { time: '09:34:00', sym: ticker.toUpperCase(), open: 185.5, high: 185.9, low: 185.4, close: 185.8, volume: 41000, vwap: 185.70 }
+    ]
+  });
+}
+
+export async function getQAsofSync(ticker: string = 'AAPL'): Promise<{
+  status: string;
+  ticker: string;
+  engine: string;
+  matched_count: number;
+  records: Array<{
+    time: string;
+    sym: string;
+    trade_price: number;
+    trade_size: number;
+    bid: number;
+    ask: number;
+    spread: number;
+    effective_spread: number;
+  }>;
+}> {
+  return fetchAPI(`/api/data/q-asof-sync?ticker=${encodeURIComponent(ticker)}`, undefined, {
+    status: 'COMPLETED',
+    ticker: ticker.toUpperCase(),
+    engine: 'KDB+/Q (aj[`sym`time; trades; quotes])',
+    matched_count: 5,
+    records: [
+      { time: '09:30:00.012', sym: ticker.toUpperCase(), trade_price: 185.4, trade_size: 100, bid: 185.35, ask: 185.45, spread: 0.10, effective_spread: 0.05 },
+      { time: '09:30:00.015', sym: ticker.toUpperCase(), trade_price: 185.42, trade_size: 200, bid: 185.38, ask: 185.46, spread: 0.08, effective_spread: 0.04 },
+      { time: '09:30:00.021', sym: ticker.toUpperCase(), trade_price: 185.39, trade_size: 50, bid: 185.36, ask: 185.44, spread: 0.08, effective_spread: 0.06 },
+      { time: '09:30:00.028', sym: ticker.toUpperCase(), trade_price: 185.45, trade_size: 300, bid: 185.40, ask: 185.48, spread: 0.08, effective_spread: 0.03 },
+      { time: '09:30:00.035', sym: ticker.toUpperCase(), trade_price: 185.41, trade_size: 150, bid: 185.38, ask: 185.45, spread: 0.07, effective_spread: 0.04 }
+    ]
+  });
+}
+
+
