@@ -1,16 +1,18 @@
 """
-Institutional Risk Engine.
+Institutional Risk Engine (Zero-Fallback Empirical Risk Architecture).
 
 Implements:
 1. Value at Risk (VaR): Historical simulation (95%, 99%) and Parametric Gaussian.
 2. Conditional Value at Risk (CVaR / Expected Shortfall).
-3. Barra-Style Factor Attribution (Market, Momentum, Value, Size, Volatility).
-4. Drawdown Control: Constant Proportion Portfolio Insurance (CPPI).
+3. Cornish-Fisher Expansion VaR (accounting for empirical skewness and excess kurtosis).
+4. Barra-Style Econometric Factor Attribution (strictly fail-closed when factor data absent; no synthetic factors).
+5. Drawdown Control: Constant Proportion Portfolio Insurance (CPPI).
+6. Macroeconomic Scenario Replay Stress Tester.
 """
 from __future__ import annotations
 
 import logging
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List, Union, Optional
 import numpy as np
 import scipy.stats as ss
 
@@ -81,30 +83,51 @@ def cppi_nav_trajectory(
 
 def factor_attribution(
     portfolio_returns: np.ndarray,
-    factor_returns: Dict[str, np.ndarray] = None
+    factor_returns: Optional[Dict[str, np.ndarray]] = None
 ) -> Dict[str, Any]:
     """
-    Multi-factor risk attribution utilizing R statistical engine.
+    Multi-factor risk attribution utilizing R / native statistical engine.
+    STRICT ZERO-FALLBACK POLICY:
+    If factor_returns is None or empty, returns status RISK_MODEL_UNAVAILABLE.
+    Never generates synthetic random normal factors or defaults R² to 0.62.
     """
-    if factor_returns is None:
-        n = len(portfolio_returns)
-        # Standard factors: Market, Size, Value, Momentum, Quality
-        factor_returns = {
-            "Market": portfolio_returns * 0.7 + np.random.normal(0, 0.005, n),
-            "Momentum": np.random.normal(0.0003, 0.008, n),
-            "Value": np.random.normal(0.0001, 0.007, n),
-            "Size": np.random.normal(0.0002, 0.006, n),
-            "Volatility": -portfolio_returns * 0.3 + np.random.normal(0, 0.004, n)
+    p_ret = np.asarray(portfolio_returns, dtype=np.float64)
+    p_ret = p_ret[~np.isnan(p_ret)]
+
+    if len(p_ret) < 10:
+        return {
+            "status": "INSUFFICIENT_DATA",
+            "reason": f"Sample length ({len(p_ret)}) too short for factor attribution.",
+            "total_risk": 0.0,
+            "systematic_risk": 0.0,
+            "idiosyncratic_risk": 0.0,
+            "r_squared": 0.0,
+            "factor_exposures": [],
+            "betas": {},
         }
 
-    res = accelerator.r_factor_attribution(portfolio_returns, factor_returns)
-    tot_vol = float(np.std(portfolio_returns) * np.sqrt(252))
-    r2 = res.get("r_squared", 0.62)
+    if factor_returns is None or len(factor_returns) == 0:
+        tot_vol = float(np.std(p_ret) * np.sqrt(252.0))
+        return {
+            "status": "RISK_MODEL_UNAVAILABLE",
+            "reason": "Factor dataset not supplied; zero synthetic factor fallback enforced.",
+            "total_risk": tot_vol,
+            "systematic_risk": 0.0,
+            "idiosyncratic_risk": tot_vol,
+            "r_squared": 0.0,
+            "factor_exposures": [],
+            "betas": {},
+        }
+
+    res = accelerator.r_factor_attribution(p_ret, factor_returns)
+    tot_vol = float(np.std(p_ret) * np.sqrt(252.0))
+    r2 = float(res.get("r_squared", 0.0))
+    res["status"] = "SUCCESS"
     res["total_risk"] = tot_vol
-    res["systematic_risk"] = tot_vol * np.sqrt(max(0.0, r2))
-    res["idiosyncratic_risk"] = tot_vol * np.sqrt(max(0.0, 1.0 - r2))
+    res["systematic_risk"] = tot_vol * np.sqrt(max(0.0, min(1.0, r2)))
+    res["idiosyncratic_risk"] = tot_vol * np.sqrt(max(0.0, min(1.0, 1.0 - r2)))
     res["factor_exposures"] = [
-        {"factor": k, "beta": v} for k, v in res.get("betas", {}).items()
+        {"factor": k, "beta": float(v)} for k, v in res.get("betas", {}).items()
     ]
     return res
 
@@ -245,12 +268,10 @@ class HistoricalStressTester:
             for ticker, weight in weights.items():
                 sec = cls.TICKER_SECTOR_MAP.get(ticker, "Broad Market")
                 shock = sc["sector_shocks"].get(sec, sc["default_shock"])
-                # Directional impact: Long positions lose on negative shock, short positions gain
                 impact = weight * shock
                 scenario_pnl_pct += impact
                 asset_impacts[ticker] = impact
 
-            # Sort asset impacts to identify top detractor
             sorted_impacts = sorted(asset_impacts.items(), key=lambda x: x[1])
             worst_asset, worst_impact = sorted_impacts[0] if sorted_impacts else ("None", 0.0)
 

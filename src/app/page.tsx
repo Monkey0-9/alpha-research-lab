@@ -15,6 +15,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import * as api from '@/lib/api';
 import * as types from '@/lib/types';
 import { formatCurrency, formatPercent } from '@/lib/utils';
+import { usePortfolioWebSocket } from '@/lib/usePortfolioWebSocket';
 
 function BBRow({ children, cols }: { children: React.ReactNode; cols: string }) {
   return (
@@ -62,6 +63,8 @@ export default function ExecutiveDashboard() {
   const [equityData, setEquityData] = useState<any[]>([]);
   const [drawdownData, setDrawdownData] = useState<any[]>([]);
 
+  const { telemetry: wsTelemetry, connected: wsConnected } = usePortfolioWebSocket(summary?.portfolio_nav ?? 2485000.0);
+
   useEffect(() => {
     async function load() {
       try {
@@ -90,13 +93,22 @@ export default function ExecutiveDashboard() {
     load();
   }, []);
 
+  const currentNav = wsConnected ? wsTelemetry.nav : (summary?.portfolio_nav ?? 2485000.0);
+
   const kpis = summary ? [
-    { label: 'PORTFOLIO NAV', value: formatCurrency(summary.portfolio_nav, 0), change: '+14.2% YTD', positive: true, subtext: 'INSTITUTIONAL AUM', status: 'live' as const },
+    {
+      label: 'PORTFOLIO NAV',
+      value: formatCurrency(currentNav, 0),
+      change: wsConnected ? 'LIVE FEED ACTIVE' : '+14.2% YTD',
+      positive: true,
+      subtext: wsConnected ? 'DOUBLE-ENTRY LEDGER' : 'INSTITUTIONAL AUM',
+      status: 'live' as const
+    },
     { label: 'DAILY P&L', value: formatCurrency(summary.daily_pnl_dollars, 0), change: `${formatPercent(summary.daily_pnl_pct, 2)} / +74bp`, positive: true, subtext: 'ALPHA CONTRIB: +52bp', status: 'pass' as const },
     { label: 'ANNUAL SHARPE', value: summary.annualized_sharpe.toFixed(2), change: 'BMK 1.12 (SPY)', positive: true, benchmark: '1.12', benchmarkLabel: 'SPY', status: 'pass' as const },
     { label: 'CALMAR RATIO', value: summary.calmar_ratio.toFixed(2), change: 'OOS ROBUST', positive: true, subtext: 'CAGR/MAX DD', status: 'pass' as const },
     { label: 'MAX DRAWDOWN', value: `-${summary.max_drawdown_pct.toFixed(1)}%`, change: 'LIMIT: -12.0%', positive: false, subtext: `${(summary.max_drawdown_pct / 12 * 100).toFixed(0)}% OF LIMIT USED`, status: 'pass' as const },
-    { label: 'DAILY VaR 95%', value: `-${summary.var_95_daily_pct.toFixed(2)}%`, change: `CVaR: -${summary.cvar_95_daily_pct?.toFixed(2) ?? '2.15'}%`, positive: false, subtext: `$${(summary.portfolio_nav * summary.var_95_daily_pct / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} DOLLAR VAR`, status: 'pass' as const },
+    { label: 'DAILY VaR 95%', value: `-${summary.var_95_daily_pct.toFixed(2)}%`, change: `CVaR: -${summary.cvar_95_daily_pct?.toFixed(2) ?? '2.15'}%`, positive: false, subtext: `$${(currentNav * summary.var_95_daily_pct / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} DOLLAR VAR`, status: 'pass' as const },
   ] : [];
 
   return (

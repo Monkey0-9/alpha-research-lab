@@ -1,6 +1,89 @@
-# QuantAlpha — Institution-Inspired Quantitative Research & Alpha Discovery Platform
+# QuantAlpha — Integrity-First Quantitative Research Operating System
 
-Institution-inspired quantitative research and alpha discovery platform with PIT-aware data handling, adversarial validation, statistical multiple-testing controls, native C/C++/Rust acceleration, portfolio/risk research and reproducible experiment lineage. QuantAlpha integrates a high-performance Python FastAPI quantitative research backend with real-market data provider abstractions (**Yahoo Finance `yfinance`** and **Robinhood `robin_stocks`**), native C/C++/Rust accelerators, and a Next.js 16 / React 19 quantitative research portal.
+> **QuantAlpha is an integrity-first research operating system for discovering, validating, falsifying, reproducing, governing, and promoting systematic investment research.**
+
+In QuantAlpha, datasets, features, alpha hypotheses, experiments, statistical tests, execution assumptions, portfolio decisions, risk results, and final conclusions are versioned, cryptographically linked, independently reproducible, and governed by fail-closed promotion gates.
+
+---
+
+## 🏛️ The Central Invariant: Evidence-Driven Governance
+
+```text
+                    QUANTALPHA
+                        │
+                        ▼
+              ┌───────────────────┐
+              │ Research Question │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │     Hypothesis    │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │ Dataset Manifest  │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │ Point-in-Time Data│
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │ Feature / Alpha   │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │  Trial Registry   │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │  OOS Validation   │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │ Statistical Tests │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │   Falsification   │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │ Execution / Cost  │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │  Portfolio / Risk │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │   Reproduction    │
+              └─────────┬─────────┘
+                        ▼
+              ┌───────────────────┐
+              │   Evidence Card   │
+              └─────────┬─────────┘
+                        ▼
+             ┌──────────────────────┐
+             │ GOVERNANCE DECISION  │
+             │ APPROVE / REJECT     │
+             └──────────────────────┘
+```
+
+> **The Central Invariant Law:**
+> *No stage gets to claim success without verifiable cryptographic evidence from the previous stage.*
+
+---
+
+## ⚖️ Level-5 Integrity Principles (Non-Negotiable Project Laws)
+
+1. **Law 1 — No Synthetic Research Data**: Synthetic data is permitted strictly under `tests/`, `fixtures/`, `benchmarks/`, and `simulation/`. It is architecturally impossible for synthetic fallbacks to silently enter `research/`, `validation/`, `risk/`, `portfolio/`, `reproduction/`, or `production/`.
+2. **Law 2 — No Plausible Fallback Values**: The system strictly forbids guessing or plausible defaults (`r_squared = 0.62`, `sharpe = 1.8`, `weights = equal_weights`). Instead, it raises or returns explicit terminal states: `MISSING`, `UNAVAILABLE`, `INSUFFICIENT_DATA`, `OPTIMIZATION_FAILED`, `VALIDATION_FAILED`, `REPRODUCTION_FAILED`. The platform must prefer failure over fabricated confidence.
+3. **Law 3 — Every Number Has Provenance**: Every metric displayed on the dashboard or produced in research is strictly traceable:
+   $$\text{Metric} \rightarrow \text{Computation} \rightarrow \text{Input Artifact} \rightarrow \text{Dataset} \rightarrow \text{Version} \rightarrow \text{Dataset SHA256} \rightarrow \text{Experiment} \rightarrow \text{Git SHA} \rightarrow \text{Environment} \rightarrow \text{Configuration} \rightarrow \text{Researcher} \rightarrow \text{Timestamp}$$
+4. **Law 4 — Cryptographic Lineage Chain**: Every stage artifact incorporates the cryptographic hash of its parent stage:
+   $$\text{DATASET (hash A)} \rightarrow \text{FEATURES (hash B)} \rightarrow \text{ALPHA (hash C)} \rightarrow \text{VALIDATION (hash D)} \rightarrow \text{EXECUTION (hash E)} \rightarrow \text{PORTFOLIO (hash F)} \rightarrow \text{FINAL EVIDENCE (hash G)}$$
+   Tampering with any single node or intermediate value immediately breaks the chain and terminates the experiment.
 
 ---
 
@@ -30,7 +113,7 @@ The platform is organized into 13 synchronized modules covering the quantitative
 
 QuantAlpha includes an automated real-market research data pipeline and provider abstraction in `backend/core/` and `backend/api/data.py`:
 
-```
+```text
                     ┌─────────────────────────┐
                     │   Yahoo Finance (YF)    │ (OHLCV, Splits, Dividends, Multi-thread)
                     └────────────┬────────────┘
@@ -53,22 +136,26 @@ QuantAlpha includes an automated real-market research data pipeline and provider
                     └─────────────────────────────────────────────┘
 ```
 
-### Key Capabilities:
+### Key Capabilities
+
 - **Yahoo Finance Client (`backend/core/yfinance_client.py`)**:
   - Multi-threaded batch historical downloads with automatic adjustment for stock splits and cash dividends.
   - Real-time quote streaming with bid/ask, trailing PE, market cap, and 52-week statistics.
   - Macro index benchmark feeds (`SPY`, `QQQ`, `DIA`, `^VIX`, `^TNX`).
+
 - **Robinhood Client (`backend/core/robinhood_client.py`)**:
   - Real-time NBBO quotes, bid/ask depth spread, and volume tracking.
   - Crypto quote streaming (`BTC-USD`, `ETH-USD`).
   - Market operating schedule and extended-hours trading detector.
   - Optional authenticated institutional login with session persistence and MFA/TOTP.
+
 - **Unified Pipeline (`backend/core/data_pipeline.py`)**:
   - Automated cleaning: forward-fills small gaps, eliminates duplicates, and scrubs bad ticks using a rolling 20-day Hampel filter ($Z > 4.5$).
   - Point-in-Time (PIT) partition alignment and local Parquet persistence (`data/sp500_daily.parquet`).
   - Zero-breakage offline fallback ensuring offline unit tests execute with deterministic sub-second speed.
 
-### Real Market CLI Commands:
+### Real Market CLI Commands
+
 ```bash
 # Ingest live market data from Yahoo Finance
 .venv\Scripts\python backend/core/data_pipeline.py --provider yfinance --start 2020-01-01 --update
@@ -99,32 +186,27 @@ The backend includes a polyglot acceleration bridge (`backend/native/native_brid
 
 ## 🧪 Testing & Verification Suite
 
-The repository contains automated unit and integration tests across both the Python computational core and TypeScript frontend:
+The repository contains automated unit and integration tests across both the Python computational core, evidence subsystem, and TypeScript frontend:
 
-### 1. Python Backend Pytest Suite (76 Tests)
+### 1. Python Backend Pytest Suite (205 Tests across 43 Test Modules)
 ```bash
-# Run all backend unit and API integration tests
-.venv\Scripts\python -m pytest backend/tests/ -v
+# Run all backend unit, native accelerator, evidence, and API integration tests
+pytest backend/tests/ -v
 ```
+- **`test_evidence_subsystem.py`** (6 tests): Fail-closed typed evidence creation, SHA-256 provenance hashing, point-in-time data audit, lookahead leakage detection, quality gate evaluation, and zero-fallback factor attribution.
+- **`test_native_c_and_q.py` & `test_c_and_q_pipeline_integration.py`** (21 tests): Vectorized C SIMD kernels (EMA, Hurst, Kalman filter, microprice) and Q tick-to-bar aggregation with ASOF joins and JSON serialization.
+- **`test_reproducibility_rigorous.py` & `test_reproducibility_level5.py`** (9 tests): Level-5 reproducibility audit, adversarial tampering detection across dataset SHA-256, Git commit, AST expressions, config hashes, and full-bundle equity/blotter hashes.
 - **`test_real_market_pipeline.py`** (8 tests): Real-market Yahoo Finance client, Robinhood client, market hours, crypto quotes, pipeline cleaning, and API sync endpoints.
-- **`test_api.py`** (16 tests): Core router endpoints for health, data, features, validation, portfolio, risk, execution, quality gate, and live research.
-- **`test_api_comprehensive.py`** (12 tests): In-depth API integration across all parameter options and data schemas.
-- **`test_core.py`** (7 tests): Native accelerator bridges, FDR multiple testing, Deflated Sharpe Ratio, and quality gate logic.
-- **`test_core_advanced.py`** (16 tests): Advanced quant algorithms (PIT store, multi-horizon labels, vol targeting, VaR/CVaR, CPPI, MVO, HRP, 3-state HMM, Almgren-Chriss, PSI drift, meta-labeling).
-- **`test_data_loader.py`** (3 tests): Data ingestion, survivorship-bias elimination, and PIT point-in-time temporal isolation.
-- **`test_features.py`** (3 tests): 50+ features with `.shift(1)` lookahead protection.
-- **`test_models.py`** (2 tests): Model training pipeline and ensemble comparison leaderboard.
-- **`test_portfolio.py`** (2 tests): HRP and Markowitz optimization constraints.
-- **`test_risk.py`** (2 tests): VaR, CVaR, and Barra factor decomposition.
-- **`test_validation.py`** (2 tests): Walk-forward cross-validation and purged K-fold CV.
-- **`test_backtester.py`** (3 tests): Temporal backtesting, leakage prevention, and transaction cost modeling.
+- **`test_api.py` & `test_api_comprehensive.py`** (28 tests): Full router suite covering health, data, features, validation, portfolio, risk, execution, quality gate, and live research.
+- **`test_core_advanced.py` & `test_institutional_statistical_governance.py`** (24 tests): Advanced quant algorithms (PIT store, multi-horizon labels, vol targeting, VaR/CVaR, CPPI, MVO, HRP, 3-state HMM, Almgren-Chriss, PSI drift, meta-labeling, CPCV, PBO, DSR, Hansen's SPA, White's Reality Check).
+- **Core modules & mathematical equivalence** (109 tests): Falsification protocol, Alpha DSL, Ledger double-entry invariant, and statistical benchmarks.
 
 ### 2. Frontend Node Test Runner (11 Tests)
 ```bash
 # Run frontend quant generator and metric tests
 npm test
 ```
-All 11 tests pass with 0 failures in ~135ms.
+All 11 tests pass with 0 failures in ~150ms.
 
 ### 3. Frontend Typecheck & Lint
 ```bash
@@ -140,7 +222,7 @@ npm run lint
 # Build optimized Next.js production bundle with Turbopack
 npm run build
 ```
-All 14 application routes prerender cleanly as static content.
+All 17 application routes prerender cleanly as static content.
 
 ---
 

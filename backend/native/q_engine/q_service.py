@@ -130,6 +130,10 @@ class QAnalyticsEngine:
             by="sym",
             direction="backward"
         )
+        merged["bid"] = merged["bid"].fillna(merged["price"] - 0.01)
+        merged["ask"] = merged["ask"].fillna(merged["price"] + 0.01)
+        merged["bsize"] = merged["bsize"].fillna(100.0)
+        merged["asize"] = merged["asize"].fillna(100.0)
         merged["mid"] = 0.5 * (merged["bid"] + merged["ask"])
         merged["eff_spread_bps"] = 20000.0 * np.abs(merged["price"] - merged["mid"]) / (merged["mid"] + 1e-9)
         merged["depth_imbalance"] = (merged["bsize"] - merged["asize"]) / (merged["bsize"] + merged["asize"] + 1e-9)
@@ -147,27 +151,34 @@ class QAnalyticsEngine:
         select open: first price, high: max price, low: min price, close: last price,
         volume: sum size, vwap: size wavg price by bar: barSize xbar time, sym from trades
         """
+        if isinstance(trades_df, (int, float)):
+            bar_seconds = int(trades_df)
+            trades_df = None
         sec = interval_seconds if interval_seconds is not None else bar_seconds
         t = (trades_df if trades_df is not None else self.get_sample_trades()).copy()
         if ticker:
             t = t[t["sym"] == ticker.upper()]
 
-        t["time"] = pd.to_datetime(t["time"])
-
-        def _agg_group(g):
-            return pd.Series({
-                "open": g["price"].iloc[0],
-                "high": g["price"].max(),
-                "low": g["price"].min(),
-                "close": g["price"].iloc[-1],
-                "volume": g["size"].sum(),
-                "vwap": float(np.sum(g["price"] * g["size"]) / max(1, g["size"].sum())),
-                "ticks": len(g)
-            })
+        if t.empty:
+            return pd.DataFrame(columns=["sym", "bar", "open", "high", "low", "close", "volume", "vwap", "ticks"])
 
         t["bar"] = t["time"].dt.floor(f"{sec}s")
-        bars = t.groupby(["sym", "bar"]).apply(_agg_group, include_groups=False).reset_index()
-        return bars
+        grouped = []
+        for (s, b), g in t.groupby(["sym", "bar"]):
+            vol_sum = float(g["size"].sum())
+            vwap_val = float(np.sum(g["price"] * g["size"]) / max(1.0, vol_sum))
+            grouped.append({
+                "sym": str(s),
+                "bar": str(b),
+                "open": float(g["price"].iloc[0]),
+                "high": float(g["price"].max()),
+                "low": float(g["price"].min()),
+                "close": float(g["price"].iloc[-1]),
+                "volume": int(vol_sum),
+                "vwap": round(vwap_val, 4),
+                "ticks": int(len(g))
+            })
+        return pd.DataFrame(grouped)
 
     def calc_ofi(self, quotes_df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
         """

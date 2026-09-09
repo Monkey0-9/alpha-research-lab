@@ -532,6 +532,12 @@ class PriceSeriesRequest(BaseModel):
     series_type: str = "SPLIT_ADJUSTED"  # RAW_PRICE, SPLIT_ADJUSTED, TOTAL_RETURN, TRADEABLE_PRICE
 
 
+@router.get("/price-series")
+def get_price_series(ticker: str = "AAPL", series_type: str = "SPLIT_ADJUSTED"):
+    """Generate 4 distinct institutional price series from unmutated cold raw storage (GET)."""
+    return post_price_series(PriceSeriesRequest(ticker=ticker, series_type=series_type))
+
+
 @router.post("/price-series")
 def post_price_series(req: PriceSeriesRequest):
     """Generate 4 distinct institutional price series from unmutated cold raw storage."""
@@ -547,20 +553,22 @@ def post_price_series(req: PriceSeriesRequest):
         raw_prices = [base_price * (1.0 + 0.005 * i) if i < 15 else (base_price *
                                                                      (1.0 + 0.005 * i)) / 4.0 for i in range(n)]
 
+        sec_id = f"SEC-US-{req.ticker}-001"
         raw_df = pd.DataFrame({
+            "date": dates,
             "timestamp": dates,
-            "raw_close": raw_prices,
-            "raw_open": [p * 0.99 for p in raw_prices],
-            "raw_high": [p * 1.01 for p in raw_prices],
-            "raw_low": [p * 0.98 for p in raw_prices],
-            "raw_volume": [1000000 if i < 15 else 4000000 for i in range(n)]
-        })
+            "close": raw_prices,
+            "open": [p * 0.99 for p in raw_prices],
+            "high": [p * 1.01 for p in raw_prices],
+            "low": [p * 0.98 for p in raw_prices],
+            "volume": [1000000 if i < 15 else 4000000 for i in range(n)]
+        }).set_index("date")
 
         from core.security_master.models import ActionType
         engine = CorporateActionEngine()
         engine.register_action(CorporateAction(
             action_id="CA-SPLIT-001",
-            security_id=f"SEC-US-{req.ticker}-001",
+            security_id=sec_id,
             action_type=ActionType.SPLIT,
             effective_date="2024-01-22",
             ratio=4.0
@@ -573,7 +581,7 @@ def post_price_series(req: PriceSeriesRequest):
             "TRADEABLE_PRICE": PriceSeriesType.TRADEABLE_PRICE,
         }
         stype = st_map.get(req.series_type.upper(), PriceSeriesType.SPLIT_ADJUSTED)
-        adj_df = engine.generate_price_series(raw_df, series_type=stype)
+        adj_df = engine.generate_price_series(raw_df, security_id=sec_id, series_type=stype)
 
         records = [
             {

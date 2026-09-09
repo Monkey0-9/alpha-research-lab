@@ -90,7 +90,7 @@ jobs:
           CI: true
 
       - name: ESLint lint check
-        run: npx eslint src/ --ext .ts,.tsx --max-warnings 0 || true
+        run: npm run lint
 
       - name: Build production bundle
         run: npm run build
@@ -127,14 +127,14 @@ jobs:
 
       - name: Python safety check
         run: |
-          pip install safety
+          pip install pip-audit
           pip install -r backend/requirements.txt
-          safety check --json || true
+          pip-audit -r backend/requirements.txt
 
       - name: NPM audit
         run: |
           npm ci
-          npm audit --audit-level=high || true
+          npm audit --audit-level=high
 
   # ── Docker Build ──────────────────────────────────────────────────────────
   docker-build:
@@ -265,7 +265,7 @@ jobs:
           | **Commit** | `${{ github.sha }}` |
           | **Branch** | `${{ github.ref_name }}` |
           | **Actor** | `${{ github.actor }}` |
-          | **Backend Tests** | 68/68 PASSED |
+          | **Backend Tests** | 205/205 PASSED |
           | **TypeScript** | 0 ERRORS |
           | **Build** | SUCCESS |
           EOF

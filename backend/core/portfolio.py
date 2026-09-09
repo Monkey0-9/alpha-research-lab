@@ -1,17 +1,22 @@
 """
-Portfolio Construction Engine.
+Portfolio Construction Engine (Convex Optimization & Risk-Based Allocation).
 
 Implements:
 1. Mean-Variance Optimization (Markowitz with long-only and box constraints).
 2. Hierarchical Risk Parity (HRP) via SciPy hierarchical clustering (Ward/single linkage)
-and quasi-diagonalization (López de Prado).
+   and quasi-diagonalization (López de Prado).
 3. CVaR (Expected Shortfall) Optimization.
+4. Ledoit-Wolf Analytical Shrinkage Covariance.
+5. Oracle Approximating Shrinkage (OAS) Covariance.
+6. Institutional Convex Quadratic Programming Optimizer with Factor & Turnover Constraints.
 """
 from __future__ import annotations
 
+import enum
 import logging
 import warnings
-from typing import List, Optional
+from dataclasses import dataclass, field
+from typing import List, Optional, Dict, Any
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -21,14 +26,61 @@ from scipy.spatial.distance import squareform
 logger = logging.getLogger(__name__)
 
 
+class SolverStatus(str, enum.Enum):
+    OPTIMAL = "OPTIMAL"
+    SOLVER_FAILED = "SOLVER_FAILED"
+    INFEASIBLE = "INFEASIBLE"
+    UNBOUNDED = "UNBOUNDED"
+    APPROXIMATION = "APPROXIMATION"
+    EMPTY = "EMPTY"
+
+
+@dataclass
+class OptimizationResult:
+    """Explicit typed container for portfolio optimization solutions."""
+    status: SolverStatus
+    weights: np.ndarray
+    weights_dict: Dict[str, float] = field(default_factory=dict)
+    expected_return: float = 0.0
+    portfolio_volatility: float = 0.0
+    sharpe_implied: float = 0.0
+    gross_leverage: float = 0.0
+    net_leverage: float = 0.0
+    turnover: float = 0.0
+    optimization_success: bool = False
+    iterations: int = 0
+    message: str = ""
+    diagnostics: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "status": self.status.value,
+            "weights": self.weights.tolist() if isinstance(self.weights, np.ndarray) else list(self.weights),
+            "weights_dict": self.weights_dict,
+            "expected_return": round(self.expected_return, 6),
+            "portfolio_volatility": round(self.portfolio_volatility, 6),
+            "sharpe_implied": round(self.sharpe_implied, 4),
+            "gross_leverage": round(self.gross_leverage, 4),
+            "net_leverage": round(self.net_leverage, 4),
+            "turnover": round(self.turnover, 4),
+            "optimization_success": self.optimization_success,
+            "iterations": self.iterations,
+            "message": self.message,
+            "diagnostics": self.diagnostics,
+        }
+
+
 def mean_variance_optimization(
     expected_returns: np.ndarray,
     cov_matrix: np.ndarray,
     target_return: Optional[float] = None,
     risk_aversion: float = 1.0,
-    max_weight: float = 0.20
+    max_weight: float = 0.20,
+    fail_closed: bool = False,
 ) -> np.ndarray:
     """Markowitz mean-variance optimization with long-only constraints."""
+    from core.evidence.exceptions import OptimizationFailedException
+
     n = len(expected_returns)
     if n == 0:
         return np.array([])
@@ -46,7 +98,10 @@ def mean_variance_optimization(
         res = minimize(objective, init_w, method="SLSQP", bounds=bounds, constraints=constraints)
     if res.success:
         return res.x
-    return init_w
+    logger.warning("Mean-variance solver failed: %s", res.message)
+    if fail_closed:
+        raise OptimizationFailedException(f"OPTIMIZATION_FAILED: {res.message}")
+    return res.x if (res.x is not None and len(res.x) == n) else init_w
 
 
 def _get_quasi_diag(link: np.ndarray) -> List[int]:
@@ -132,7 +187,7 @@ def cvar_optimization(returns_matrix: np.ndarray, alpha: float = 0.05, max_weigh
         res = minimize(cvar_objective, init_w, method="SLSQP", bounds=bounds, constraints=constraints)
     if res.success:
         return res.x
-    return init_w
+    return res.x if (res.x is not None and len(res.x) == n_assets) else init_w
 
 
 def ledoit_wolf_covariance(returns_matrix: np.ndarray) -> tuple[np.ndarray, float]:
@@ -245,7 +300,12 @@ def convex_portfolio_optimizer(
     cov = np.asarray(cov_matrix, dtype=np.float64)
     n = len(alpha)
     if n == 0:
-        return {"weights": np.array([]), "status": "EMPTY"}
+        return {
+            "weights": np.array([]),
+            "weights_dict": {},
+            "status": "EMPTY",
+            "optimization_success": False
+        }
 
     w0 = np.zeros(n) if current_weights is None else np.asarray(current_weights, dtype=np.float64)
     init_w = w0.copy()
@@ -296,6 +356,7 @@ def convex_portfolio_optimizer(
             constraints=constraints,
             options={"maxiter": 500}
         )
+
     opt_w = res.x if res.success else init_w
 
     port_exp_ret = float(opt_w @ alpha)
@@ -303,6 +364,8 @@ def convex_portfolio_optimizer(
     gross_lev = float(np.sum(np.abs(opt_w)))
     net_lev = float(np.sum(opt_w))
     turnover = float(np.sum(np.abs(opt_w - w0)))
+
+    status_str = "OPTIMAL" if res.success else "APPROXIMATION"
 
     return {
         "weights": opt_w,
@@ -313,6 +376,8 @@ def convex_portfolio_optimizer(
         "gross_leverage": gross_lev,
         "net_leverage": net_lev,
         "turnover": turnover,
-        "status": "OPTIMAL" if res.success else "APPROXIMATION",
-        "optimization_success": bool(res.success)
+        "status": status_str,
+        "optimization_success": bool(res.success),
+        "iterations": getattr(res, "nit", 0),
+        "message": getattr(res, "message", ""),
     }

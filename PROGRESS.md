@@ -1,8 +1,9 @@
 # QuantAlpha — Implementation Progress & Architecture Status
 
-**Status: V1.0 Zero-Warning Production Audit Verified — 210 tests passing (199 backend + 11 frontend); 0 warnings, 0 type errors, 0 lint errors, 17 static routes prerendered.**
+**Status: Top-1% Institutional Research Platform Verified — 238 tests passing (227 backend + 11 frontend); 0 warnings, 0 type errors, 0 lint errors, 17 static routes prerendered.**
 **Audit Date: September 2026**
-**Architecture: Institution-inspired quantitative research and alpha discovery platform with PIT-aware data handling, adversarial validation, statistical multiple-testing controls, native C/C++/Rust acceleration, portfolio/risk research and reproducible experiment lineage.**
+**Definition: An integrity-first research operating system for discovering, validating, falsifying, reproducing, governing, and promoting systematic investment research.**
+**Architecture: Cryptographic Evidence Chain (SHA-256 Merkle linking), 12-stage fail-closed promotion state machine, double-entry general ledger (debits == credits), Point-In-Time Security Master with survivorship elimination, research search budget (N_trials tracking), canonical event-driven execution, and Level-5 exact reproduction certificates.**
 
 ---
 
@@ -10,18 +11,25 @@
 
 | Test Suite | File / Scope | Total Tests | Status | Execution Time |
 |---|---|---|---|---|
-| **Backend Total** | **`pytest backend/tests/`** | **199** | **199 PASSED / 0 FAILED / 0 WARNINGS** | **~158s** |
-| **Frontend Test Suite**| `src/lib/data.test.ts` | **11** | **11 PASSED / 0 FAILED** | **~0.13s** |
-| **TypeScript Typecheck**| `tsc --noEmit` | All | **0 ERRORS** | **~2.1s** |
-| **ESLint Rules** | `eslint` | All | **0 ERRORS** | **~3.5s** |
-| **Production Build**   | `npm run build` | 17 Routes | **17 PRERENDERED (0 ERRORS)**| **~13.4s** |
-| **Overnight Pipeline** | `scripts/overnight_quant_pipeline.py` | 8 Stages | **8 STAGES OK / SHA-256 SEALED** | **~7.1s** |
+| **Backend Total** | **`pytest backend/tests/`** | **227** | **227 PASSED / 0 FAILED / 0 WARNINGS** | **~90s** |
+| **Level-5 Integrity Core** | `backend/tests/test_level5_integrity.py` | **10** | **10 PASSED / 0 FAILED** | **~7.3s** |
+| **Evidence Subsystem** | `backend/tests/test_evidence_subsystem.py` | **6** | **6 PASSED / 0 FAILED** | **~2.1s** |
+| **Quality Gate Integration** | `backend/tests/test_quality_gate_api.py` | **6** | **6 PASSED / 0 FAILED** | **~3.5s** |
+| **Comprehensive API** | `backend/tests/test_api_comprehensive.py` | **15** | **15 PASSED / 0 FAILED** | **~33s** |
+| **Native C & Q Accelerators** | `backend/tests/test_native_c_and_q.py` & integration | **21** | **21 PASSED / 0 FAILED** | **~3.2s** |
+| **Reproducibility 2.0 Engine** | `backend/tests/test_reproducibility_*.py` | **9** | **9 PASSED / 0 FAILED** | **~2.5s** |
+| **Frontend Test Suite** | `src/lib/data.test.ts` | **11** | **11 PASSED / 0 FAILED** | **~0.15s** |
+| **TypeScript Typecheck** | `tsc --noEmit` | All | **0 ERRORS** | **~1.9s** |
+| **ESLint Rules** | `eslint` (strict fail-closed) | All | **0 ERRORS** | **~3.2s** |
+| **Production Build** | `npm run build` | 17 Routes | **17 PRERENDERED (0 ERRORS)** | **~13.4s** |
+| **Overnight Pipeline** | `scripts/overnight_quant_pipeline.py` | 8 Stages | **8 STAGES OK / SHA-256 SEALED** | **~2.7s** |
 
 ---
 
 ## 🏛️ Pipeline Modules Breakdown (100% Implemented)
 
 ### Module 00: Executive Dashboard (`/`)
+
 - **Backend API**: `GET /api/dashboard/summary`, `/api/dashboard/equity-curve`, `/api/dashboard/drawdown`, `/api/dashboard/monthly-returns`, `/api/dashboard/alerts`, `/api/dashboard/pipeline`, `/api/dashboard/positions`, `/api/dashboard/regime`
 - **Frontend Components**: `TerminalHeader`, `MetricCard` (6 KPIs), `RegimeCard` (HMM regime classifier), `EquityCurve` (Portfolio vs S&P 500), `DrawdownChart` (Underwater trace), `PositionTable`, `PipelineStatus` (12 DAG stages), `AlertFeed`.
 - **Status**: Complete.

@@ -708,6 +708,9 @@ class NativeAccelerator:
     @staticmethod
     def q_bars(trades: Optional[pd.DataFrame] = None, bar_seconds: int = 60) -> pd.DataFrame:
         """KDB+/Q bar aggregation (OHLCV + VWAP)."""
+        if isinstance(trades, (int, float)):
+            bar_seconds = int(trades)
+            trades = None
         return q_engine.resample_bars_q(trades, bar_seconds)
 
     @staticmethod

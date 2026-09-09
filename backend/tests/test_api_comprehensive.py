@@ -260,3 +260,59 @@ def test_dashboard_and_backtest():
     res_bt_status = client.get("/api/backtest/status")
     assert res_bt_status.status_code == 200
     assert res_bt_status.json()["status"] == "READY"
+
+
+def test_data_price_series_get_and_post():
+    # Verify GET /api/data/price-series
+    res_get = client.get("/api/data/price-series?ticker=AAPL&series_type=SPLIT_ADJUSTED")
+    assert res_get.status_code == 200
+    data_get = res_get.json()
+    assert data_get["status"] == "COMPLETED"
+    assert data_get["ticker"] == "AAPL"
+    assert len(data_get["data"]) > 0
+
+    # Verify POST /api/data/price-series
+    res_post = client.post("/api/data/price-series", json={"ticker": "MSFT", "series_type": "TOTAL_RETURN"})
+    assert res_post.status_code == 200
+    assert res_post.json()["ticker"] == "MSFT"
+
+
+def test_statistical_engine_alias_routes():
+    # Verify /api/statistical/cpcv works via alias
+    res_cpcv = client.post("/api/statistical/cpcv", json={"n_splits": 6})
+    assert res_cpcv.status_code == 200
+    assert res_cpcv.json()["status"] in ["COMPLETED", "PASS_ROBUST"]
+
+    # Verify /api/statistical/pbo works via alias
+    res_pbo = client.post("/api/statistical/pbo", json={"n_candidates": 10})
+    assert res_pbo.status_code == 200
+    assert "pbo_probability" in res_pbo.json() or "pbo" in res_pbo.json()
+
+    # Verify /api/statistical/spa works via alias
+    res_spa = client.post("/api/statistical/spa", json={"n_benchmarks": 5})
+    assert res_spa.status_code == 200
+    assert "hansens_spa" in res_spa.json()
+
+    # Verify /api/statistical/evidence-card works via alias
+    res_card = client.post("/api/statistical/evidence-card", json={"alpha_id": "ALPHA-001"})
+    assert res_card.status_code == 200
+    assert res_card.json()["alpha_id"] == "ALPHA-001"
+
+
+def test_risk_compliance_check_portfolio_and_ui():
+    res = client.post("/api/risk/compliance-check", json={
+        "gross_leverage": 1.6,
+        "max_single_weight": 0.12,
+        "short_enabled": True
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert "passed" in data
+    assert "verdict" in data
+    assert "checks" in data
+    assert len(data["checks"]) >= 4
+    for check in data["checks"]:
+        assert "rule" in check
+        assert "passed" in check
+        assert "current" in check
+        assert "limit" in check

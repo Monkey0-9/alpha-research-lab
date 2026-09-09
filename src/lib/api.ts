@@ -7,9 +7,7 @@
 import * as types from './types';
 import * as mock from './data';
 
-const API_BASE = typeof window !== 'undefined'
-  ? ''
-  : (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000');
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit, fallback?: T): Promise<T> {
   try {
@@ -22,11 +20,13 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit, fallback?: T
       next: { revalidate: 0 }
     });
     if (!res.ok) {
+      console.warn(`[API WARN] ${endpoint} returned status ${res.status}: ${res.statusText}`);
       if (fallback !== undefined) return fallback;
       throw new Error(`API error ${res.status}: ${res.statusText}`);
     }
     return await res.json();
   } catch (err) {
+    console.error(`[API ERROR] ${endpoint} request failed:`, err);
     if (fallback !== undefined) return fallback;
     throw err;
   }

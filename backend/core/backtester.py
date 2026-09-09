@@ -312,9 +312,19 @@ class EventDrivenBacktester:
                 short_ret = d_slice[d_slice.index.get_level_values("ticker").isin(shorts)]["return_1d"].mean()
 
                 raw_ret = 0.5 * (np.nan_to_num(long_ret, 0.0) - np.nan_to_num(short_ret, 0.0))
-                # Volatility scaling
+                # Dynamic realized volatility scaling
                 if position_sizing == "vol_target":
-                    raw_ret = raw_ret * (target_vol / 0.15)
+                    train_rets = (
+                        train_data["return_1d"].dropna().values
+                        if "return_1d" in train_data.columns
+                        else np.array([])
+                    )
+                    if len(train_rets) >= 20:
+                        est_vol = float(np.std(train_rets[-63:], ddof=1) * np.sqrt(252.0))
+                        vol_scalar = target_vol / max(0.04, est_vol)
+                        raw_ret = raw_ret * float(np.clip(vol_scalar, 0.2, 3.0))
+                    else:
+                        raw_ret = raw_ret * (target_vol / 0.15)
 
                 interval_returns.append(raw_ret)
 
