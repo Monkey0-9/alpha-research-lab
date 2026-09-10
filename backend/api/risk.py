@@ -180,39 +180,114 @@ def get_var_distribution() -> VaRDistributionData:
 
 @router.get("/factor-attribution", response_model=FactorAttribution)
 def get_factor_attribution() -> FactorAttribution:
-    """Factor risk attribution — computed from real portfolio returns."""
-    portfolio_returns, _ = _get_real_returns()
-    if portfolio_returns is None or len(portfolio_returns) < 30:
+    """Factor risk attribution — computed empirically via multivariate OLS from real constituent factor returns."""
+    try:
+        from core.data_loader import load_sp500_data
+        raw = load_sp500_data()
+        unstacked = raw["return_1d"].unstack("ticker").dropna()
+        if len(unstacked) < 30 or len(unstacked.columns) < 5:
+            return FactorAttribution(
+                total_active_risk_pct=0,
+                systematic_risk_pct=0,
+                idiosyncratic_risk_pct=0,
+                r_squared=0,
+                factors=[]
+            )
+
+        holdings = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "JPM", "V"]
+        avail_holdings = [t for t in holdings if t in unstacked.columns]
+
+        # 1. Market Factor: Mean return across all market constituents
+        f_market = unstacked.mean(axis=1).values
+
+        # 2. Momentum Factor: Top 3 trailing 20d return minus Bottom 3
+        roll_ret = unstacked.rolling(20).sum().dropna()
+        aligned_unstacked = unstacked.loc[roll_ret.index]
+        y = aligned_unstacked[avail_holdings].mean(axis=1).values
+
+        wml_vals = []
+        for dt, row in roll_ret.iterrows():
+            top3 = row.nlargest(3).index
+            bot3 = row.nsmallest(3).index
+            day_ret = aligned_unstacked.loc[dt]
+            wml_vals.append(float(day_ret[top3].mean() - day_ret[bot3].mean()))
+        f_momentum = np.array(wml_vals)
+
+        # 3. Low Volatility Factor: Lowest 3 trailing 20d std minus Highest 3
+        roll_vol = unstacked.rolling(20).std().dropna()
+        lowvol_vals = []
+        for dt, row in roll_vol.iterrows():
+            low3 = row.nsmallest(3).index
+            high3 = row.nlargest(3).index
+            day_ret = aligned_unstacked.loc[dt]
+            lowvol_vals.append(float(day_ret[low3].mean() - day_ret[high3].mean()))
+        f_lowvol = np.array(lowvol_vals)
+
+        # 4. Value / Cyclical Factor: Financials & Energy vs Tech & Consumer
+        val_tickers = [t for t in ["JPM", "XOM", "V", "MA"] if t in aligned_unstacked.columns]
+        growth_tickers = [t for t in ["AAPL", "MSFT", "NVDA", "AMZN"] if t in aligned_unstacked.columns]
+        f_value = (aligned_unstacked[val_tickers].mean(axis=1) - aligned_unstacked[growth_tickers].mean(axis=1)).values
+
+        min_len = min(len(y), len(f_momentum), len(f_lowvol), len(f_value))
+        y = y[-min_len:]
+        F = np.column_stack([
+            f_market[-min_len:],
+            f_momentum[-min_len:],
+            f_lowvol[-min_len:],
+            f_value[-min_len:]
+        ])
+        factor_names = ["Market Factor", "Momentum (WML)", "Low Volatility (BAB)", "Cyclical Value (HML)"]
+
+        # Multivariate OLS via Normal Equations
+        X = np.column_stack([np.ones(min_len), F])
+        XtX = X.T @ X
+        betas_all = np.linalg.solve(XtX, X.T @ y)
+        betas = betas_all[1:]
+
+        residuals = y - (X @ betas_all)
+        ss_tot = float(np.sum((y - np.mean(y)) ** 2))
+        ss_res = float(np.sum(residuals ** 2))
+        r2 = max(0.0, min(1.0, 1.0 - (ss_res / max(ss_tot, 1e-12))))
+
+        total_risk = float(np.std(y) * np.sqrt(252) * 100)
+        systematic_risk = float(total_risk * np.sqrt(r2))
+        idiosyncratic_risk = float(total_risk * np.sqrt(max(0.0, 1.0 - r2)))
+
+        factors = []
+        betas_dict = {}
+        for idx, fname in enumerate(factor_names):
+            b = float(betas[idx])
+            f_series = F[:, idx]
+            f_ann_ret = float(np.mean(f_series) * 252 * 100)
+            contrib_bps = b * f_ann_ret * 100
+            cov_yf = float(np.cov(y, f_series)[0, 1])
+            pct_risk = abs(cov_yf / max(float(np.var(y)), 1e-10)) * 100
+
+            factors.append(FactorAttributionItem(
+                factor=fname,
+                exposure=round(b, 3),
+                factor_return_pct=round(f_ann_ret, 2),
+                contribution_bps=round(contrib_bps, 1),
+                pct_of_total_risk=round(min(100.0, pct_risk), 1)
+            ))
+            betas_dict[fname] = round(b, 3)
+
+        return FactorAttribution(
+            total_active_risk_pct=round(total_risk, 2),
+            systematic_risk_pct=round(systematic_risk, 2),
+            idiosyncratic_risk_pct=round(idiosyncratic_risk, 2),
+            r_squared=round(r2, 4),
+            factors=factors,
+            betas=betas_dict
+        )
+    except Exception:
         return FactorAttribution(
             total_active_risk_pct=0,
             systematic_risk_pct=0,
             idiosyncratic_risk_pct=0,
             r_squared=0,
-            factors=[])
-
-    factor_names = ["Market Beta", "Momentum", "Quality", "Low Volatility", "Size", "Value"]
-    factors = []
-    for fname in factor_names:
-        np.random.seed(hash(fname) % 2**31)
-        factor_ret = np.random.normal(0.0003, 0.01, len(portfolio_returns))
-        beta = float(np.cov(portfolio_returns, factor_ret)[0, 1] / max(np.var(factor_ret), 1e-10))
-        contribution = beta * float(np.mean(factor_ret) * 252 * 10000)
-        factors.append(FactorAttributionItem(
-            factor=fname,
-            exposure=round(beta, 2),
-            factor_return_pct=round(float(np.mean(factor_ret) * 252 * 100), 2),
-            contribution_bps=round(contribution, 1),
-            pct_of_total_risk=round(abs(beta) * 20, 1)
-        ))
-
-    total_risk = float(np.std(portfolio_returns) * np.sqrt(252) * 100)
-    return FactorAttribution(
-        total_active_risk_pct=round(total_risk, 2),
-        systematic_risk_pct=round(total_risk * 0.7, 2),
-        idiosyncratic_risk_pct=round(total_risk * 0.3, 2),
-        r_squared=0.82,
-        factors=factors
-    )
+            factors=[]
+        )
 
 
 @router.get("/drawdown", response_model=DrawdownData)
@@ -226,20 +301,32 @@ def get_drawdown_analysis() -> DrawdownData:
             max_drawdown_duration_days=0,
             current_duration_days=0,
             recovery_status="NO_DATA",
-            history=[])
+            history=[]
+        )
 
     cum_ret = np.cumprod(1 + portfolio_returns)
     peak = np.maximum.accumulate(cum_ret)
     drawdown = (cum_ret / peak) - 1.0
 
-    dates = [f"2024-{m:02d}-{d:02d}" for m in range(1, 10) for d in [1, 15]]
+    # Retrieve genuine observation dates
+    try:
+        from core.data_loader import load_sp500_data
+        raw = load_sp500_data()
+        date_series = raw.index.get_level_values("date").unique().sort_values()
+        date_strings = [d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d)[:10] for d in date_series]
+    except Exception:
+        date_strings = [f"2024-01-{i+1:02d}" for i in range(len(drawdown))]
+
+    # Evenly sample up to 50 historical points to keep payload snappy and representative
+    step = max(1, len(drawdown) // 50)
     pts = []
-    for idx, dt in enumerate(dates[:len(drawdown)]):
+    for idx in range(0, len(drawdown), step):
+        dt = date_strings[idx] if idx < len(date_strings) else f"Day-{idx}"
         pts.append(DrawdownPoint(
             date=dt,
             drawdown_pct=round(float(drawdown[idx] * 100), 2),
-            peak_nav=round(float(peak[idx]), 2),
-            current_nav=round(float(cum_ret[idx]), 2)
+            peak_nav=round(float(peak[idx]), 4),
+            current_nav=round(float(cum_ret[idx]), 4)
         ))
 
     max_dd = float(np.min(drawdown) * 100)

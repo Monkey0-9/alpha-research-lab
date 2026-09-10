@@ -163,13 +163,12 @@ def get_efficient_frontier(method: str = "mv") -> FrontierData:
         cov_mat = returns_df.cov().values * 252
 
         pts = []
-        for target_vol in np.linspace(0.08, 0.25, 20):
+        # Institutional Pareto frontier: sweep risk aversion parameter lambda from 0.05 to 50.0
+        for risk_aversion in np.logspace(-1.3, 1.7, 24):
             try:
-                scale = target_vol / max(np.sqrt(mean_ret @ np.linalg.solve(cov_mat, mean_ret)), 0.01)
-                scaled_ret = mean_ret * scale
-                w = mean_variance_optimization(scaled_ret, cov_mat)
+                w = mean_variance_optimization(mean_ret, cov_mat, risk_aversion=float(risk_aversion), max_weight=0.35)
                 port_ret = float(w @ mean_ret)
-                port_vol = float(np.sqrt(w @ cov_mat @ w))
+                port_vol = float(np.sqrt(max(1e-8, w @ cov_mat @ w)))
                 sr = port_ret / max(port_vol, 1e-6)
                 pts.append(FrontierPoint(
                     volatility=round(port_vol, 4),
@@ -186,32 +185,24 @@ def get_efficient_frontier(method: str = "mv") -> FrontierData:
                     volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
                     volatility=0, expected_return=0, sharpe=0))
 
+        # Sort points monotonically by volatility
+        pts.sort(key=lambda p: p.volatility)
         tangency = max(pts, key=lambda p: p.sharpe)
         tangency.is_optimal = True
         min_vol = min(pts, key=lambda p: p.volatility)
         min_vol.is_min_vol = True
 
+        eq_w = np.ones(len(available)) / len(available)
+        cur_vol = float(np.sqrt(max(1e-8, eq_w @ cov_mat @ eq_w)))
+        cur_ret = float(eq_w @ mean_ret)
+        cur_sharpe = cur_ret / max(cur_vol, 1e-6)
+
         current = FrontierPoint(
-            volatility=round(
-                float(
-                    np.sqrt(
-                        np.diag(cov_mat).mean()) *
-                    np.sqrt(252)),
-                4),
-            expected_return=round(
-                float(
-                    np.mean(mean_ret)),
-                4),
-            sharpe=round(
-                float(
-                    np.mean(mean_ret) /
-                    max(
-                        np.sqrt(
-                            np.diag(cov_mat).mean()) *
-                        np.sqrt(252),
-                        1e-6)),
-                2),
-            is_current=True)
+            volatility=round(cur_vol, 4),
+            expected_return=round(cur_ret, 4),
+            sharpe=round(cur_sharpe, 2),
+            is_current=True
+        )
 
         return FrontierData(
             method=method.upper(),
@@ -256,35 +247,45 @@ def optimize_portfolio(req: OptimizeRequest) -> PortfolioResult:
         weights = np.clip(weights, 0.0, req.max_position_weight)
         weights = weights / max(np.sum(weights), 1e-8)
 
-    sectors = [
-        "Technology",
-        "Technology",
-        "Communication",
-        "Consumer",
-        "Technology",
-        "Technology",
-        "Financials",
-        "Financials",
-        "Healthcare",
-        "Energy"]
-    allocations = [AllocationItem(ticker=available[i], weight=round(float(weights[i]), 4), sector=sectors[i % len(
-        sectors)], side="LONG" if weights[i] >= 0 else "SHORT") for i in range(len(available))]
+    sector_taxonomy = {
+        "AAPL": "Technology", "MSFT": "Technology", "NVDA": "Technology", "AVGO": "Technology",
+        "GOOGL": "Communication Services", "META": "Communication Services",
+        "AMZN": "Consumer Discretionary", "TSLA": "Consumer Discretionary",
+        "JPM": "Financials", "V": "Financials", "MA": "Financials",
+        "LLY": "Healthcare", "UNH": "Healthcare", "JNJ": "Healthcare",
+        "XOM": "Energy", "CVX": "Energy",
+    }
+    allocations = [
+        AllocationItem(
+            ticker=available[i],
+            weight=round(float(weights[i]), 4),
+            sector=sector_taxonomy.get(available[i], "Equity Core"),
+            side="LONG" if weights[i] >= 0 else "SHORT"
+        )
+        for i in range(len(available))
+    ]
 
-    port_vol = float(np.sqrt(weights @ cov_mat @ weights))
+    port_vol = float(np.sqrt(max(1e-8, weights @ cov_mat @ weights)))
     port_ret = float(weights @ mean_ret)
+
+    # Genuine empirical Expected Shortfall (CVaR 95%) from daily portfolio returns
+    from core.risk import cvar_expected_shortfall
+    port_daily_returns = returns_df.values @ weights
+    cvar_daily = cvar_expected_shortfall(port_daily_returns, confidence=0.95)
+    cvar_annualized = float(cvar_daily * np.sqrt(252))
+
+    div_ratio = float(
+        np.sum(np.abs(weights) * np.sqrt(np.diag(cov_mat)))
+        / max(port_vol, 1e-6)
+    )
 
     return PortfolioResult(
         method=req.method.upper(),
         annualized_return=round(port_ret, 4),
         annualized_volatility=round(port_vol, 4),
         sharpe=round(port_ret / max(port_vol, 1e-6), 2),
-        cvar_95=round(port_vol * 1.645 * 0.12, 4),
-        diversification_ratio=round(
-            float(
-                np.sum(np.abs(weights) * np.sqrt(np.diag(cov_mat)))
-                / max(port_vol, 1e-6)
-            ), 2
-        ),
+        cvar_95=round(cvar_annualized, 4),
+        diversification_ratio=round(div_ratio, 2),
         allocations=allocations
     )
 

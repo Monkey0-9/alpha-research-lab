@@ -137,8 +137,8 @@ def calculate_full_metrics(
     daily_returns: Union[pd.Series, np.ndarray],
     predictions: Optional[np.ndarray] = None,
     targets: Optional[np.ndarray] = None,
-    turnover: float = 0.25,
-    num_trades: int = 150
+    turnover: float = 0.0,
+    num_trades: int = 0
 ) -> Dict[str, Any]:
     """Compile comprehensive institutional metrics dictionary."""
     ret = np.asarray(daily_returns)
