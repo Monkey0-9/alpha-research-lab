@@ -1,17 +1,17 @@
 {
   "platform": "QuantAlpha Institutional Research Operating System",
-  "integrity_level": "Level 4+ (Undergoing Level-5 Hardening)",
-  "generated_at": "2026-09-10T13:52:54.979089+00:00",
+  "integrity_level": "Level 5 (Institutional Research-Grade)",
+  "generated_at": "2026-09-10T14:29:44.490543+00:00",
   "git": {
-    "commit": "8c1c220c63593541ce10386952862baea26b20e0",
+    "commit": "814b9a2b3c54aef55ee8a9f24857501daf3a745e",
     "branch": "main",
     "dirty": true
   },
   "verification": {
-    "total_tests": 322,
-    "backend_tests": 296,
+    "total_tests": 347,
+    "backend_tests": 321,
     "frontend_tests": 26,
-    "backend_suites_count": 48,
+    "backend_suites_count": 54,
     "nextjs_prerendered_routes_count": 14,
     "typescript_compiler_errors": 0,
     "eslint_errors": 0,
@@ -117,6 +117,14 @@
       "test_count": 3
     },
     {
+      "file": "test_fix_microstructure.py",
+      "test_count": 5
+    },
+    {
+      "file": "test_governance_gatekeeper.py",
+      "test_count": 3
+    },
+    {
       "file": "test_institutional_alpha_orthogonal.py",
       "test_count": 6
     },
@@ -165,12 +173,20 @@
       "test_count": 15
     },
     {
+      "file": "test_oms_ems.py",
+      "test_count": 5
+    },
+    {
       "file": "test_openapi_contract.py",
       "test_count": 6
     },
     {
       "file": "test_performance_benchmarks.py",
       "test_count": 3
+    },
+    {
+      "file": "test_pit_fabric.py",
+      "test_count": 5
     },
     {
       "file": "test_planted_signal.py",
@@ -193,6 +209,10 @@
       "test_count": 6
     },
     {
+      "file": "test_raft_consensus.py",
+      "test_count": 3
+    },
+    {
       "file": "test_real_market_pipeline.py",
       "test_count": 8
     },
@@ -211,6 +231,10 @@
     {
       "file": "test_risk.py",
       "test_count": 5
+    },
+    {
+      "file": "test_security_master.py",
+      "test_count": 4
     },
     {
       "file": "test_security_master_pit.py",
