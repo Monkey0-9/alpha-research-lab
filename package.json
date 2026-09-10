@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --no-warnings --test src/lib/data.test.ts",
+    "test": "node --no-warnings --test src/lib/data.test.ts src/lib/api.test.ts src/lib/api_failure.test.ts",
     "test:all": "npm run typecheck && npm run lint && npm test"
   },
   "dependencies": {

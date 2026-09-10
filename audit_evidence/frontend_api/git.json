@@ -1,0 +1,24 @@
+{
+  "commit_sha": "8c1c220c63593541ce10386952862baea26b20e0",
+  "branch": "main",
+  "remote_origin": "https://github.com/Monkey0-9/alpha-research-lab.git",
+  "uncommitted_changes": [
+    "M STATUS.json",
+    " M backend/api/alpha_discovery.py",
+    " M backend/api/portfolio.py",
+    " M backend/api/statistical_engine.py",
+    " M backend/core/alpha_gp.py",
+    " M package.json",
+    " M scripts/generate_status.py",
+    " M src/lib/api.ts",
+    "?? .coverage",
+    "?? audit_evidence/",
+    "?? backend/tests/test_api_status_codes.py",
+    "?? backend/tests/test_openapi_contract.py",
+    "?? experiment/",
+    "?? scripts/build_evidence_package.py",
+    "?? src/lib/api-error.ts",
+    "?? src/lib/api.test.ts",
+    "?? src/lib/api_failure.test.ts"
+  ]
+}

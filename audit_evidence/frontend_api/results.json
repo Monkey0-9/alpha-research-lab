@@ -1,0 +1,25 @@
+{
+  "suite": "Frontend API Fail-Closed & Adversarial Resilience",
+  "command": "node --no-warnings --test src/lib/api.test.ts src/lib/api_failure.test.ts",
+  "exit_code": 0,
+  "elapsed_seconds": 1.01,
+  "total_tests": 15,
+  "passed": 15,
+  "failed": 0,
+  "breakdown": {
+    "src/lib/api.test.ts": 7,
+    "src/lib/api_failure.test.ts": 8
+  },
+  "semantics_enforced": [
+    "HTTP 500 returns ApiError with status = 500 (zero mock data)",
+    "HTTP 503 returns ApiError with status = 503",
+    "Backend unreachable returns ApiError with code = BACKEND_UNAVAILABLE",
+    "Invalid JSON returns ApiError with code = INVALID_JSON",
+    "HTTP 422 returns ApiError with status = 422 and structured code",
+    "Valid response returns typed result without modification",
+    "Explicit empty result returns empty collection without inventing numbers",
+    "Timeout triggers AbortSignal failure without fabricating data",
+    "Connection refused throws network error (never falls back to mock numbers)",
+    "Zero synthetic fallback values exist in src/lib/api.ts"
+  ]
+}

@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from core.hypothesis_store import get_hypotheses as fetch_hypotheses
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -229,10 +229,15 @@ def build_alpha(request: AlphaBuildRequest) -> BacktestResult:
     """Evaluate custom mathematical alpha formula using real AST evaluation and backtesting."""
     from core.alpha_gp import evaluate_alpha, parse_formula
 
-    df = _get_panel_data()
-
-    node = parse_formula(request.formula)
-    res = evaluate_alpha(node, df, target_col="fwd_return_1d")
+    try:
+        df = _get_panel_data()
+        node = parse_formula(request.formula)
+        res = evaluate_alpha(node, df, target_col="fwd_return_1d")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Formula parsing or evaluation failed: {str(e)}"
+        ) from e
 
     return BacktestResult(
         formula=request.formula,

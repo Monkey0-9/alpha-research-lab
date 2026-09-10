@@ -1,0 +1,28 @@
+{
+  "backend_tests": {
+    "total": 296,
+    "passed": 296,
+    "failed": 0,
+    "errors": 0,
+    "warnings": 18,
+    "exit_code": 0,
+    "elapsed_seconds": 155.83
+  },
+  "frontend_tests": {
+    "total": 26,
+    "passed": 26,
+    "failed": 0,
+    "components": [
+      "src/lib/data.test.ts (11 quantitative calculation/generator tests)",
+      "src/lib/api.test.ts (7 canonical API error contract tests)",
+      "src/lib/api_failure.test.ts (8 adversarial failure/resilience tests)"
+    ]
+  },
+  "code_quality": {
+    "flake8_backend_errors": 0,
+    "eslint_frontend_errors": 0,
+    "typescript_typecheck_errors": 0
+  },
+  "status": "PARTIALLY VERIFIED",
+  "verdict": "LEVEL 4+ \u2014 APPROACHING LEVEL 5"
+}

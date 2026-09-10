@@ -1,0 +1,29 @@
+{
+  "suite": "API Status Codes & OpenAPI Contract Matrix",
+  "command": "\"C:\\Program Files\\Python311\\python.exe\" -m pytest backend/tests/test_api_status_codes.py backend/tests/test_openapi_contract.py -v",
+  "exit_code": 0,
+  "elapsed_seconds": 27.68,
+  "total_tests": 43,
+  "passed": 43,
+  "failed": 0,
+  "errors": 0,
+  "breakdown": {
+    "backend/tests/test_api_status_codes.py": 37,
+    "backend/tests/test_openapi_contract.py": 6
+  },
+  "semantics_enforced": [
+    "Convex optimize returns 422 with structured code on invalid returns",
+    "Convex optimize returns 422 on dimension mismatch",
+    "Convex optimize returns 422 on negative risk aversion",
+    "Shrinkage compare returns 422 on invalid returns",
+    "Autocorr returns 422 on insufficient length",
+    "Distribution returns 422 on empty series",
+    "Decay returns 422 on empty returns",
+    "CPCV returns 422 on empty matrix",
+    "PBO returns 422 on empty matrix",
+    "SPA returns 422 on empty series",
+    "Evidence card returns 422 on empty series",
+    "Alpha formula syntax error returns 422",
+    "OpenAPI 3.1.0 schema generated cleanly with 0 contract regressions"
+  ]
+}

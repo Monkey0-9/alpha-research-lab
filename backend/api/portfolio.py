@@ -4,9 +4,8 @@ Module 08 — Portfolio Engine
 All endpoints return REAL computations from actual optimization algorithms.
 No hardcoded results, no synthetic data.
 """
-from __future__ import annotations
 from typing import List, Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 import numpy as np
 from core.portfolio import mean_variance_optimization, hierarchical_risk_parity, cvar_optimization
@@ -143,21 +142,25 @@ def get_efficient_frontier(method: str = "mv") -> FrontierData:
         top_tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "JPM", "V", "LLY", "XOM"]
         available = [t for t in top_tickers if t in raw.index.get_level_values("ticker")]
         if len(available) < 3:
-            return FrontierData(
-                method=method.upper(), points=[], current_portfolio=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0))
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "UNIVERSE_DATA_UNAVAILABLE",
+                    "message": "Insufficient tickers available to compute efficient frontier"
+                }
+            )
 
         mask = raw.index.get_level_values("ticker").isin(available)
         sub = raw[mask]
         returns_df = sub["return_1d"].unstack("ticker").dropna()
         if len(returns_df) < 30:
-            return FrontierData(
-                method=method.upper(), points=[], current_portfolio=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0))
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "UNIVERSE_DATA_UNAVAILABLE",
+                    "message": "Insufficient time-series observations to compute efficient frontier"
+                }
+            )
 
         mean_ret = returns_df.mean().values * 252
         cov_mat = returns_df.cov().values * 252
@@ -179,11 +182,13 @@ def get_efficient_frontier(method: str = "mv") -> FrontierData:
                 continue
 
         if not pts:
-            return FrontierData(
-                method=method.upper(), points=[], current_portfolio=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
-                    volatility=0, expected_return=0, sharpe=0))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "code": "SOLVER_FAILURE",
+                    "message": "Frontier optimization failed to converge on Pareto curve points"
+                }
+            )
 
         # Sort points monotonically by volatility
         pts.sort(key=lambda p: p.volatility)
@@ -210,27 +215,30 @@ def get_efficient_frontier(method: str = "mv") -> FrontierData:
             current_portfolio=current,
             optimal_tangency=tangency,
             min_variance=min_vol)
-    except Exception:
-        return FrontierData(
-            method=method.upper(), points=[], current_portfolio=FrontierPoint(
-                volatility=0, expected_return=0, sharpe=0), optimal_tangency=FrontierPoint(
-                volatility=0, expected_return=0, sharpe=0), min_variance=FrontierPoint(
-                volatility=0, expected_return=0, sharpe=0))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": "SOLVER_FAILURE",
+                "message": f"Frontier calculation failed: {str(e)}"
+            }
+        ) from e
 
 
 @router.post("/optimize", response_model=PortfolioResult)
 def optimize_portfolio(req: OptimizeRequest) -> PortfolioResult:
     """Compute optimal portfolio weights using real market data and chosen algorithm."""
     returns_df, available = _get_real_returns(req.tickers)
-    if returns_df is None or returns_df.empty:
-        return PortfolioResult(
-            method=req.method.upper(),
-            annualized_return=0.0,
-            annualized_volatility=0.0,
-            sharpe=0.0,
-            cvar_95=0.0,
-            diversification_ratio=0.0,
-            allocations=[])
+    if returns_df is None or returns_df.empty or len(available) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "UNIVERSE_DATA_UNAVAILABLE",
+                "message": "No valid universe data is available for the requested assets."
+            }
+        )
 
     mean_ret = returns_df.mean().values * 252
     cov_mat = returns_df.cov().values * 252
@@ -538,8 +546,14 @@ def post_convex_optimization(req: ConvexOptimizeRequest):
     try:
         from core.portfolio import convex_portfolio_optimizer, ledoit_wolf_covariance
         returns_df, available = _get_real_returns(req.tickers)
-        if returns_df is None or returns_df.empty:
-            return {"status": "NO_DATA", "weights": {}, "gross_leverage": 0.0}
+        if returns_df is None or returns_df.empty or len(available) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "UNIVERSE_DATA_UNAVAILABLE",
+                    "message": "No valid universe data is available for the requested assets."
+                }
+            )
 
         n = len(available)
         np.random.seed(42)
@@ -585,8 +599,13 @@ def post_convex_optimization(req: ConvexOptimizeRequest):
             "shrinkage_intensity": round(delta, 4),
             "allocations": allocations
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        return {"status": "ERROR", "error": str(e)}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Optimization solver failure: {str(e)}"
+        ) from e
 
 
 @router.get("/shrinkage-compare")
@@ -600,7 +619,13 @@ def get_shrinkage_comparison():
         tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "JPM", "V", "LLY", "XOM"]
         available = [t for t in tickers if t in raw.index.get_level_values("ticker")]
         if len(available) < 3:
-            return {"status": "INSUFFICIENT_DATA"}
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "UNIVERSE_DATA_UNAVAILABLE",
+                    "message": "Insufficient tickers available to compute shrinkage comparison"
+                }
+            )
 
         sub = raw[raw.index.get_level_values("ticker").isin(available)]
         rets = sub["return_1d"].unstack("ticker").dropna().values
@@ -639,5 +664,10 @@ def get_shrinkage_comparison():
                 "eigenvalues": oas_eigs[:6]
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        return {"status": "ERROR", "error": str(e)}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Shrinkage calculation failed: {str(e)}"
+        ) from e

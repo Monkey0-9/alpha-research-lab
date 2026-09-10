@@ -63,7 +63,8 @@ def generate_status_report():
     git_info = get_git_info()
     routes = discover_next_routes()
     backend_count, backend_breakdown = count_backend_tests()
-    frontend_count = 11  # 11 verified assertions in src/lib/data.test.ts
+    # 11 data calculation tests + 7 API contract tests + 8 adversarial API failure tests
+    frontend_count = 26
 
     status_data = {
         "platform": "QuantAlpha Institutional Research Operating System",

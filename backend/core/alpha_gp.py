@@ -330,7 +330,7 @@ class TimeSeriesCorrNode(ASTNode):
         )
 
 
-def parse_formula(formula_str: str) -> ASTNode:
+def parse_formula(formula_str: str, fail_closed: bool = True) -> ASTNode:
     """
     Parse a mathematical formula string into an executable ASTNode tree.
     Uses Python's ast module for parsing.
@@ -339,6 +339,8 @@ def parse_formula(formula_str: str) -> ASTNode:
     try:
         py_ast = ast.parse(clean_str, mode="eval")
     except Exception as e:
+        if fail_closed:
+            raise ValueError(f"Formula parsing failed for '{formula_str}': {e}") from e
         logger.warning(f"Formula parsing failed for '{formula_str}', defaulting to momentum_20d: {e}")
         return FeatureNode("momentum_20d")
 

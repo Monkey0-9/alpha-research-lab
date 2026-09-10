@@ -1,0 +1,4 @@
+pytest backend/tests/ -q --junitxml=audit_evidence/pytest.xml --cov=backend --cov-report=xml:audit_evidence/coverage.xml
+npm run test:all
+flake8 backend/
+python scripts/benchmark_performance.py

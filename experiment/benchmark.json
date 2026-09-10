@@ -1,0 +1,40 @@
+{
+  "ast_expression_parser": {
+    "claimed_throughput_per_sec": 35700.0,
+    "measured_throughput_per_sec": 23419.6,
+    "median_latency_microseconds": 40.2,
+    "status": "FALSIFIED_AND_CORRECTED",
+    "delta_pct": -34.4
+  },
+  "qp_100_asset_constrained_optimizer": {
+    "claimed_throughput_per_sec": 55.0,
+    "measured_throughput_per_sec": 0.2,
+    "median_solve_time_ms": 5076.49,
+    "solver": "scipy.optimize.minimize (SLSQP)",
+    "status": "FALSIFIED_AND_CORRECTED",
+    "note": "Production SLSQP with 100 assets is computationally bounded by numerical Jacobian evaluations."
+  },
+  "deflated_sharpe_ratio_5000_trials": {
+    "execution_time_ms": 0.217,
+    "status": "VERIFIED_ACCELERATED"
+  },
+  "native_cpp_discrete_event_backtest": {
+    "events_processed": 50000,
+    "latency_microseconds": 24.8,
+    "fill_rate_pct": 99.85,
+    "status": "VERIFIED"
+  },
+  "oracle_equivalence": {
+    "pure_python_reference_vs_c_accelerated_delta": 0.0,
+    "bit_level_exact_match": true,
+    "status": "VERIFIED"
+  },
+  "pure_noise_falsification_monte_carlo": {
+    "trials": 10000,
+    "nominal_max_sharpe": 2.6856,
+    "deflated_sharpe_ratio": 0.4596,
+    "threshold_required": 0.95,
+    "noise_rejection_rate_pct": 100.0,
+    "status": "VERIFIED"
+  }
+}

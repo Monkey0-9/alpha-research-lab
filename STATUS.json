@@ -1,17 +1,17 @@
 {
   "platform": "QuantAlpha Institutional Research Operating System",
   "integrity_level": "Level 4+ (Undergoing Level-5 Hardening)",
-  "generated_at": "2026-09-10T12:34:37.636971+00:00",
+  "generated_at": "2026-09-10T13:52:54.979089+00:00",
   "git": {
-    "commit": "82cd4e382889ed1572f7d3c7bd83052630f2adab",
+    "commit": "8c1c220c63593541ce10386952862baea26b20e0",
     "branch": "main",
     "dirty": true
   },
   "verification": {
-    "total_tests": 264,
-    "backend_tests": 253,
-    "frontend_tests": 11,
-    "backend_suites_count": 46,
+    "total_tests": 322,
+    "backend_tests": 296,
+    "frontend_tests": 26,
+    "backend_suites_count": 48,
     "nextjs_prerendered_routes_count": 14,
     "typescript_compiler_errors": 0,
     "eslint_errors": 0,
@@ -55,6 +55,10 @@
     {
       "file": "test_api_comprehensive.py",
       "test_count": 15
+    },
+    {
+      "file": "test_api_status_codes.py",
+      "test_count": 13
     },
     {
       "file": "test_backtester.py",
@@ -159,6 +163,10 @@
     {
       "file": "test_native_c_and_q.py",
       "test_count": 15
+    },
+    {
+      "file": "test_openapi_contract.py",
+      "test_count": 6
     },
     {
       "file": "test_performance_benchmarks.py",
