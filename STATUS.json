@@ -1,18 +1,18 @@
 {
   "platform": "QuantAlpha Institutional Research Operating System",
   "integrity_level": "Level 5 Candidate \u2014 Hardened with Protocol & Byzantine Conformance",
-  "generated_at": "2026-09-10T14:42:13.731591+00:00",
+  "generated_at": "2026-09-10T15:53:33.622206+00:00",
   "git": {
-    "commit": "b07a82dcdae5be4be33bfcfe5620e6f7214812f2",
+    "commit": "478caf871de6f434589045d8502cf2723079b45d",
     "branch": "main",
-    "dirty": true
+    "dirty": false
   },
   "verification": {
-    "total_tests": 376,
-    "backend_tests": 350,
+    "total_tests": 401,
+    "backend_tests": 375,
     "frontend_tests": 26,
-    "backend_suites_count": 54,
-    "nextjs_prerendered_routes_count": 14,
+    "backend_suites_count": 59,
+    "nextjs_prerendered_routes_count": 17,
     "typescript_compiler_errors": 0,
     "eslint_errors": 0,
     "runtime_warnings": 0,
@@ -21,9 +21,12 @@
   },
   "routes": [
     "/",
+    "/_global-error",
+    "/_not-found",
     "/alpha-discovery",
     "/data",
     "/execution",
+    "/favicon.ico",
     "/features",
     "/live-research",
     "/model-lab",
@@ -101,6 +104,10 @@
       "test_count": 3
     },
     {
+      "file": "test_evidence_integrity.py",
+      "test_count": 6
+    },
+    {
       "file": "test_evidence_subsystem.py",
       "test_count": 6
     },
@@ -117,11 +124,19 @@
       "test_count": 3
     },
     {
+      "file": "test_fix_conformance.py",
+      "test_count": 8
+    },
+    {
       "file": "test_fix_microstructure.py",
       "test_count": 10
     },
     {
       "file": "test_governance_gatekeeper.py",
+      "test_count": 6
+    },
+    {
+      "file": "test_independent_oracles.py",
       "test_count": 6
     },
     {
@@ -185,6 +200,10 @@
       "test_count": 3
     },
     {
+      "file": "test_pit_attacks.py",
+      "test_count": 2
+    },
+    {
       "file": "test_pit_fabric.py",
       "test_count": 9
     },
@@ -211,6 +230,10 @@
     {
       "file": "test_raft_consensus.py",
       "test_count": 10
+    },
+    {
+      "file": "test_raft_fault_matrix.py",
+      "test_count": 3
     },
     {
       "file": "test_real_market_pipeline.py",

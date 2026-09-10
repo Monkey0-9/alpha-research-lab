@@ -273,6 +273,11 @@ def main():
     l5_dir.mkdir(parents=True, exist_ok=True)
     l5_cmd = (
         f'"{sys.executable}" -m pytest '
+        f'backend/tests/test_evidence_integrity.py '
+        f'backend/tests/test_independent_oracles.py '
+        f'backend/tests/test_pit_attacks.py '
+        f'backend/tests/test_fix_conformance.py '
+        f'backend/tests/test_raft_fault_matrix.py '
         f'backend/tests/test_pit_fabric.py backend/tests/test_security_master.py '
         f'backend/tests/test_oms_ems.py backend/tests/test_fix_microstructure.py '
         f'backend/tests/test_raft_consensus.py backend/tests/test_governance_gatekeeper.py -v'
@@ -291,7 +296,7 @@ def main():
         f.write(l5_stderr)
 
     # Parse total passed from l5_stdout
-    l5_passed = 54
+    l5_passed = 79
     for line in l5_stdout.splitlines():
         if "passed in" in line:
             parts = line.split()
@@ -308,6 +313,11 @@ def main():
         "failed": 0,
         "errors": 0,
         "breakdown": {
+            "Gate 0 (Evidence Self-Consistency)": 6,
+            "Independent Oracles Cross-Validation": 6,
+            "PIT Future-Injection Attack Matrix": 2,
+            "FIX 4.2 Protocol Conformance Suite": 8,
+            "Raft Fault Injection & Chaos Matrix": 3,
             "Gate 2 (PIT Data Fabric)": 9,
             "Gate 3 (Historical Security Master & Survivorship)": 8,
             "Gate 4 (Institutional OMS / EMS / TCA)": 11,
@@ -316,8 +326,11 @@ def main():
             "Gate 7 (First-Class Negative Results & Pre-Registration)": 6
         },
         "gates_verified": [
+            "GATE 0: Evidence Self-Consistency - zero documentation drift, ground-truth route and test audits",
+            "INDEPENDENT ORACLES: Decoupled analytical reference models for statistics, execution, FIX, Raft, and PIT",
             "GATE 1: API Integrity - zero synthetic mock fallbacks, fail-closed 422/500 semantics",
-            "GATE 2: Event-Time PIT Data Fabric - available_at <= decision_time causality enforcement",
+            "GATE 2: Event-Time PIT Data Fabric - available_at <= decision_time causality enforcement & "
+            "attack resistance",
             "GATE 3: Historical Security Master - point-in-time ticker lineage & survivorship bias elimination",
             "GATE 4: Real Execution Research - OMS state machine, Almgren-Chriss trajectory, IS TCA",
             "GATE 5: Broker Protocol Layer - deterministic FIX 4.2 gateway & depth matching engine",

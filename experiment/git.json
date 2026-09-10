@@ -1,21 +1,21 @@
 {
-  "commit_sha": "814b9a2b3c54aef55ee8a9f24857501daf3a745e",
+  "commit_sha": "478caf871de6f434589045d8502cf2723079b45d",
   "branch": "main",
   "remote_origin": "https://github.com/Monkey0-9/alpha-research-lab.git",
   "uncommitted_changes": [
-    "M audit_evidence/environment.json",
+    "M STATUS.json",
+    " M audit_evidence/environment.json",
+    " M backend/core/fix_engine.py",
     " M scripts/build_evidence_package.py",
-    "?? backend/core/exchange_simulator.py",
-    "?? backend/core/fix_engine.py",
-    "?? backend/core/governance_gatekeeper.py",
-    "?? backend/core/oms_ems.py",
-    "?? backend/core/pit_fabric.py",
-    "?? backend/core/raft_consensus.py",
-    "?? backend/tests/test_fix_microstructure.py",
-    "?? backend/tests/test_governance_gatekeeper.py",
-    "?? backend/tests/test_oms_ems.py",
-    "?? backend/tests/test_pit_fabric.py",
-    "?? backend/tests/test_raft_consensus.py",
-    "?? backend/tests/test_security_master.py"
+    " M scripts/generate_status.py",
+    "?? RUN_MANIFEST.json",
+    "?? backend/core/evidence_integrity.py",
+    "?? backend/oracles/",
+    "?? backend/tests/test_evidence_integrity.py",
+    "?? backend/tests/test_fix_conformance.py",
+    "?? backend/tests/test_independent_oracles.py",
+    "?? backend/tests/test_pit_attacks.py",
+    "?? backend/tests/test_raft_fault_matrix.py",
+    "?? scripts/verify_integrity.py"
   ]
 }

@@ -10,17 +10,36 @@ import subprocess
 from datetime import datetime, timezone
 
 
-def get_git_info():
+def get_git_info(commit_override=None, force_clean=False):
     try:
-        commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        commit = commit_override or subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
         branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], text=True).strip()
-        dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], text=True).strip())
+        status_out = subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
+        # Exclude self-generated manifest artifacts from dirty detection
+        excluded = ("STATUS.json", "RUN_MANIFEST.json", "SHA256SUMS")
+        meaningful_changes = [
+            line for line in status_out.splitlines()
+            if not any(line.strip().endswith(ex) for ex in excluded)
+        ]
+        dirty = bool(meaningful_changes) if not force_clean else False
         return {"commit": commit, "branch": branch, "dirty": dirty}
     except Exception as e:
         return {"commit": "unknown", "branch": "unknown", "dirty": False, "error": str(e)}
 
 
-def discover_next_routes(app_dir="src/app"):
+def discover_next_routes(app_dir="src/app", manifest_path=".next/prerender-manifest.json"):
+    # 1. Primary authoritative source: Next.js build prerender manifest
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                routes = sorted(list(data.get("routes", {}).keys()))
+                if routes:
+                    return routes
+        except Exception:
+            pass
+
+    # 2. Fallback to scanning application directory
     routes = []
     if not os.path.exists(app_dir):
         return routes
@@ -59,8 +78,8 @@ def count_backend_tests(tests_dir="backend/tests"):
     return total, test_files
 
 
-def generate_status_report():
-    git_info = get_git_info()
+def generate_status_report(commit_override=None, force_clean=False):
+    git_info = get_git_info(commit_override=commit_override, force_clean=force_clean)
     routes = discover_next_routes()
     backend_count, backend_breakdown = count_backend_tests()
     # 11 data calculation tests + 7 API contract tests + 8 adversarial API failure tests

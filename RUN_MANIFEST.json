@@ -1,0 +1,33 @@
+{
+  "platform": "QuantAlpha Institutional Research OS",
+  "git_commit": "478caf871de6f434589045d8502cf2723079b45d",
+  "git_branch": "main",
+  "git_dirty": true,
+  "python_executable": "C:\\quant-alpha\\.venv\\Scripts\\python.exe",
+  "python_version": "3.11.9",
+  "verified_tests": {
+    "backend": 375,
+    "frontend": 26,
+    "total": 401
+  },
+  "prerendered_routes_count": 17,
+  "routes": [
+    "/",
+    "/_global-error",
+    "/_not-found",
+    "/alpha-discovery",
+    "/data",
+    "/execution",
+    "/favicon.ico",
+    "/features",
+    "/live-research",
+    "/model-lab",
+    "/monitoring",
+    "/native-engine",
+    "/portfolio",
+    "/quality-gate",
+    "/risk",
+    "/statistical-engine",
+    "/validation"
+  ]
+}

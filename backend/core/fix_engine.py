@@ -78,23 +78,52 @@ class FixMessage:
 
     @classmethod
     def from_wire(cls, wire_data: str) -> "FixMessage":
-        """Parse raw FIX wire string and validate body length and checksum."""
-        # Split on SOH or pipe delimiter if formatted for display
+        """Parse raw FIX wire string and validate body length, tags, and checksum."""
         delim = SOH if SOH in wire_data else "|"
         tokens = [t for t in wire_data.split(delim) if t]
         tag_map: Dict[int, str] = {}
+        seen_tags = set()
+
         for token in tokens:
             if "=" in token:
                 k, v = token.split("=", 1)
-                tag_map[int(k)] = v
+                try:
+                    tag_int = int(k)
+                except ValueError:
+                    raise ValueError(f"Invalid non-integer tag: {k}")
 
+                if tag_int in seen_tags:
+                    raise ValueError(f"Duplicate tag detected: {tag_int}")
+                seen_tags.add(tag_int)
+                tag_map[tag_int] = v
+
+        # 1. BeginString verification
+        if 8 in tag_map and tag_map[8] != "FIX.4.2":
+            raise ValueError(f"Invalid BeginString: expected FIX.4.2, got {tag_map[8]}")
+
+        # 2. Mandatory header tags
         if 35 not in tag_map or 49 not in tag_map or 56 not in tag_map or 34 not in tag_map:
             raise ValueError("Malformed FIX message: Missing mandatory header tags (35, 49, 56, 34).")
 
-        # Validate checksum if present
+        # 3. BodyLength verification
+        if 9 in tag_map:
+            expected_body_len = int(tag_map[9])
+            # Body length is count of characters between tag 9 delimiter and tag 10 tag
+            tag9_token = f"9={tag_map[9]}{delim}"
+            start_pos = wire_data.find(tag9_token)
+            if start_pos != -1:
+                body_start = start_pos + len(tag9_token)
+                end_pos = wire_data.find("10=", body_start)
+                if end_pos != -1:
+                    actual_body_len = end_pos - body_start
+                    if actual_body_len != expected_body_len:
+                        raise ValueError(
+                            f"FIX BodyLength mismatch: specified {expected_body_len}, actual {actual_body_len}"
+                        )
+
+        # 4. Checksum verification if present
         if 10 in tag_map:
             expected_chk = int(tag_map[10])
-            # Checksum is computed over everything up to tag 10
             chk_idx = wire_data.find(f"10={tag_map[10]}")
             calc_chk = sum(wire_data[:chk_idx].encode("ascii")) % 256
             if calc_chk != expected_chk:
