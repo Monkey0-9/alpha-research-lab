@@ -57,6 +57,21 @@ class RaftNode:
     def last_log_term(self) -> int:
         return self.log[-1].term if self.log else 0
 
+    def crash_and_restart(self) -> None:
+        """Simulate crash and reboot: volatile state resets, persistent state (log, term) replayed."""
+        self.role = RaftRole.FOLLOWER
+        self.commit_index = 0
+        self.last_applied = 0
+        self.merkle_root = hashlib.sha256(b"GENESIS_EVIDENCE").hexdigest()
+        self.next_index.clear()
+        self.match_index.clear()
+        # Replay log to restore Merkle root
+        for entry in self.log:
+            combined = f"{self.merkle_root}|{entry.leaf_hash}".encode("utf-8")
+            self.merkle_root = hashlib.sha256(combined).hexdigest()
+        self.commit_index = len(self.log)
+        self.last_applied = len(self.log)
+
     def start_election(self) -> None:
         """Transition to candidate and request votes."""
         self.role = RaftRole.CANDIDATE

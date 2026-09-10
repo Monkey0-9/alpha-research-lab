@@ -1,15 +1,15 @@
 {
   "platform": "QuantAlpha Institutional Research Operating System",
-  "integrity_level": "Level 5 (Institutional Research-Grade)",
-  "generated_at": "2026-09-10T14:29:44.490543+00:00",
+  "integrity_level": "Level 5 Candidate \u2014 Hardened with Protocol & Byzantine Conformance",
+  "generated_at": "2026-09-10T14:42:13.731591+00:00",
   "git": {
-    "commit": "814b9a2b3c54aef55ee8a9f24857501daf3a745e",
+    "commit": "b07a82dcdae5be4be33bfcfe5620e6f7214812f2",
     "branch": "main",
     "dirty": true
   },
   "verification": {
-    "total_tests": 347,
-    "backend_tests": 321,
+    "total_tests": 376,
+    "backend_tests": 350,
     "frontend_tests": 26,
     "backend_suites_count": 54,
     "nextjs_prerendered_routes_count": 14,
@@ -118,11 +118,11 @@
     },
     {
       "file": "test_fix_microstructure.py",
-      "test_count": 5
+      "test_count": 10
     },
     {
       "file": "test_governance_gatekeeper.py",
-      "test_count": 3
+      "test_count": 6
     },
     {
       "file": "test_institutional_alpha_orthogonal.py",
@@ -174,7 +174,7 @@
     },
     {
       "file": "test_oms_ems.py",
-      "test_count": 5
+      "test_count": 11
     },
     {
       "file": "test_openapi_contract.py",
@@ -186,7 +186,7 @@
     },
     {
       "file": "test_pit_fabric.py",
-      "test_count": 5
+      "test_count": 9
     },
     {
       "file": "test_planted_signal.py",
@@ -210,7 +210,7 @@
     },
     {
       "file": "test_raft_consensus.py",
-      "test_count": 3
+      "test_count": 10
     },
     {
       "file": "test_real_market_pipeline.py",
@@ -234,7 +234,7 @@
     },
     {
       "file": "test_security_master.py",
-      "test_count": 4
+      "test_count": 8
     },
     {
       "file": "test_security_master_pit.py",

@@ -68,7 +68,7 @@ def generate_status_report():
 
     status_data = {
         "platform": "QuantAlpha Institutional Research Operating System",
-        "integrity_level": "Level 5 (Institutional Research-Grade)",
+        "integrity_level": "Level 5 Candidate — Hardened with Protocol & Byzantine Conformance",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "git": git_info,
         "verification": {

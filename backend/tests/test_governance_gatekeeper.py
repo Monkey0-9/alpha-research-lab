@@ -86,3 +86,52 @@ def test_search_budget_enforcement_and_approval():
     trial_3 = gatekeeper.evaluate_alpha(m_hash, gross_sharpe=2.10, net_sharpe=1.80, total_is_bps=10.0)
     assert trial_3.verdict == GovernanceVerdict.REJECT_BUDGET_EXCEEDED
     assert trial_3.rejection_details == "Search budget exhausted for hypothesis."
+
+
+def test_cumulative_trial_registry_immutability_and_dsr_penalty():
+    gatekeeper = ResearchGovernanceGatekeeper(gross_hurdle=1.50, net_survival_hurdle=0.50)
+    m_hash = gatekeeper.pre_register("HYP-REGISTRY", "Testing multiple testing penalty", "AST", search_budget=50)
+
+    # Run 5 unsuccessful trials
+    for _ in range(5):
+        rec = gatekeeper.evaluate_alpha(m_hash, gross_sharpe=1.60, net_sharpe=0.30, total_is_bps=50.0)
+        assert rec.verdict == GovernanceVerdict.REJECT_EXECUTION_UNVIABLE
+
+    # Total trials must be exactly 5, negative results exactly 5
+    assert gatekeeper.total_trials_count == 5
+    assert gatekeeper.negative_results_count == 5
+
+    # Run 1 approved trial with same net Sharpe as earlier
+    rec_pass = gatekeeper.evaluate_alpha(m_hash, gross_sharpe=2.00, net_sharpe=1.60, total_is_bps=10.0)
+    assert rec_pass.verdict == GovernanceVerdict.APPROVED
+    assert gatekeeper.total_trials_count == 6
+
+    # Invariant: All past trials remain recorded in chronological order
+    assert len(gatekeeper._trial_history) == 6
+    assert gatekeeper._trial_history[0].trial_id == "TRIAL-1"
+    assert gatekeeper._trial_history[5].trial_id == "TRIAL-6"
+
+
+def test_preregistration_parameter_tamper_defense():
+    gatekeeper = ResearchGovernanceGatekeeper()
+    h1 = gatekeeper.pre_register("HYP-1", "Statement", "AST_A", search_budget=10, random_seed=42)
+    h2 = gatekeeper.pre_register("HYP-1", "Statement", "AST_B", search_budget=10, random_seed=42)
+    h3 = gatekeeper.pre_register("HYP-1", "Statement", "AST_A", search_budget=10, random_seed=43)
+
+    # Different parameters produce distinct cryptographic manifest hashes
+    assert h1 != h2
+    assert h1 != h3
+    assert h2 != h3
+
+
+def test_exact_hurdle_boundary_behavior():
+    gatekeeper = ResearchGovernanceGatekeeper(gross_hurdle=1.50, net_survival_hurdle=0.50)
+    m_hash = gatekeeper.pre_register("HYP-BOUND", "Boundary testing", "AST", search_budget=10)
+
+    # Exactly at survival hurdle: Net Sharpe = 0.50 (Approved)
+    t_boundary_pass = gatekeeper.evaluate_alpha(m_hash, gross_sharpe=1.50, net_sharpe=0.50, total_is_bps=20.0)
+    assert t_boundary_pass.verdict == GovernanceVerdict.APPROVED
+
+    # Just below survival hurdle: Net Sharpe = 0.4999 (Rejected as execution unviable because Gross >= 1.50)
+    t_boundary_fail = gatekeeper.evaluate_alpha(m_hash, gross_sharpe=1.50, net_sharpe=0.4999, total_is_bps=20.0)
+    assert t_boundary_fail.verdict == GovernanceVerdict.REJECT_EXECUTION_UNVIABLE

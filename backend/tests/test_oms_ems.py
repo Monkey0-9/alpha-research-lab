@@ -148,3 +148,108 @@ def test_transaction_cost_analysis_implementation_shortfall():
     assert tca.trading_cost_bps == 20.0
     # Total IS = 40.0 bps
     assert tca.total_is_bps == 40.0
+
+
+def test_oms_exhaustive_invalid_state_transitions():
+    oms = OrderManagementSystem()
+    order = oms.create_order("AAPL", OrderSide.BUY, OrderType.MARKET, quantity=100.0)
+
+    # 1. From NEW, cannot transition directly to FILLED, PARTIALLY_FILLED, CANCELLED, EXPIRED
+    for invalid_target in [OrderStatus.FILLED, OrderStatus.PARTIALLY_FILLED,
+                           OrderStatus.CANCELLED, OrderStatus.EXPIRED]:
+        with pytest.raises(InvalidOrderStateTransition):
+            oms.transition(order.order_id, invalid_target)
+
+    # 2. Advance to terminal state REJECTED
+    oms.transition(order.order_id, OrderStatus.REJECTED)
+
+    # Terminal state cannot transition anywhere
+    for any_state in OrderStatus:
+        with pytest.raises(InvalidOrderStateTransition):
+            oms.transition(order.order_id, any_state)
+
+
+def test_oms_overfill_and_negative_fill_defense():
+    oms = OrderManagementSystem()
+    order = oms.create_order("GOOGL", OrderSide.BUY, OrderType.LIMIT, quantity=100.0, price=150.0)
+    oms.transition(order.order_id, OrderStatus.PENDING_NEW)
+    oms.transition(order.order_id, OrderStatus.SUBMITTED)
+
+    # Negative fill rejection
+    with pytest.raises(ValueError, match="positive"):
+        oms.apply_fill(order.order_id, fill_qty=-10.0, fill_price=150.0)
+
+    # Zero fill rejection
+    with pytest.raises(ValueError, match="positive"):
+        oms.apply_fill(order.order_id, fill_qty=0.0, fill_price=150.0)
+
+    # Overfill rejection (101 shares > 100 shares leaves)
+    with pytest.raises(ValueError, match="exceeds leaves quantity"):
+        oms.apply_fill(order.order_id, fill_qty=100.01, fill_price=150.0)
+
+    # Valid partial fill
+    oms.apply_fill(order.order_id, fill_qty=50.0, fill_price=150.0)
+
+    # Attempting to fill remaining with 51 shares > 50 shares leaves
+    with pytest.raises(ValueError, match="exceeds leaves quantity"):
+        oms.apply_fill(order.order_id, fill_qty=50.1, fill_price=150.0)
+
+
+def test_oms_duplicate_client_order_id_defense():
+    oms = OrderManagementSystem()
+    oms.create_order("MSFT", OrderSide.BUY, OrderType.MARKET, quantity=10.0, client_order_id="CL-UNIQUE-001")
+    with pytest.raises(ValueError, match="Duplicate client order ID"):
+        oms.create_order("MSFT", OrderSide.SELL, OrderType.MARKET, quantity=5.0, client_order_id="CL-UNIQUE-001")
+
+
+def test_pre_trade_risk_boundary_precision():
+    risk = PreTradeRiskFilter(max_order_notional=100_000.0, max_adv_pct=0.10, price_collar_pct=0.05)
+    oms = OrderManagementSystem()
+
+    # Exact threshold: 1,000 shares @ $100.00 = $100,000 (Allowed)
+    exact_order = oms.create_order("XYZ", OrderSide.BUY, OrderType.LIMIT, quantity=1000.0, price=100.0)
+    risk.validate(exact_order, reference_price=100.0, adv=1_000_000.0)
+
+    # $0.01 over threshold: 1,000 shares @ $100.01 = $100,010 (Breached)
+    oms_over = OrderManagementSystem()
+    over_order = oms_over.create_order("XYZ", OrderSide.BUY, OrderType.LIMIT, quantity=1000.0, price=100.01)
+    with pytest.raises(PreTradeRiskViolation, match="exceeds max allowed"):
+        risk.validate(over_order, reference_price=100.0, adv=1_000_000.0)
+
+
+def test_ems_almgren_chriss_risk_aversion_monotonicity():
+    # Risk-neutral (low lambda) should have flatter schedule than high lambda (risk-averse)
+    flat_schedule = ExecutionManagementSystem.slice_almgren_chriss(
+        total_quantity=10_000.0, num_intervals=10, daily_volatility=0.01,
+        daily_volume=1_000_000.0, risk_aversion=1e-8
+    )
+    front_loaded_schedule = ExecutionManagementSystem.slice_almgren_chriss(
+        total_quantity=10_000.0, num_intervals=10, daily_volatility=0.03,
+        daily_volume=1_000_000.0, risk_aversion=1e-2
+    )
+    # Conservation of mass
+    assert round(sum(flat_schedule), 2) == 10_000.0
+    assert round(sum(front_loaded_schedule), 2) == 10_000.0
+
+    # High risk aversion trades significantly more in the first bucket than low risk aversion
+    assert front_loaded_schedule[0] > flat_schedule[0]
+    # Ratio of first bucket to last bucket is much higher under high risk aversion
+    ratio_high_lambda = front_loaded_schedule[0] / front_loaded_schedule[-1]
+    ratio_low_lambda = flat_schedule[0] / flat_schedule[-1]
+    assert ratio_high_lambda > ratio_low_lambda
+
+
+def test_transaction_cost_analysis_sell_side_shortfall():
+    # SELL order: Decision at $100.00
+    # Market drops before arrival: $99.80 (Delay cost = 20 bps)
+    # Market drops further during execution: Executed at $99.50 (Trading cost = 30 bps)
+    tca = TransactionCostAnalysis.compute(
+        side=OrderSide.SELL,
+        decision_price=100.00,
+        arrival_price=99.80,
+        fills=[(100.0, 99.50)]
+    )
+    # Both delay and trading costs are positive penalties to alpha
+    assert tca.delay_cost_bps == 20.0
+    assert tca.trading_cost_bps == 30.0
+    assert tca.total_is_bps == 50.0

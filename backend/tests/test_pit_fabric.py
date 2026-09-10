@@ -203,3 +203,111 @@ def test_pit_history_as_of_snapshot():
     )
     assert len(h_aug) == 2
     assert [rec.value for rec in h_aug] == [1.20, 1.25]
+
+
+def test_pit_bitemporal_matrix_invariants():
+    """
+    Exhaustive bitemporal matrix verification across a dense grid of decision times.
+    Asserts invariant: available_at <= decision_time < effective_to
+    """
+    fabric = PITDataFabric()
+    event_time = datetime(2021, 12, 31, tzinfo=timezone.utc)
+
+    # 3 revisions released at 3 distinct dates
+    dates = [
+        datetime(2022, 1, 15, 9, 0, tzinfo=timezone.utc),  # r0
+        datetime(2022, 2, 15, 9, 0, tzinfo=timezone.utc),  # r1
+        datetime(2022, 3, 15, 9, 0, tzinfo=timezone.utc),  # r2
+    ]
+    values = [100.0, 102.5, 101.8]
+
+    for val, avail in zip(values, dates, strict=True):
+        fabric.record_observation(
+            entity_id="EQUITY_X",
+            feature_name="ebitda",
+            value=val,
+            event_time=event_time,
+            published_at=avail,
+            available_at=avail,
+            source_id="TEST_SOURCE"
+        )
+
+    # Test 1: Before r0 available
+    pre_r0 = datetime(2022, 1, 10, tzinfo=timezone.utc)
+    with pytest.raises(TemporalLookaheadError):
+        fabric.query_as_of("EQUITY_X", "ebitda", event_time, pre_r0, fail_closed=True)
+    assert fabric.query_as_of("EQUITY_X", "ebitda", event_time, pre_r0, fail_closed=False) is None
+
+    # Test 2: Exactly at r0 availability
+    rec_r0 = fabric.query_as_of("EQUITY_X", "ebitda", event_time, dates[0])
+    assert rec_r0 is not None and rec_r0.value == 100.0 and rec_r0.revision_id == 0
+
+    # Test 3: Between r0 and r1 (e.g. Feb 1)
+    rec_between_0_1 = fabric.query_as_of("EQUITY_X", "ebitda", event_time, datetime(2022, 2, 1, tzinfo=timezone.utc))
+    assert rec_between_0_1.value == 100.0 and rec_between_0_1.revision_id == 0
+
+    # Test 4: Exactly at r1 availability
+    rec_r1 = fabric.query_as_of("EQUITY_X", "ebitda", event_time, dates[1])
+    assert rec_r1.value == 102.5 and rec_r1.revision_id == 1
+
+    # Test 5: Between r1 and r2 (e.g. Mar 1)
+    rec_between_1_2 = fabric.query_as_of("EQUITY_X", "ebitda", event_time, datetime(2022, 3, 1, tzinfo=timezone.utc))
+    assert rec_between_1_2.value == 102.5 and rec_between_1_2.revision_id == 1
+
+    # Test 6: Exactly at r2 and post-r2
+    rec_r2 = fabric.query_as_of("EQUITY_X", "ebitda", event_time, dates[2])
+    assert rec_r2.value == 101.8 and rec_r2.revision_id == 2
+
+    post_r2 = datetime(2022, 12, 31, tzinfo=timezone.utc)
+    assert fabric.query_as_of("EQUITY_X", "ebitda", event_time, post_r2).value == 101.8
+
+
+def test_pit_digest_tamper_detection():
+    fabric = PITDataFabric()
+    event_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    pub = datetime(2020, 1, 10, tzinfo=timezone.utc)
+    rec = fabric.record_observation("SEC_A", "f1", 42.0, event_time, pub, pub, "SRC_A")
+
+    # Recomputed digest with correct params matches rec.digest
+    from backend.core.pit_fabric import PITRecord
+    expected_digest = PITRecord.compute_digest("SEC_A", "f1", 42.0, event_time, pub, pub, 0, "SRC_A")
+    assert rec.digest == expected_digest
+
+    # Tampered value generates mismatched digest
+    tampered_digest = PITRecord.compute_digest("SEC_A", "f1", 42.000001, event_time, pub, pub, 0, "SRC_A")
+    assert rec.digest != tampered_digest
+
+
+def test_pit_cross_asset_query_isolation():
+    fabric = PITDataFabric()
+    event_time = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    pub = datetime(2020, 1, 10, tzinfo=timezone.utc)
+
+    fabric.record_observation("ASSET_ALPHA", "vol", 0.15, event_time, pub, pub, "SRC")
+    fabric.record_observation("ASSET_BETA", "vol", 0.35, event_time, pub, pub, "SRC")
+
+    dec_time = datetime(2020, 1, 15, tzinfo=timezone.utc)
+    rec_a = fabric.query_as_of("ASSET_ALPHA", "vol", event_time, dec_time)
+    rec_b = fabric.query_as_of("ASSET_BETA", "vol", event_time, dec_time)
+
+    assert rec_a.value == 0.15
+    assert rec_b.value == 0.35
+    assert rec_a.entity_id == "ASSET_ALPHA"
+    assert rec_b.entity_id == "ASSET_BETA"
+
+
+def test_pit_naive_datetime_normalization():
+    fabric = PITDataFabric()
+    # Pass naive datetimes
+    event_time = datetime(2020, 6, 30, 0, 0)
+    published_at = datetime(2020, 7, 15, 12, 0)
+    available_at = datetime(2020, 7, 15, 12, 30)
+
+    rec = fabric.record_observation("SEC_NAIVE", "cf", 10.0, event_time, published_at, available_at, "SRC")
+    assert rec.event_time.tzinfo == timezone.utc
+    assert rec.available_at.tzinfo == timezone.utc
+
+    query_naive = datetime(2020, 7, 20, 0, 0)
+    queried = fabric.query_as_of("SEC_NAIVE", "cf", event_time, query_naive)
+    assert queried is not None
+    assert queried.value == 10.0

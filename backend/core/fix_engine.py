@@ -191,5 +191,23 @@ class FixSession:
 
         if msg.msg_type == FixMsgType.LOGON:
             self.is_connected = True
+        elif msg.msg_type == FixMsgType.LOGOUT:
+            self.is_connected = False
+        elif msg.msg_type == FixMsgType.TEST_REQUEST:
+            # Echo tag 112 (TestReqID) in Heartbeat (35=0)
+            test_req_id = msg.get(112)
+            resend_req = self.build_heartbeat(test_req_id)
 
         return msg, resend_req
+
+    def build_heartbeat(self, test_req_id: Optional[str] = None) -> FixMessage:
+        msg = FixMessage(
+            msg_type=FixMsgType.HEARTBEAT,
+            sender_comp_id=self.sender_comp_id,
+            target_comp_id=self.target_comp_id,
+            msg_seq_num=self.out_seq_num
+        )
+        if test_req_id:
+            msg.set(112, test_req_id)
+        self.out_seq_num += 1
+        return msg

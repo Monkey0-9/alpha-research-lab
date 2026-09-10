@@ -161,3 +161,100 @@ def test_exchange_limit_order_partial_fill_and_cancel():
     assert cancel_rep.get(39) == "4"  # Cancelled
     assert cancel_rep.get(151) == "0.0"  # LeavesQty
     assert cancel_rep.get(14) == "100.0"  # CumQty remained 100
+
+
+def test_fix_heartbeat_and_test_request():
+    session = FixSession("CLIENT", "EXCHANGE")
+
+    # Inbound TestRequest (35=1) with TestReqID = "PING_123"
+    test_req = FixMessage(
+        msg_type=FixMsgType.TEST_REQUEST,
+        sender_comp_id="EXCHANGE",
+        target_comp_id="CLIENT",
+        msg_seq_num=1
+    )
+    test_req.set(112, "PING_123")
+
+    msg, heartbeat = session.receive_message(test_req.to_wire())
+    assert msg.msg_type == FixMsgType.TEST_REQUEST
+    assert heartbeat is not None
+    assert heartbeat.msg_type == FixMsgType.HEARTBEAT
+    assert heartbeat.get(112) == "PING_123"  # Echoed TestReqID
+
+
+def test_fix_logout_session_lifecycle():
+    session = FixSession("CLIENT", "EXCHANGE")
+    # Logon
+    logon_wire = FixMessage(FixMsgType.LOGON, "EXCHANGE", "CLIENT", 1).to_wire()
+    session.receive_message(logon_wire)
+    assert session.is_connected is True
+
+    # Logout
+    logout_wire = FixMessage(FixMsgType.LOGOUT, "EXCHANGE", "CLIENT", 2).to_wire()
+    session.receive_message(logout_wire)
+    assert session.is_connected is False
+
+
+def test_exchange_strict_price_time_fifo_priority():
+    exchange = ExchangeSimulator()
+    # Two orders at the EXACT same price level: $100.00
+    # Order A arrives first (timestamp t1), Order B arrives second (timestamp t2 > t1)
+    exchange.seed_liquidity(
+        symbol="SPY",
+        bid_depth=[],
+        ask_depth=[(100.00, 100.0), (100.00, 200.0)]
+    )
+
+    # Inbound Market Buy for 100 shares
+    session = FixSession("CLIENT", "EXCHANGE_SIM")
+    market_buy = session.build_new_order_single("CL-MKT-01", "SPY", "1", 100.0, ord_type="1")
+    rep = exchange.process_new_order_single(market_buy)[0]
+
+    assert rep.get(39) == "2"  # Filled
+    assert rep.get(14) == "100.0"
+    # Order A was completely filled (100 shares consumed)
+    # Order B remains on the book with 200 shares
+    book = exchange.books["SPY"]
+    assert len(book.asks) == 1
+    assert book.asks[0].quantity == 200.0
+
+
+def test_exchange_adverse_selection_multi_level_walk():
+    exchange = ExchangeSimulator()
+    # Thin book with 3 distinct price levels:
+    # 50 @ $10.00, 50 @ $10.50, 100 @ $11.00
+    exchange.seed_liquidity(
+        symbol="THIN",
+        bid_depth=[],
+        ask_depth=[(10.00, 50.0), (10.50, 50.0), (11.00, 100.0)]
+    )
+
+    session = FixSession("CLIENT", "EXCHANGE_SIM")
+    # Large market order for 200 shares walks the entire depth
+    big_order = session.build_new_order_single("CL-BIG-01", "THIN", "1", 200.0, ord_type="1")
+    rep = exchange.process_new_order_single(big_order)[0]
+
+    assert rep.get(39) == "2"
+    assert rep.get(14) == "200.0"
+    # Expected VWAP: (50*10 + 50*10.50 + 100*11.00) / 200 = (500 + 525 + 1100) / 200 = 2125 / 200 = 10.6250
+    assert rep.get(6) == "10.6250"
+    assert len(exchange.books["THIN"].asks) == 0  # Book swept completely
+
+
+def test_exchange_cancel_after_fill_race_condition():
+    exchange = ExchangeSimulator()
+    exchange.seed_liquidity("XYZ", bid_depth=[], ask_depth=[(50.0, 100.0)])
+
+    session = FixSession("CLIENT", "EXCHANGE_SIM")
+    order = session.build_new_order_single("CL-XYZ-1", "XYZ", "1", 100.0, price=50.0, ord_type="2")
+    exchange.process_new_order_single(order)
+
+    # Order is now completely FILLED (leaves = 0)
+    # Now an in-flight cancel request arrives
+    cancel_req = FixMessage(FixMsgType.ORDER_CANCEL_REQUEST, "CLIENT", "EXCHANGE_SIM", 2)
+    cancel_req.set(11, "CANCEL-XYZ-1")
+    cancel_req.set(41, "CL-XYZ-1")
+    cancel_req.set(55, "XYZ")
+
+    rep = exchange.process_order_cancel_request(cancel_req)
+    assert rep.get(151) == "0.0"  # LeavesQty must remain 0 (cannot cancel already filled order)
