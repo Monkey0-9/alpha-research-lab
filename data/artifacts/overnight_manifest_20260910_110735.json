@@ -1,0 +1,35 @@
+{
+  "pipeline": "QuantAlpha Overnight Institutional Orchestration",
+  "universe": "SP500",
+  "execution_timestamp": "2026-09-10T11:07:35.085880+00:00",
+  "elapsed_seconds": 1.85,
+  "dataset_records": 12852,
+  "trials_accounted": 250,
+  "deflated_sharpe_ratio": 0.0226,
+  "probability_of_backtest_overfitting": 0.25,
+  "gross_leverage": 0.2,
+  "net_leverage": 0.0,
+  "polyglot_acceleration": {
+    "c_kernel_engine": "c_engine.dll (GCC 16.1.0 -O3 -lm, Kalman, OFI, Hurst)",
+    "q_vector_engine": "analytics.q + QAnalyticsEngine (calcBars, aj, wavg)",
+    "cpp_execution_loop": "cpp_engine (Event-driven matching loop)",
+    "rust_simulators": "rust_engine (Memory-safe discrete queue)",
+    "mean_native_latency_micros": 7.4
+  },
+  "ledger_invariants": {
+    "is_balanced": true,
+    "chain_valid": true,
+    "pnl_reconciled": false,
+    "total_assets": 11000006.37,
+    "total_liabilities": 1000012.37,
+    "equity": 9999994.0,
+    "cash": 9999993.98,
+    "long_market_value": 1000012.4,
+    "short_market_value": 1000012.37,
+    "accrued_borrow_fees": 0.0,
+    "total_fees_paid": 6.0,
+    "journal_entries_count": 6
+  },
+  "status": "APPROVED_INSTITUTIONAL_READY",
+  "cryptographic_seal": "6a25f1730e240697380d7165d51aefbaba402181c989b970f9fe98977e67092a"
+}
