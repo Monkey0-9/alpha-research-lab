@@ -193,12 +193,82 @@ class EvidenceIntegrityVerifier:
                     f"or its parents ({actual_git.get('parents', [])})"
                 )
 
-        if enforce_clean_working_tree and actual_git.get("dirty"):
-            raise IntegrityViolationError(
-                f"Working tree is dirty! Uncommitted changes detected: {actual_git.get('uncommitted_lines')}"
-            )
+        if enforce_clean_working_tree:
+            if git_info.get("dirty"):
+                raise IntegrityViolationError(
+                    "STATUS.json records dirty: true, violating clean working tree requirement."
+                )
+            if actual_git.get("dirty"):
+                raise IntegrityViolationError(
+                    f"Working tree is dirty! Uncommitted changes detected: {actual_git.get('uncommitted_lines')}"
+                )
 
         return status
+
+    def verify_run_manifest(
+        self,
+        manifest_path: Optional[str] = None,
+        enforce_git_commit: bool = True,
+        enforce_clean_working_tree: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Verify RUN_MANIFEST.json self-consistency.
+        Fails closed on any inconsistency between manifest claims and repository ground truth.
+        """
+        m_path = Path(manifest_path) if manifest_path else (self.root_dir / "RUN_MANIFEST.json")
+        if not m_path.exists():
+            raise IntegrityViolationError(f"Run manifest not found at {m_path}")
+
+        with open(m_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        v_tests = manifest.get("verified_tests", {})
+        claimed_backend = v_tests.get("backend")
+        claimed_frontend = v_tests.get("frontend")
+        claimed_total = v_tests.get("total")
+
+        if claimed_total != (claimed_backend + claimed_frontend):
+            raise IntegrityViolationError(
+                f"Arithmetic mismatch in RUN_MANIFEST.json: total ({claimed_total}) != "
+                f"backend ({claimed_backend}) + frontend ({claimed_frontend})"
+            )
+
+        actual_backend_count, _ = self.count_actual_backend_tests()
+        if claimed_backend != actual_backend_count:
+            raise IntegrityViolationError(
+                f"Backend test count mismatch in RUN_MANIFEST.json: claims {claimed_backend}, "
+                f"but ground-truth discovery found {actual_backend_count}"
+            )
+
+        actual_routes = self.get_actual_prerendered_routes()
+        claimed_routes_count = manifest.get("prerendered_routes_count")
+        if actual_routes and claimed_routes_count != len(actual_routes):
+            raise IntegrityViolationError(
+                f"Route count mismatch in RUN_MANIFEST.json: claims {claimed_routes_count}, "
+                f"actual is {len(actual_routes)}"
+            )
+
+        actual_git = self.get_actual_git_state()
+        if enforce_git_commit:
+            claimed_commit = manifest.get("git_commit")
+            valid_commits = [actual_git.get("commit")] + actual_git.get("parents", [])
+            if claimed_commit not in valid_commits:
+                raise IntegrityViolationError(
+                    f"Git commit mismatch in RUN_MANIFEST.json: claims {claimed_commit}, "
+                    f"valid are {valid_commits}"
+                )
+
+        if enforce_clean_working_tree:
+            if manifest.get("git_dirty"):
+                raise IntegrityViolationError(
+                    "RUN_MANIFEST.json records git_dirty: true, violating clean baseline requirement."
+                )
+            if actual_git.get("dirty"):
+                raise IntegrityViolationError(
+                    f"Working tree is dirty during run manifest verification: {actual_git.get('uncommitted_lines')}"
+                )
+
+        return manifest
 
     def verify_sha256sums(self, target_dir: Path) -> int:
         """
@@ -233,17 +303,29 @@ class EvidenceIntegrityVerifier:
 
         return verified_count
 
-    def generate_run_manifest(self, output_path: Optional[Path] = None) -> Dict[str, Any]:
+    def generate_run_manifest(
+        self,
+        output_path: Optional[Path] = None,
+        force_clean: bool = False
+    ) -> Dict[str, Any]:
         """Produce authoritative RUN_MANIFEST.json linking code, environment, and evidence."""
         actual_git = self.get_actual_git_state()
         b_count, _ = self.count_actual_backend_tests()
         routes = self.get_actual_prerendered_routes()
+        dirty = False if force_clean else actual_git.get("dirty")
 
         manifest = {
             "platform": "QuantAlpha Institutional Research OS",
+            "provenance": {
+                "schema_version": "1.0.0",
+                "manifest_type": "measurement_run_provenance",
+                "measurement_commit": actual_git.get("commit"),
+                "git_dirty_at_measurement": dirty,
+                "description": "Cryptographic execution manifest documenting measurement baseline."
+            },
             "git_commit": actual_git.get("commit"),
             "git_branch": actual_git.get("branch"),
-            "git_dirty": actual_git.get("dirty"),
+            "git_dirty": dirty,
             "python_executable": sys.executable,
             "python_version": sys.version.split()[0],
             "verified_tests": {

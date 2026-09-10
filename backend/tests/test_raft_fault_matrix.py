@@ -1,12 +1,13 @@
 """
-Institutional Raft Consensus Fault-Injection & Chaos Test Matrix.
+Institutional Raft Consensus Randomized Crash, Omission & Network Fault Matrix.
 Verifies distributed consensus safety under simulated chaos:
 1. 500-step randomized trace simulating partitions, leader crashes, and log writes.
 2. Formal Invariants:
    - Election Safety: At most one leader per term.
    - Quorum Safety: Un-quorum minority partitions cannot commit log entries.
    - Log Matching: All nodes committing index k share identical Merkle roots.
-   - Byzantine conflict truncation and recovery.
+   - Uncommitted log conflict truncation and recovery upon reconnection.
+   - Idempotent AppendEntries RPC duplicate delivery handling.
 """
 import random
 from backend.core.raft_consensus import RaftCluster, RaftRole

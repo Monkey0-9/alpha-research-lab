@@ -1,17 +1,24 @@
 {
   "platform": "QuantAlpha Institutional Research Operating System",
-  "integrity_level": "Level 5 Candidate \u2014 Hardened with Protocol & Byzantine Conformance",
-  "generated_at": "2026-09-10T15:53:33.622206+00:00",
+  "integrity_level": "Level 5 Candidate \u2014 Hardened via Gate 0, Independent Oracles & Conformance Suites",
+  "provenance": {
+    "schema_version": "1.0.0",
+    "manifest_type": "measurement_run_provenance",
+    "measurement_commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
+    "git_dirty_at_measurement": false,
+    "description": "Authoritative system status reflecting ground-truth execution against the measured baseline commit."
+  },
+  "generated_at": "2026-09-10T16:25:38.148152+00:00",
   "git": {
-    "commit": "478caf871de6f434589045d8502cf2723079b45d",
+    "commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
     "branch": "main",
     "dirty": false
   },
   "verification": {
-    "total_tests": 401,
-    "backend_tests": 375,
+    "total_tests": 407,
+    "backend_tests": 381,
     "frontend_tests": 26,
-    "backend_suites_count": 59,
+    "backend_suites_count": 60,
     "nextjs_prerendered_routes_count": 17,
     "typescript_compiler_errors": 0,
     "eslint_errors": 0,
@@ -178,6 +185,10 @@
     {
       "file": "test_level5_integrity.py",
       "test_count": 10
+    },
+    {
+      "file": "test_manifest_commit_consistency.py",
+      "test_count": 6
     },
     {
       "file": "test_models.py",

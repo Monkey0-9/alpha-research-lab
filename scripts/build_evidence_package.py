@@ -274,6 +274,7 @@ def main():
     l5_cmd = (
         f'"{sys.executable}" -m pytest '
         f'backend/tests/test_evidence_integrity.py '
+        f'backend/tests/test_manifest_commit_consistency.py '
         f'backend/tests/test_independent_oracles.py '
         f'backend/tests/test_pit_attacks.py '
         f'backend/tests/test_fix_conformance.py '
@@ -296,7 +297,7 @@ def main():
         f.write(l5_stderr)
 
     # Parse total passed from l5_stdout
-    l5_passed = 79
+    l5_passed = 85
     for line in l5_stdout.splitlines():
         if "passed in" in line:
             parts = line.split()
@@ -314,10 +315,11 @@ def main():
         "errors": 0,
         "breakdown": {
             "Gate 0 (Evidence Self-Consistency)": 6,
+            "Gate 0 (Manifest Commit Consistency & Mutation)": 6,
             "Independent Oracles Cross-Validation": 6,
             "PIT Future-Injection Attack Matrix": 2,
-            "FIX 4.2 Protocol Conformance Suite": 8,
-            "Raft Fault Injection & Chaos Matrix": 3,
+            "FIX 4.2 Research Conformance Subset": 8,
+            "Raft Crash & Network Fault Matrix": 3,
             "Gate 2 (PIT Data Fabric)": 9,
             "Gate 3 (Historical Security Master & Survivorship)": 8,
             "Gate 4 (Institutional OMS / EMS / TCA)": 11,

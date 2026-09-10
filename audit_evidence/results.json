@@ -6,7 +6,7 @@
     "errors": 0,
     "warnings": 18,
     "exit_code": 4,
-    "elapsed_seconds": 0.7
+    "elapsed_seconds": 0.74
   },
   "frontend_tests": {
     "total": 26,

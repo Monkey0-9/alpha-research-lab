@@ -87,7 +87,16 @@ def generate_status_report(commit_override=None, force_clean=False):
 
     status_data = {
         "platform": "QuantAlpha Institutional Research Operating System",
-        "integrity_level": "Level 5 Candidate — Hardened with Protocol & Byzantine Conformance",
+        "integrity_level": "Level 5 Candidate — Hardened via Gate 0, Independent Oracles & Conformance Suites",
+        "provenance": {
+            "schema_version": "1.0.0",
+            "manifest_type": "measurement_run_provenance",
+            "measurement_commit": git_info["commit"],
+            "git_dirty_at_measurement": git_info["dirty"],
+            "description": (
+                "Authoritative system status reflecting ground-truth execution against the measured baseline commit."
+            )
+        },
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "git": git_info,
         "verification": {

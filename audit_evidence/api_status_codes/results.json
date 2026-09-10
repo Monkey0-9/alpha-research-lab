@@ -2,7 +2,7 @@
   "suite": "API Status Codes & OpenAPI Contract Matrix",
   "command": "\"C:\\quant-alpha\\.venv\\Scripts\\python.exe\" -m pytest backend/tests/test_api_status_codes.py backend/tests/test_openapi_contract.py -v",
   "exit_code": 0,
-  "elapsed_seconds": 29.02,
+  "elapsed_seconds": 26.24,
   "total_tests": 43,
   "passed": 43,
   "failed": 0,

@@ -17,7 +17,7 @@ Implements:
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 SOH = "\x01"
@@ -168,6 +168,18 @@ class FixSession:
         self.out_seq_num += 1
         return msg
 
+    def build_logout(self, text: Optional[str] = None) -> FixMessage:
+        msg = FixMessage(
+            msg_type=FixMsgType.LOGOUT,
+            sender_comp_id=self.sender_comp_id,
+            target_comp_id=self.target_comp_id,
+            msg_seq_num=self.out_seq_num
+        )
+        if text:
+            msg.set(58, text)
+        self.out_seq_num += 1
+        return msg
+
     def build_new_order_single(
         self,
         cl_ord_id: str,
@@ -196,12 +208,16 @@ class FixSession:
         self.out_seq_num += 1
         return msg
 
-    def receive_message(self, wire_msg: str) -> Tuple[FixMessage, Optional[FixMessage]]:
+    def receive_message(self, wire_or_msg: Any) -> Tuple[FixMessage, Optional[FixMessage]]:
         """
-        Process inbound message.
+        Process inbound message (string wire data or FixMessage object).
         Detects sequence gaps and returns (processed_message, optional_resend_request).
         """
-        msg = FixMessage.from_wire(wire_msg)
+        if isinstance(wire_or_msg, str):
+            msg = FixMessage.from_wire(wire_or_msg)
+        else:
+            msg = wire_or_msg
+
         resend_req: Optional[FixMessage] = None
 
         if msg.msg_seq_num > self.in_seq_num:
@@ -220,14 +236,30 @@ class FixSession:
 
         if msg.msg_type == FixMsgType.LOGON:
             self.is_connected = True
+            resend_req = self.build_logon()
         elif msg.msg_type == FixMsgType.LOGOUT:
             self.is_connected = False
+            logout_ack = FixMessage(
+                msg_type=FixMsgType.LOGOUT,
+                sender_comp_id=self.sender_comp_id,
+                target_comp_id=self.target_comp_id,
+                msg_seq_num=self.out_seq_num
+            )
+            if msg.get(58):
+                logout_ack.set(58, msg.get(58))
+            self.out_seq_num += 1
+            resend_req = logout_ack
         elif msg.msg_type == FixMsgType.TEST_REQUEST:
             # Echo tag 112 (TestReqID) in Heartbeat (35=0)
             test_req_id = msg.get(112)
             resend_req = self.build_heartbeat(test_req_id)
 
         return msg, resend_req
+
+    def process_incoming(self, wire_or_msg: Any) -> List[FixMessage]:
+        """Convenience method returning list of outbound response messages."""
+        _, resp = self.receive_message(wire_or_msg)
+        return [resp] if resp else []
 
     def build_heartbeat(self, test_req_id: Optional[str] = None) -> FixMessage:
         msg = FixMessage(

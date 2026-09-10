@@ -1,21 +1,19 @@
 {
-  "commit_sha": "478caf871de6f434589045d8502cf2723079b45d",
+  "commit_sha": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
   "branch": "main",
   "remote_origin": "https://github.com/Monkey0-9/alpha-research-lab.git",
   "uncommitted_changes": [
-    "M STATUS.json",
+    "M RUN_MANIFEST.json",
+    " M STATUS.json",
     " M audit_evidence/environment.json",
+    " M backend/core/evidence_integrity.py",
     " M backend/core/fix_engine.py",
+    " M backend/tests/test_fix_conformance.py",
+    " M backend/tests/test_pit_attacks.py",
+    " M backend/tests/test_raft_fault_matrix.py",
     " M scripts/build_evidence_package.py",
     " M scripts/generate_status.py",
-    "?? RUN_MANIFEST.json",
-    "?? backend/core/evidence_integrity.py",
-    "?? backend/oracles/",
-    "?? backend/tests/test_evidence_integrity.py",
-    "?? backend/tests/test_fix_conformance.py",
-    "?? backend/tests/test_independent_oracles.py",
-    "?? backend/tests/test_pit_attacks.py",
-    "?? backend/tests/test_raft_fault_matrix.py",
-    "?? scripts/verify_integrity.py"
+    " M scripts/verify_integrity.py",
+    "?? backend/tests/test_manifest_commit_consistency.py"
   ]
 }

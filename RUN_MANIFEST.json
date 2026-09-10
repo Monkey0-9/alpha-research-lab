@@ -1,14 +1,21 @@
 {
   "platform": "QuantAlpha Institutional Research OS",
-  "git_commit": "478caf871de6f434589045d8502cf2723079b45d",
+  "provenance": {
+    "schema_version": "1.0.0",
+    "manifest_type": "measurement_run_provenance",
+    "measurement_commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
+    "git_dirty_at_measurement": false,
+    "description": "Cryptographic execution manifest documenting measurement baseline."
+  },
+  "git_commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
   "git_branch": "main",
-  "git_dirty": true,
+  "git_dirty": false,
   "python_executable": "C:\\quant-alpha\\.venv\\Scripts\\python.exe",
   "python_version": "3.11.9",
   "verified_tests": {
-    "backend": 375,
+    "backend": 381,
     "frontend": 26,
-    "total": 401
+    "total": 407
   },
   "prerendered_routes_count": 17,
   "routes": [

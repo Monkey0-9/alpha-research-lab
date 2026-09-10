@@ -33,9 +33,9 @@ def main():
     verifier = EvidenceIntegrityVerifier(ROOT)
 
     if args.update:
-        print("[Gate 0] Updating STATUS.json from live ground-truth...")
+        print("[Gate 0] Updating STATUS.json & RUN_MANIFEST.json from live ground-truth...")
         generate_status_report(force_clean=args.force_clean)
-        verifier.generate_run_manifest()
+        verifier.generate_run_manifest(force_clean=args.force_clean)
         print("[Gate 0] Manifests updated successfully.")
         return 0
 
@@ -51,6 +51,13 @@ def main():
         print(f"         Total tests: {v['total_tests']} "
               f"({v['backend_tests']} backend, {v['frontend_tests']} frontend)")
         print(f"         Routes: {v['nextjs_prerendered_routes_count']}")
+
+        if (ROOT / "RUN_MANIFEST.json").exists():
+            verifier.verify_run_manifest(
+                enforce_git_commit=args.strict_git,
+                enforce_clean_working_tree=args.strict_clean
+            )
+            print("[Gate 0] PASS: RUN_MANIFEST.json is self-consistent.")
 
         if args.verify_evidence:
             ev_dir = ROOT / "audit_evidence"
