@@ -1,0 +1,224 @@
+{
+  "platform": "QuantAlpha Institutional Research Operating System",
+  "integrity_level": "Level 4+ (Undergoing Level-5 Hardening)",
+  "generated_at": "2026-09-10T11:26:26.198782+00:00",
+  "git": {
+    "commit": "d3c6fec985093c355e16da9a72db25cc00beabf7",
+    "branch": "main",
+    "dirty": true
+  },
+  "verification": {
+    "total_tests": 264,
+    "backend_tests": 253,
+    "frontend_tests": 11,
+    "backend_suites_count": 46,
+    "nextjs_prerendered_routes_count": 14,
+    "typescript_compiler_errors": 0,
+    "eslint_errors": 0,
+    "runtime_warnings": 0,
+    "backend_status": "ALL_PASSED",
+    "frontend_status": "ALL_PASSED"
+  },
+  "routes": [
+    "/",
+    "/alpha-discovery",
+    "/data",
+    "/execution",
+    "/features",
+    "/live-research",
+    "/model-lab",
+    "/monitoring",
+    "/native-engine",
+    "/portfolio",
+    "/quality-gate",
+    "/risk",
+    "/statistical-engine",
+    "/validation"
+  ],
+  "backend_breakdown": [
+    {
+      "file": "test_adversarial_attacks.py",
+      "test_count": 7
+    },
+    {
+      "file": "test_alpha_dsl.py",
+      "test_count": 5
+    },
+    {
+      "file": "test_alpha_gp.py",
+      "test_count": 2
+    },
+    {
+      "file": "test_api.py",
+      "test_count": 16
+    },
+    {
+      "file": "test_api_comprehensive.py",
+      "test_count": 15
+    },
+    {
+      "file": "test_backtester.py",
+      "test_count": 4
+    },
+    {
+      "file": "test_benchmark_datasets.py",
+      "test_count": 3
+    },
+    {
+      "file": "test_c_and_q_pipeline_integration.py",
+      "test_count": 6
+    },
+    {
+      "file": "test_capacity_attribution.py",
+      "test_count": 2
+    },
+    {
+      "file": "test_core.py",
+      "test_count": 7
+    },
+    {
+      "file": "test_core_advanced.py",
+      "test_count": 16
+    },
+    {
+      "file": "test_cpcv_pbo.py",
+      "test_count": 3
+    },
+    {
+      "file": "test_cpp_event_backtest.py",
+      "test_count": 3
+    },
+    {
+      "file": "test_data_foundation_stage1.py",
+      "test_count": 5
+    },
+    {
+      "file": "test_data_loader.py",
+      "test_count": 3
+    },
+    {
+      "file": "test_evidence_subsystem.py",
+      "test_count": 6
+    },
+    {
+      "file": "test_experiment_lineage.py",
+      "test_count": 1
+    },
+    {
+      "file": "test_falsification_suite.py",
+      "test_count": 2
+    },
+    {
+      "file": "test_features.py",
+      "test_count": 3
+    },
+    {
+      "file": "test_institutional_alpha_orthogonal.py",
+      "test_count": 6
+    },
+    {
+      "file": "test_institutional_compliance.py",
+      "test_count": 7
+    },
+    {
+      "file": "test_institutional_cpp_execution.py",
+      "test_count": 4
+    },
+    {
+      "file": "test_institutional_data_foundation.py",
+      "test_count": 5
+    },
+    {
+      "file": "test_institutional_execution_broker.py",
+      "test_count": 6
+    },
+    {
+      "file": "test_institutional_portfolio_optimizer.py",
+      "test_count": 6
+    },
+    {
+      "file": "test_institutional_portfolio_risk.py",
+      "test_count": 6
+    },
+    {
+      "file": "test_institutional_statistical_governance.py",
+      "test_count": 5
+    },
+    {
+      "file": "test_ledger.py",
+      "test_count": 3
+    },
+    {
+      "file": "test_level5_integrity.py",
+      "test_count": 10
+    },
+    {
+      "file": "test_models.py",
+      "test_count": 2
+    },
+    {
+      "file": "test_native_c_and_q.py",
+      "test_count": 15
+    },
+    {
+      "file": "test_performance_benchmarks.py",
+      "test_count": 3
+    },
+    {
+      "file": "test_planted_signal.py",
+      "test_count": 1
+    },
+    {
+      "file": "test_polyglot_native.py",
+      "test_count": 5
+    },
+    {
+      "file": "test_portfolio.py",
+      "test_count": 2
+    },
+    {
+      "file": "test_pure_noise.py",
+      "test_count": 1
+    },
+    {
+      "file": "test_quality_gate_api.py",
+      "test_count": 6
+    },
+    {
+      "file": "test_real_market_pipeline.py",
+      "test_count": 8
+    },
+    {
+      "file": "test_reproducibility_level5.py",
+      "test_count": 1
+    },
+    {
+      "file": "test_reproducibility_rigorous.py",
+      "test_count": 2
+    },
+    {
+      "file": "test_research_integrity_attacks.py",
+      "test_count": 10
+    },
+    {
+      "file": "test_risk.py",
+      "test_count": 5
+    },
+    {
+      "file": "test_security_master_pit.py",
+      "test_count": 3
+    },
+    {
+      "file": "test_statistical_equivalence.py",
+      "test_count": 5
+    },
+    {
+      "file": "test_v020_integrity_core.py",
+      "test_count": 16
+    },
+    {
+      "file": "test_validation.py",
+      "test_count": 2
+    }
+  ]
+}

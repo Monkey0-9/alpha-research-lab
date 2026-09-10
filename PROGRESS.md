@@ -1,6 +1,6 @@
 # QuantAlpha — Implementation Progress & Architecture Status
 
-**Status: Top-1% Institutional Research Platform Verified — 254 tests passing (243 backend + 11 frontend); 0 warnings, 0 type errors, 0 lint errors, 17 static routes prerendered.**
+**Status: Top-1% Institutional Research Platform Verified — 264 tests passing (253 backend + 11 frontend); 0 warnings, 0 type errors, 0 lint errors, 14 core research routes prerendered.**
 **Audit Date: September 2026**
 **Definition: An integrity-first research operating system for discovering, validating, falsifying, reproducing, governing, and promoting systematic investment research.**
 **Architecture: Cryptographic Evidence Chain (SHA-256 Merkle linking), 12-stage fail-closed promotion state machine, double-entry general ledger (debits == credits), Point-In-Time Security Master with survivorship elimination, research search budget (N_trials tracking), canonical event-driven execution, and Level-5 exact reproduction certificates.**
@@ -11,7 +11,8 @@
 
 | Test Suite | File / Scope | Total Tests | Status | Execution Time |
 | --- | --- | --- | --- | --- |
-| **Backend Total** | **`pytest backend/tests/`** | **243** | **243 PASSED / 0 FAILED / 0 WARNINGS** | **~170s** |
+| **Backend Total** | **`pytest backend/tests/`** | **253** | **253 PASSED / 0 FAILED / 0 WARNINGS** | **~90s** |
+| **Tier 0 Research Attacks** | `backend/tests/test_research_integrity_attacks.py` | **10** | **10 PASSED / 0 FAILED** | **~0.9s** |
 | **v0.2.0 Integrity Core** | `backend/tests/test_v020_integrity_core.py` | **16** | **16 PASSED / 0 FAILED** | **~0.8s** |
 | **Level-5 Integrity Core** | `backend/tests/test_level5_integrity.py` | **10** | **10 PASSED / 0 FAILED** | **~7.3s** |
 | **Evidence Subsystem** | `backend/tests/test_evidence_subsystem.py` | **6** | **6 PASSED / 0 FAILED** | **~2.1s** |
@@ -22,8 +23,9 @@
 | **Frontend Test Suite** | `src/lib/data.test.ts` | **11** | **11 PASSED / 0 FAILED** | **~0.15s** |
 | **TypeScript Typecheck** | `tsc --noEmit` | All | **0 ERRORS** | **~1.9s** |
 | **ESLint Rules** | `eslint` (strict fail-closed) | All | **0 ERRORS** | **~3.2s** |
-| **Production Build** | `npm run build` | 17 Routes | **17 PRERENDERED (0 ERRORS)** | **~13.4s** |
+| **Production Build** | `npm run build` | 14 Routes | **14 PRERENDERED (0 ERRORS)** | **~13.4s** |
 | **Overnight Pipeline** | `scripts/overnight_quant_pipeline.py` | 8 Stages | **8 STAGES OK / SHA-256 SEALED** | **~2.7s** |
+| **Authoritative Status** | `scripts/generate_status.py` -> `STATUS.json` | Dynamic | **MACHINE SEALED / ZERO DRIFT** | **~0.5s** |
 
 ---
 

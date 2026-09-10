@@ -286,6 +286,7 @@ def convex_portfolio_optimizer(
     factor_bounds: Optional[List[tuple[float, float]]] = None,
     turnover_budget: Optional[float] = None,
     turnover_penalty: float = 0.001,
+    fail_closed: bool = False,
 ) -> dict:
     """
     Institutional convex quadratic programming portfolio optimizer.
@@ -296,6 +297,8 @@ def convex_portfolio_optimizer(
     - Multi-factor beta neutrality bounds
     - Turnover budget / penalty
     """
+    from core.evidence.exceptions import OptimizationFailedException
+
     alpha = np.asarray(alpha_signal, dtype=np.float64)
     cov = np.asarray(cov_matrix, dtype=np.float64)
     n = len(alpha)
@@ -357,6 +360,9 @@ def convex_portfolio_optimizer(
             options={"maxiter": 500}
         )
 
+    if not res.success and fail_closed:
+        raise OptimizationFailedException(f"OPTIMIZATION_FAILED: {res.message}")
+
     opt_w = res.x if res.success else init_w
 
     port_exp_ret = float(opt_w @ alpha)
@@ -365,7 +371,7 @@ def convex_portfolio_optimizer(
     net_lev = float(np.sum(opt_w))
     turnover = float(np.sum(np.abs(opt_w - w0)))
 
-    status_str = "OPTIMAL" if res.success else "APPROXIMATION"
+    status_str = "OPTIMAL" if res.success else "SOLVER_FAILED"
 
     return {
         "weights": opt_w,
