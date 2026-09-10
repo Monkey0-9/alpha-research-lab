@@ -6,9 +6,13 @@ Simulates 2,000 structured adversarial lookahead attacks across 4 distinct attac
 3. restatement_leakage (500 cases): Querying post-period restatements during wire transit.
 4. negative_time (500 cases): Retrograde query injection (query_time < event_time).
 
+Formal Error Metric Definitions:
+- false_negative = invalid/future-information query accepted (query_time < available_at incorrectly accepted).
+- false_positive = valid PIT query rejected (query_time >= available_at incorrectly rejected).
+
 Guarantees:
 - Seed: 918273 (deterministic reproducibility)
-- 100% fail-closed rejection rate (0 false negatives, 0 false positives).
+- 100% fail-closed rejection rate (0 false negatives across 2,000 attacks, 0 false positives across 500 valid queries).
 """
 from datetime import datetime, timedelta, timezone
 import random

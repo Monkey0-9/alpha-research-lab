@@ -1,12 +1,12 @@
 {
   "backend_tests": {
-    "total": 350,
-    "passed": 350,
+    "total": 381,
+    "passed": 381,
     "failed": 0,
     "errors": 0,
     "warnings": 18,
-    "exit_code": 4,
-    "elapsed_seconds": 0.74
+    "exit_code": 0,
+    "elapsed_seconds": 214.45
   },
   "frontend_tests": {
     "total": 26,

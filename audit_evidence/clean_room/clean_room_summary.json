@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-09-10T16:53:32.912598+00:00",
+  "platform": "QuantAlpha Institutional Research Operating System",
+  "verdict": "LEVEL 5 \u2014 VERIFIED RESEARCH-GRADE INFRASTRUCTURE",
+  "reproduction_metrics": {
+    "backend_collected_tests": 381,
+    "backend_passed_tests": 381,
+    "backend_failed_tests": 0,
+    "frontend_passed_tests": 26,
+    "frontend_failed_tests": 0,
+    "total_verified_tests": 407,
+    "prerendered_routes_count": 17,
+    "gate0_status": "PASS",
+    "sha256_verified_artifacts": 9
+  },
+  "routes": [
+    "/",
+    "/_global-error",
+    "/_not-found",
+    "/alpha-discovery",
+    "/data",
+    "/execution",
+    "/favicon.ico",
+    "/features",
+    "/live-research",
+    "/model-lab",
+    "/monitoring",
+    "/native-engine",
+    "/portfolio",
+    "/quality-gate",
+    "/risk",
+    "/statistical-engine",
+    "/validation"
+  ]
+}

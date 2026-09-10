@@ -44,6 +44,9 @@ def test_real_manifests_are_pristine_and_consistent(verifier, repo_root):
     assert status.get("git", {}).get("dirty") is False, "STATUS.json must certify clean working tree"
     if "provenance" in status:
         assert status["provenance"]["git_dirty_at_measurement"] is False
+        assert status["provenance"]["schema_version"] == "1.1.0"
+        assert "measurement_commit" in status["provenance"]
+        assert "publication_commit" in status["provenance"]
 
     # 2. Arithmetic assertions
     v = status["verification"]

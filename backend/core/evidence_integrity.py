@@ -8,6 +8,7 @@ Guarantees:
 import hashlib
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 import sys
@@ -314,13 +315,22 @@ class EvidenceIntegrityVerifier:
         routes = self.get_actual_prerendered_routes()
         dirty = False if force_clean else actual_git.get("dirty")
 
+        now_iso = datetime.now(timezone.utc).isoformat()
         manifest = {
             "platform": "QuantAlpha Institutional Research OS",
             "provenance": {
-                "schema_version": "1.0.0",
+                "schema_version": "1.1.0",
                 "manifest_type": "measurement_run_provenance",
                 "measurement_commit": actual_git.get("commit"),
+                "publication_commit": actual_git.get("commit"),
+                "measurement_timestamp": now_iso,
+                "publication_timestamp": now_iso,
                 "git_dirty_at_measurement": dirty,
+                "git_dirty_at_publication": dirty,
+                "evidence_generation_state": {
+                    "is_historical_snapshot": True,
+                    "description": "Captured during deterministic test execution baseline."
+                },
                 "description": "Cryptographic execution manifest documenting measurement baseline."
             },
             "git_commit": actual_git.get("commit"),

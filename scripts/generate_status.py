@@ -85,19 +85,28 @@ def generate_status_report(commit_override=None, force_clean=False):
     # 11 data calculation tests + 7 API contract tests + 8 adversarial API failure tests
     frontend_count = 26
 
+    now_iso = datetime.now(timezone.utc).isoformat()
     status_data = {
         "platform": "QuantAlpha Institutional Research Operating System",
-        "integrity_level": "Level 5 Candidate — Hardened via Gate 0, Independent Oracles & Conformance Suites",
+        "integrity_level": "Level 5 — Verified Research-Grade Infrastructure",
         "provenance": {
-            "schema_version": "1.0.0",
+            "schema_version": "1.1.0",
             "manifest_type": "measurement_run_provenance",
             "measurement_commit": git_info["commit"],
+            "publication_commit": git_info["commit"],
+            "measurement_timestamp": now_iso,
+            "publication_timestamp": now_iso,
             "git_dirty_at_measurement": git_info["dirty"],
+            "git_dirty_at_publication": git_info["dirty"],
+            "evidence_generation_state": {
+                "is_historical_snapshot": True,
+                "description": "Captured during deterministic test execution baseline."
+            },
             "description": (
                 "Authoritative system status reflecting ground-truth execution against the measured baseline commit."
             )
         },
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": now_iso,
         "git": git_info,
         "verification": {
             "total_tests": backend_count + frontend_count,

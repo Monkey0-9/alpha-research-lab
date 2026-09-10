@@ -2,7 +2,7 @@
   "suite": "Frontend API Fail-Closed & Adversarial Resilience",
   "command": "node --no-warnings --test src/lib/api.test.ts src/lib/api_failure.test.ts",
   "exit_code": 0,
-  "elapsed_seconds": 0.97,
+  "elapsed_seconds": 0.86,
   "total_tests": 15,
   "passed": 15,
   "failed": 0,

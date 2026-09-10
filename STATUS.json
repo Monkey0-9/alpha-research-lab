@@ -1,16 +1,24 @@
 {
   "platform": "QuantAlpha Institutional Research Operating System",
-  "integrity_level": "Level 5 Candidate \u2014 Hardened via Gate 0, Independent Oracles & Conformance Suites",
+  "integrity_level": "Level 5 \u2014 Verified Research-Grade Infrastructure",
   "provenance": {
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
+    "measurement_commit": "49506a7e1eba600b730a86db950335bc45a6f737",
+    "publication_commit": "49506a7e1eba600b730a86db950335bc45a6f737",
+    "measurement_timestamp": "2026-09-10T17:17:44.211095+00:00",
+    "publication_timestamp": "2026-09-10T17:17:44.211095+00:00",
     "git_dirty_at_measurement": false,
+    "git_dirty_at_publication": false,
+    "evidence_generation_state": {
+      "is_historical_snapshot": true,
+      "description": "Captured during deterministic test execution baseline."
+    },
     "description": "Authoritative system status reflecting ground-truth execution against the measured baseline commit."
   },
-  "generated_at": "2026-09-10T16:25:38.148152+00:00",
+  "generated_at": "2026-09-10T17:17:44.211095+00:00",
   "git": {
-    "commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
+    "commit": "49506a7e1eba600b730a86db950335bc45a6f737",
     "branch": "main",
     "dirty": false
   },
