@@ -386,52 +386,109 @@ def get_current_allocations():
 
 @router.get("/factor-exposure", response_model=FactorExposure)
 def get_factor_exposure() -> FactorExposure:
-    """Barra-style factor exposures — computed from real portfolio vs benchmark."""
+    """Barra-style factor exposures — computed empirically via multivariate OLS from real constituent factor returns."""
     try:
         from core.data_loader import load_sp500_data
         raw = load_sp500_data()
+        unstacked = raw["return_1d"].unstack("ticker").dropna()
+        if len(unstacked) < 30 or len(unstacked.columns) < 5:
+            return FactorExposure(
+                model_name="Barra Empirical Multi-Factor Model",
+                as_of="2026-09-04",
+                r_squared=0.0,
+                factors=[]
+            )
+
         tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "JPM", "V"]
-        available = [t for t in tickers if t in raw.index.get_level_values("ticker")]
-        if len(available) < 3:
-            return FactorExposure(model_name="Factor Model", as_of="2026-09-04", r_squared=0.0, factors=[])
+        available = [t for t in tickers if t in unstacked.columns]
 
-        mask = raw.index.get_level_values("ticker").isin(available)
-        sub = raw[mask]
-        returns_df = sub["return_1d"].unstack("ticker").dropna()
-        if len(returns_df) < 30:
-            return FactorExposure(model_name="Factor Model", as_of="2026-09-04", r_squared=0.0, factors=[])
+        # 1. Market Factor: Mean return across all market constituents
+        f_market = unstacked.mean(axis=1).values
 
-        returns_df = returns_df[available]
-        portfolio_returns = returns_df.mean(axis=1).values
+        # 2. Momentum Factor: Top 3 trailing 20d return minus Bottom 3
+        roll_ret = unstacked.rolling(20).sum().dropna()
+        aligned_unstacked = unstacked.loc[roll_ret.index]
+        y = aligned_unstacked[available].mean(axis=1).values
 
-        factors_out = []
+        wml_vals = []
+        for dt, row in roll_ret.iterrows():
+            top3 = row.nlargest(3).index
+            bot3 = row.nsmallest(3).index
+            day_ret = aligned_unstacked.loc[dt]
+            wml_vals.append(float(day_ret[top3].mean() - day_ret[bot3].mean()))
+        f_momentum = np.array(wml_vals)
+
+        # 3. Low Volatility Factor: Lowest 3 trailing 20d std minus Highest 3
+        roll_vol = unstacked.rolling(20).std().dropna()
+        lowvol_vals = []
+        for dt, row in roll_vol.iterrows():
+            low3 = row.nsmallest(3).index
+            high3 = row.nlargest(3).index
+            day_ret = aligned_unstacked.loc[dt]
+            lowvol_vals.append(float(day_ret[low3].mean() - day_ret[high3].mean()))
+        f_lowvol = np.array(lowvol_vals)
+
+        # 4. Value / Cyclical Factor: Financials & Energy vs Tech & Consumer
+        val_tickers = [t for t in ["JPM", "XOM", "V", "MA"] if t in aligned_unstacked.columns]
+        growth_tickers = [t for t in ["AAPL", "MSFT", "NVDA", "AMZN"] if t in aligned_unstacked.columns]
+        f_value = (aligned_unstacked[val_tickers].mean(axis=1) - aligned_unstacked[growth_tickers].mean(axis=1)).values
+
+        min_len = min(len(y), len(f_momentum), len(f_lowvol), len(f_value))
+        y = y[-min_len:]
+        F = np.column_stack([
+            f_market[-min_len:],
+            f_momentum[-min_len:],
+            f_lowvol[-min_len:],
+            f_value[-min_len:]
+        ])
         factor_names = [
+            "Market Factor (Beta)",
             "Momentum (12-1m)",
-            "Quality (ROE/Accruals)",
-            "Value (B/P, E/P)",
             "Low Volatility",
-            "Size (Log Cap)",
-            "Market Beta"]
-        for fname in factor_names:
-            try:
-                np.random.seed(hash(fname) % 2**31)
-                factor_ret = np.random.normal(0.0003, 0.01, len(portfolio_returns))
-                beta = float(np.cov(portfolio_returns, factor_ret)[0, 1] / max(np.var(factor_ret), 1e-10))
-                contribution = beta * float(np.mean(factor_ret) * 252 * 100)
-                factors_out.append(FactorBar(
-                    factor=fname,
-                    exposure=round(beta, 2),
-                    benchmark_exposure=round(float(np.mean(factor_ret) * 252 * 100), 2),
-                    active_exposure=round(contribution, 2),
-                    t_stat=round(float(beta / max(np.std(factor_ret) / np.sqrt(len(factor_ret)), 1e-10)), 2)
-                ))
-            except Exception:
-                continue
+            "Cyclical Value (HML)"
+        ]
 
-        r_sq = 0.82 if factors_out else 0.0
-        return FactorExposure(model_name="Factor Model", as_of="2026-09-04", r_squared=r_sq, factors=factors_out)
+        # Multivariate OLS via Normal Equations
+        X = np.column_stack([np.ones(min_len), F])
+        XtX = X.T @ X
+        betas_all = np.linalg.solve(XtX, X.T @ y)
+        betas = betas_all[1:]
+
+        residuals = y - (X @ betas_all)
+        ss_tot = float(np.sum((y - np.mean(y)) ** 2))
+        ss_res = float(np.sum(residuals ** 2))
+        r2 = max(0.0, min(1.0, 1.0 - (ss_res / max(ss_tot, 1e-12))))
+
+        XtX_inv = np.linalg.inv(XtX)
+        factors_out = []
+        for idx, fname in enumerate(factor_names):
+            b = float(betas[idx])
+            f_series = F[:, idx]
+            b_exposure = float(np.mean(f_series) * 252 * 100)
+            a_exposure = b * b_exposure
+            se_beta = float(np.sqrt(max(1e-12, ss_res / max(min_len - 5, 1) * XtX_inv[idx + 1, idx + 1])))
+            t_stat = float(b / max(se_beta, 1e-6))
+            factors_out.append(FactorBar(
+                factor=fname,
+                exposure=round(b, 2),
+                benchmark_exposure=round(b_exposure, 2),
+                active_exposure=round(a_exposure, 2),
+                t_stat=round(t_stat, 2)
+            ))
+
+        return FactorExposure(
+            model_name="Barra Empirical Multi-Factor Model",
+            as_of="2026-09-04",
+            r_squared=round(r2, 4),
+            factors=factors_out
+        )
     except Exception:
-        return FactorExposure(model_name="Factor Model", as_of="2026-09-04", r_squared=0.0, factors=[])
+        return FactorExposure(
+            model_name="Barra Empirical Multi-Factor Model",
+            as_of="2026-09-04",
+            r_squared=0.0,
+            factors=[]
+        )
 
 
 @router.get("/rebalances", response_model=List[RebalanceEvent])
