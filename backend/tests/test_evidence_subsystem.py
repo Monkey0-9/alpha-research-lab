@@ -6,8 +6,10 @@ Verifies:
 2. DataValidationEvidence computes true schema, null rate, and file SHA-256 checks.
 3. LeakageAuditEvidence detects lookahead contamination and verifies PIT availability.
 4. Quality Gate fail-closed behavior: missing evidence strictly causes stage failure and caps claim ceiling.
-5. Zero-fallback policy: factor_attribution returns RISK_MODEL_UNAVAILABLE when factor data is absent (no synthetic factors).
-6. Deterministic full-bundle reproduction: verifies multi-metric tolerances, equity curve hashes, and blotter hashes without synthetic jitter.
+5. Zero-fallback policy: factor_attribution returns RISK_MODEL_UNAVAILABLE when factor data
+   is absent (no synthetic factors).
+6. Deterministic full-bundle reproduction: verifies multi-metric tolerances, equity curve hashes,
+   and blotter hashes without synthetic jitter.
 """
 import numpy as np
 import pandas as pd
@@ -73,7 +75,11 @@ def test_data_validation_evidence_from_df():
         "ticker": ["AAPL"] * 50,
         "close": np.linspace(150, 180, 50),
     })
-    ev_bad = DataValidationEvidence.create_from_dataframe(df_invalid, dataset_id="TEST_BAD", required_columns=["close", "volume"])
+    ev_bad = DataValidationEvidence.create_from_dataframe(
+        df_invalid,
+        dataset_id="TEST_BAD",
+        required_columns=["close", "volume"]
+    )
     assert ev_bad.passed is False
     assert ev_bad.status == EvidenceStatus.FAILED
     assert "missing required columns" in ev_bad.description

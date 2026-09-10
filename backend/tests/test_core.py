@@ -37,6 +37,12 @@ def test_native_c_cpp_pnl_almgren():
     pos = np.array([1.0, 1.0, 0.5])
     pnl = accelerator.fast_pnl_simulation(ret, pos, fee_bps=5.0)
     assert len(pnl) == 3
+    # Exact verification: day 0 fee = 1.0*0.0005 -> 0.0095; day 1 fee = 0 -> -0.005; day 2 fee = 0.5*0.0005 -> 0.00975
+    expected_pnl = np.array([0.0095, -0.005, 0.00975])
+    np.testing.assert_allclose(pnl, expected_pnl, atol=1e-6)
+    # Monotonicity test: higher fees must strictly reduce net return
+    pnl_high_fee = accelerator.fast_pnl_simulation(ret, pos, fee_bps=50.0)
+    assert np.all(pnl_high_fee <= pnl)
 
     ac = accelerator.fast_almgren_chriss(50000, 5)
     assert len(ac["holdings"]) == 6

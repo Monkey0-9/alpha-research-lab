@@ -431,7 +431,10 @@ def reproduce_experiment(
         reason = (
             "Reproduced identically within numerical tolerance (< 1e-4 across Sharpe, IC, Max DD)."
             if is_exact_match
-            else f"Metric drift detected: delta Sharpe {sharpe_diff:.6f}, delta IC {ic_diff:.6f} exceeds tolerance 1e-4."
+            else (
+                f"Metric drift detected: delta Sharpe {sharpe_diff:.6f}, "
+                f"delta IC {ic_diff:.6f} exceeds tolerance 1e-4."
+            )
         )
 
     return {
