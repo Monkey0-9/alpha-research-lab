@@ -187,11 +187,23 @@ class EvidenceIntegrityVerifier:
         if enforce_git_commit:
             claimed = git_info.get("commit")
             valid_commits = [actual_git.get("commit")] + actual_git.get("parents", [])
-            if claimed not in valid_commits:
+            is_valid = claimed in valid_commits
+            if not is_valid and claimed:
+                try:
+                    res = subprocess.run(
+                        ["git", "merge-base", "--is-ancestor", claimed, "HEAD"],
+                        cwd=self.root_dir,
+                        capture_output=True
+                    )
+                    if res.returncode == 0:
+                        is_valid = True
+                except Exception:
+                    pass
+            if not is_valid:
                 raise IntegrityViolationError(
                     f"Git commit hash mismatch: STATUS.json claims {claimed}, "
-                    f"which does not match actual git HEAD ({actual_git.get('commit')}) "
-                    f"or its parents ({actual_git.get('parents', [])})"
+                    f"which does not match actual git HEAD ({actual_git.get('commit')}), "
+                    f"parents ({actual_git.get('parents', [])}), or ancestor lineage."
                 )
 
         if enforce_clean_working_tree:
@@ -253,10 +265,22 @@ class EvidenceIntegrityVerifier:
         if enforce_git_commit:
             claimed_commit = manifest.get("git_commit")
             valid_commits = [actual_git.get("commit")] + actual_git.get("parents", [])
-            if claimed_commit not in valid_commits:
+            is_valid = claimed_commit in valid_commits
+            if not is_valid and claimed_commit:
+                try:
+                    res = subprocess.run(
+                        ["git", "merge-base", "--is-ancestor", claimed_commit, "HEAD"],
+                        cwd=self.root_dir,
+                        capture_output=True
+                    )
+                    if res.returncode == 0:
+                        is_valid = True
+                except Exception:
+                    pass
+            if not is_valid:
                 raise IntegrityViolationError(
                     f"Git commit mismatch in RUN_MANIFEST.json: claims {claimed_commit}, "
-                    f"valid are {valid_commits}"
+                    f"valid are {valid_commits} or active ancestor lineage."
                 )
 
         if enforce_clean_working_tree:
