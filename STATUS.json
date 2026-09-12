@@ -4,10 +4,10 @@
   "provenance": {
     "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
-    "publication_commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
-    "measurement_timestamp": "2026-09-12T13:31:14.106659+00:00",
-    "publication_timestamp": "2026-09-12T13:31:14.106659+00:00",
+    "measurement_commit": "0a6817c8839a8397e74d172a992020e385bf15dd",
+    "publication_commit": "0a6817c8839a8397e74d172a992020e385bf15dd",
+    "measurement_timestamp": "2026-09-12T14:21:09.720251+00:00",
+    "publication_timestamp": "2026-09-12T14:21:09.720251+00:00",
     "git_dirty_at_measurement": false,
     "git_dirty_at_publication": false,
     "evidence_generation_state": {
@@ -16,9 +16,9 @@
     },
     "description": "Authoritative system status reflecting ground-truth execution against the measured baseline commit."
   },
-  "generated_at": "2026-09-12T13:31:14.106659+00:00",
+  "generated_at": "2026-09-12T14:21:09.720251+00:00",
   "git": {
-    "commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
+    "commit": "0a6817c8839a8397e74d172a992020e385bf15dd",
     "branch": "main",
     "dirty": false
   },
