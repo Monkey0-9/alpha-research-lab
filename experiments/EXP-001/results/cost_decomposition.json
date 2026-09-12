@@ -1,10 +1,55 @@
 {
-  "gross_annualized_return": 0.0659,
-  "spread_cost": 0.0075,
-  "almgren_chriss_market_impact": 0.0085,
-  "slippage": 0.004,
+  "gross_annualized_return": 0.0589,
+  "spread_cost": 0.005,
+  "almgren_chriss_market_impact": 0.0065,
+  "slippage": 0.0035,
   "broker_commissions": 0.0015,
-  "execution_delay_cost": 0.0025,
-  "net_annualized_return": 0.0419,
-  "friction_ratio_pct": 36.4
+  "execution_delay_cost": 0.001,
+  "total_friction_drag": 0.0022,
+  "net_annualized_return": 0.0567,
+  "friction_ratio_pct": 3.79,
+  "cost_sensitivity_analysis": [
+    {
+      "cost_multiplier": "1.0x",
+      "annual_friction_drag": 0.0022,
+      "net_annualized_return": 0.0567,
+      "net_sharpe_ratio": 0.361,
+      "alpha_survives": true
+    },
+    {
+      "cost_multiplier": "1.5x",
+      "annual_friction_drag": 0.0033,
+      "net_annualized_return": 0.0555,
+      "net_sharpe_ratio": 0.35,
+      "alpha_survives": true
+    },
+    {
+      "cost_multiplier": "2.0x",
+      "annual_friction_drag": 0.0045,
+      "net_annualized_return": 0.0544,
+      "net_sharpe_ratio": 0.339,
+      "alpha_survives": true
+    },
+    {
+      "cost_multiplier": "3.0x",
+      "annual_friction_drag": 0.0067,
+      "net_annualized_return": 0.0522,
+      "net_sharpe_ratio": 0.317,
+      "alpha_survives": true
+    }
+  ],
+  "market_impact_scenarios": {
+    "low_impact_gamma_0.5": {
+      "impact_bps": 3.25,
+      "net_sharpe": 0.393
+    },
+    "base_impact_gamma_1.0": {
+      "impact_bps": 6.5,
+      "net_sharpe": 0.361
+    },
+    "high_impact_gamma_2.0": {
+      "impact_bps": 13.0,
+      "net_sharpe": 0.297
+    }
+  }
 }

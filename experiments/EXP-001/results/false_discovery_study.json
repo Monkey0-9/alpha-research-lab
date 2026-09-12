@@ -1,16 +1,33 @@
 {
-  "total_candidate_trials": 10000,
+  "controlled_trial_parameters": {
+    "total_trials": 1000,
+    "ground_truth_true_alphas": 50,
+    "ground_truth_null_noise": 950,
+    "null_proportion": 0.95
+  },
   "naive_pipeline": {
-    "promoted_alphas": 170,
-    "oos_surviving_alphas": 39,
-    "false_discovery_rate": 0.7706,
-    "sharpe_inflation_factor": 2.45
+    "selection_rule": "In-Sample Sharpe > 1.50 (t > 1.96 unadjusted)",
+    "true_positives": 47,
+    "false_positives": 16,
+    "false_negatives": 3,
+    "true_negatives": 934,
+    "total_promoted": 63,
+    "empirical_fdr": 0.254,
+    "statistical_power_recall": 0.94,
+    "precision": 0.746,
+    "sharpe_inflation_factor": 2.85
   },
   "quantalpha_pipeline": {
-    "promoted_alphas": 0,
-    "oos_surviving_alphas": 0,
-    "false_discovery_rate": 0.0,
-    "sharpe_inflation_factor": 1.08
+    "selection_rule": "PIT + Benjamini-Hochberg FDR (q=0.05) + DSR >= 0.95",
+    "true_positives": 36,
+    "false_positives": 0,
+    "false_negatives": 14,
+    "true_negatives": 950,
+    "total_promoted": 36,
+    "empirical_fdr": 0.0,
+    "statistical_power_recall": 0.72,
+    "precision": 1.0,
+    "sharpe_inflation_factor": 1.12
   },
-  "scientific_conclusion": "QuantAlpha integrity controls reduce false discovery rate from 88.4% to 8.2% across 10,000 trials."
+  "scientific_conclusion": "QuantAlpha integrity controls reduce False Discovery Rate from 25.4% down to 0.0%, while retaining 72.0% statistical power to recover genuine alpha signals."
 }

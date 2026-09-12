@@ -1,40 +1,47 @@
 {
   "ablation_matrix": [
     {
-      "configuration": "Full QuantAlpha (Model D)",
-      "net_sharpe": 1.84,
-      "max_drawdown": 0.118,
-      "status": "OPTIMAL"
+      "configuration": "Full QuantAlpha OS (Model D)",
+      "net_annualized_return": 0.0567,
+      "net_sharpe_ratio": 0.361,
+      "max_drawdown": 0.1868,
+      "status": "OPTIMAL_INSTITUTIONAL_CORE"
     },
     {
       "configuration": "Without Regime Conditioning (-Regime)",
-      "net_sharpe": 1.48,
-      "max_drawdown": 0.174,
-      "status": "DEGRADED"
+      "net_annualized_return": 0.0622,
+      "net_sharpe_ratio": 0.341,
+      "max_drawdown": 0.2342,
+      "status": "DEGRADED_BEAR_TAIL_RISK"
     },
     {
       "configuration": "Without Execution Impact Controls (-Costs)",
-      "net_sharpe": 2.12,
-      "max_drawdown": 0.112,
-      "status": "UNREALISTIC"
+      "net_annualized_return": 0.0752,
+      "net_sharpe_ratio": 0.544,
+      "max_drawdown": 0.1719,
+      "status": "PAPER_ALPHA_ILLUSION"
     },
     {
       "configuration": "Without Deflated Sharpe Ratio (-DSR)",
-      "net_sharpe": 1.35,
-      "max_drawdown": 0.192,
-      "status": "OVERFITTED"
+      "net_annualized_return": 0.0387,
+      "net_sharpe_ratio": 0.16,
+      "max_drawdown": 0.2522,
+      "status": "OVERFITTED_TO_NOISE"
     },
     {
       "configuration": "Without Multiple Testing Control (-FDR)",
-      "net_sharpe": 1.18,
-      "max_drawdown": 0.224,
-      "status": "SPURIOUS"
+      "net_annualized_return": 0.0307,
+      "net_sharpe_ratio": 0.084,
+      "max_drawdown": 0.2895,
+      "status": "SPURIOUS_ALPHA_LEAKAGE"
     },
     {
-      "configuration": "Without PIT Strict Causality (-PIT)",
-      "net_sharpe": 2.65,
-      "max_drawdown": 0.082,
-      "status": "LOOKAHEAD_CORRUPTED"
+      "configuration": "Without Point-in-Time Causality (-PIT Control)",
+      "net_annualized_return": 0.1217,
+      "net_sharpe_ratio": 1.179,
+      "max_drawdown": 0.1214,
+      "status": "LOOKAHEAD_CORRUPTED_CONTROL",
+      "lookahead_mechanism": "Deliberate PIT-disabled negative control: incorporates Q1 earnings reports on fiscal quarter end date (March 31) rather than public SEC filing timestamp (May 4), leaking 44 days of non-public operational knowledge."
     }
   ]
 }

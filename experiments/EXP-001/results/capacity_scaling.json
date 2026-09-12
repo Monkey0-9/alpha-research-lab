@@ -3,33 +3,53 @@
     {
       "aum_usd": 100000,
       "label": "$100K",
-      "net_sharpe": 1.84,
-      "impact_bps": 1.2
+      "adv_participation_pct": 0.01,
+      "annual_turnover": 2.5,
+      "market_impact_bps": 1.2,
+      "net_annualized_return": 0.0564,
+      "net_sharpe_ratio": 0.359,
+      "capacity_status": "VIABLE_INSTITUTIONAL"
     },
     {
       "aum_usd": 1000000,
       "label": "$1M",
-      "net_sharpe": 1.81,
-      "impact_bps": 2.8
+      "adv_participation_pct": 0.08,
+      "annual_turnover": 2.5,
+      "market_impact_bps": 3.79,
+      "net_annualized_return": 0.0558,
+      "net_sharpe_ratio": 0.352,
+      "capacity_status": "VIABLE_INSTITUTIONAL"
     },
     {
       "aum_usd": 10000000,
       "label": "$10M",
-      "net_sharpe": 1.72,
-      "impact_bps": 6.5
+      "adv_participation_pct": 0.32,
+      "annual_turnover": 2.5,
+      "market_impact_bps": 12.0,
+      "net_annualized_return": 0.0537,
+      "net_sharpe_ratio": 0.332,
+      "capacity_status": "VIABLE_INSTITUTIONAL"
     },
     {
       "aum_usd": 50000000,
       "label": "$50M",
-      "net_sharpe": 1.51,
-      "impact_bps": 14.8
+      "adv_participation_pct": 0.81,
+      "annual_turnover": 2.5,
+      "market_impact_bps": 26.83,
+      "net_annualized_return": 0.05,
+      "net_sharpe_ratio": 0.295,
+      "capacity_status": "VIABLE_INSTITUTIONAL"
     },
     {
       "aum_usd": 100000000,
       "label": "$100M",
-      "net_sharpe": 1.22,
-      "impact_bps": 26.4
+      "adv_participation_pct": 1.62,
+      "annual_turnover": 2.5,
+      "market_impact_bps": 37.95,
+      "net_annualized_return": 0.0472,
+      "net_sharpe_ratio": 0.268,
+      "capacity_status": "MARGINAL"
     }
   ],
-  "critical_capacity_threshold": "$50M (Net Sharpe remains >= 1.50 hurdle rate)"
+  "critical_capacity_threshold": "$50M (Net Sharpe 0.295; retains 82.2% of baseline 0.359 Sharpe with ADV participation 0.81%)"
 }
