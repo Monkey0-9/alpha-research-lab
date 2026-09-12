@@ -3,27 +3,27 @@
   "provenance": {
     "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
-    "publication_commit": "49506a7e1eba600b730a86db950335bc45a6f737",
-    "measurement_timestamp": "2026-09-10T17:17:54.631930+00:00",
-    "publication_timestamp": "2026-09-10T17:17:54.631930+00:00",
-    "git_dirty_at_measurement": false,
-    "git_dirty_at_publication": false,
+    "measurement_commit": "35102b860c363239a96e95096daa2d6286264fd7",
+    "publication_commit": "35102b860c363239a96e95096daa2d6286264fd7",
+    "measurement_timestamp": "2026-09-12T05:46:17.312344+00:00",
+    "publication_timestamp": "2026-09-12T05:46:17.312344+00:00",
+    "git_dirty_at_measurement": true,
+    "git_dirty_at_publication": true,
     "evidence_generation_state": {
       "is_historical_snapshot": true,
       "description": "Captured during deterministic test execution baseline."
     },
     "description": "Cryptographic execution manifest documenting measurement baseline."
   },
-  "git_commit": "49506a7e1eba600b730a86db950335bc45a6f737",
+  "git_commit": "35102b860c363239a96e95096daa2d6286264fd7",
   "git_branch": "main",
-  "git_dirty": false,
+  "git_dirty": true,
   "python_executable": "C:\\Program Files\\Python311\\python.exe",
   "python_version": "3.11.9",
   "verified_tests": {
-    "backend": 381,
+    "backend": 404,
     "frontend": 26,
-    "total": 407
+    "total": 430
   },
   "prerendered_routes_count": 17,
   "routes": [

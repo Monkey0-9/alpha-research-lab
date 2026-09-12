@@ -4,29 +4,29 @@
   "provenance": {
     "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
-    "publication_commit": "49506a7e1eba600b730a86db950335bc45a6f737",
-    "measurement_timestamp": "2026-09-10T17:17:44.211095+00:00",
-    "publication_timestamp": "2026-09-10T17:17:44.211095+00:00",
-    "git_dirty_at_measurement": false,
-    "git_dirty_at_publication": false,
+    "measurement_commit": "35102b860c363239a96e95096daa2d6286264fd7",
+    "publication_commit": "35102b860c363239a96e95096daa2d6286264fd7",
+    "measurement_timestamp": "2026-09-12T05:45:43.379060+00:00",
+    "publication_timestamp": "2026-09-12T05:45:43.379060+00:00",
+    "git_dirty_at_measurement": true,
+    "git_dirty_at_publication": true,
     "evidence_generation_state": {
       "is_historical_snapshot": true,
       "description": "Captured during deterministic test execution baseline."
     },
     "description": "Authoritative system status reflecting ground-truth execution against the measured baseline commit."
   },
-  "generated_at": "2026-09-10T17:17:44.211095+00:00",
+  "generated_at": "2026-09-12T05:45:43.379060+00:00",
   "git": {
-    "commit": "49506a7e1eba600b730a86db950335bc45a6f737",
+    "commit": "35102b860c363239a96e95096daa2d6286264fd7",
     "branch": "main",
-    "dirty": false
+    "dirty": true
   },
   "verification": {
-    "total_tests": 407,
-    "backend_tests": 381,
+    "total_tests": 430,
+    "backend_tests": 404,
     "frontend_tests": 26,
-    "backend_suites_count": 60,
+    "backend_suites_count": 66,
     "nextjs_prerendered_routes_count": 17,
     "typescript_compiler_errors": 0,
     "eslint_errors": 0,
@@ -67,6 +67,10 @@
       "test_count": 2
     },
     {
+      "file": "test_alpha_trial_registry.py",
+      "test_count": 2
+    },
+    {
       "file": "test_api.py",
       "test_count": 16
     },
@@ -81,6 +85,10 @@
     {
       "file": "test_backtester.py",
       "test_count": 4
+    },
+    {
+      "file": "test_backtesting_adversarial_suite.py",
+      "test_count": 6
     },
     {
       "file": "test_benchmark_datasets.py",
@@ -119,12 +127,20 @@
       "test_count": 3
     },
     {
+      "file": "test_dataset_security_master.py",
+      "test_count": 4
+    },
+    {
       "file": "test_evidence_integrity.py",
       "test_count": 6
     },
     {
       "file": "test_evidence_subsystem.py",
       "test_count": 6
+    },
+    {
+      "file": "test_experiment_exp001.py",
+      "test_count": 2
     },
     {
       "file": "test_experiment_lineage.py",
@@ -199,6 +215,10 @@
       "test_count": 6
     },
     {
+      "file": "test_math_oracles.py",
+      "test_count": 6
+    },
+    {
       "file": "test_models.py",
       "test_count": 2
     },
@@ -257,6 +277,10 @@
     {
       "file": "test_real_market_pipeline.py",
       "test_count": 8
+    },
+    {
+      "file": "test_regime_portfolio_tca.py",
+      "test_count": 3
     },
     {
       "file": "test_reproducibility_level5.py",
