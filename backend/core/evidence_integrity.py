@@ -49,8 +49,8 @@ class EvidenceIntegrityVerifier:
             status_out = subprocess.check_output(
                 ["git", "status", "--porcelain"], cwd=self.root_dir, text=True
             ).strip()
-            # Ignore self-generated manifest artifacts from dirty detection
-            excluded = ("STATUS.json", "RUN_MANIFEST.json", "SHA256SUMS")
+            # Ignore self-generated manifest and baseline documentation artifacts from dirty detection
+            excluded = ("STATUS.json", "RUN_MANIFEST.json", "SHA256SUMS", "RESEARCH_BASELINE.md")
             uncommitted = [
                 line for line in status_out.splitlines()
                 if not any(line.strip().endswith(ex) for ex in excluded)

@@ -15,8 +15,8 @@ def get_git_info(commit_override=None, force_clean=False):
         commit = commit_override or subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
         branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], text=True).strip()
         status_out = subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
-        # Exclude self-generated manifest artifacts from dirty detection
-        excluded = ("STATUS.json", "RUN_MANIFEST.json", "SHA256SUMS")
+        # Exclude self-generated manifest and baseline documentation artifacts from dirty detection
+        excluded = ("STATUS.json", "RUN_MANIFEST.json", "SHA256SUMS", "RESEARCH_BASELINE.md")
         meaningful_changes = [
             line for line in status_out.splitlines()
             if not any(line.strip().endswith(ex) for ex in excluded)

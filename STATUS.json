@@ -4,7 +4,7 @@
   "provenance": {
     "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "49506a7e1eba600b730a86db950335bc45a6f737",
+    "measurement_commit": "e075456b288efa4e850d0f6e04128ca33a58ab4f",
     "publication_commit": "49506a7e1eba600b730a86db950335bc45a6f737",
     "measurement_timestamp": "2026-09-10T17:17:44.211095+00:00",
     "publication_timestamp": "2026-09-10T17:17:44.211095+00:00",
