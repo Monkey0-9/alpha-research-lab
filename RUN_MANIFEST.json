@@ -3,10 +3,10 @@
   "provenance": {
     "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "152d52157d5b05898330287485240284a32e8e0c",
-    "publication_commit": "152d52157d5b05898330287485240284a32e8e0c",
-    "measurement_timestamp": "2026-09-12T14:38:47.022473+00:00",
-    "publication_timestamp": "2026-09-12T14:38:47.022473+00:00",
+    "measurement_commit": "5fda52d1689df305e8360081b5d9c8025698ef1d",
+    "publication_commit": "5fda52d1689df305e8360081b5d9c8025698ef1d",
+    "measurement_timestamp": "2026-09-12T15:25:34.430171+00:00",
+    "publication_timestamp": "2026-09-12T15:25:34.430171+00:00",
     "git_dirty_at_measurement": false,
     "git_dirty_at_publication": false,
     "evidence_generation_state": {
@@ -15,7 +15,7 @@
     },
     "description": "Cryptographic execution manifest documenting measurement baseline."
   },
-  "git_commit": "152d52157d5b05898330287485240284a32e8e0c",
+  "git_commit": "5fda52d1689df305e8360081b5d9c8025698ef1d",
   "git_branch": "main",
   "git_dirty": false,
   "python_executable": "C:\\quant-alpha\\.venv\\Scripts\\python.exe",
