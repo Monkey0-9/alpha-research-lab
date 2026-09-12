@@ -88,7 +88,7 @@ def generate_status_report(commit_override=None, force_clean=False):
     now_iso = datetime.now(timezone.utc).isoformat()
     status_data = {
         "platform": "QuantAlpha Institutional Research Operating System",
-        "integrity_level": "Level 5 — Verified Research-Grade Infrastructure",
+        "integrity_level": "Level-5 Candidate — Research Platform Hardened and Under Independent Reproduction",
         "provenance": {
             "schema_version": "1.1.0",
             "manifest_type": "measurement_run_provenance",

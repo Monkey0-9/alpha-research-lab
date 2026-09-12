@@ -3,10 +3,10 @@
   "provenance": {
     "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
-    "publication_commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
-    "measurement_timestamp": "2026-09-12T05:50:33.864074+00:00",
-    "publication_timestamp": "2026-09-12T05:50:33.864074+00:00",
+    "measurement_commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
+    "publication_commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
+    "measurement_timestamp": "2026-09-12T13:31:19.400613+00:00",
+    "publication_timestamp": "2026-09-12T13:31:19.400613+00:00",
     "git_dirty_at_measurement": false,
     "git_dirty_at_publication": false,
     "evidence_generation_state": {
@@ -15,10 +15,10 @@
     },
     "description": "Cryptographic execution manifest documenting measurement baseline."
   },
-  "git_commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
+  "git_commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
   "git_branch": "main",
   "git_dirty": false,
-  "python_executable": "C:\\Program Files\\Python311\\python.exe",
+  "python_executable": "C:\\quant-alpha\\.venv\\Scripts\\python.exe",
   "python_version": "3.11.9",
   "verified_tests": {
     "backend": 404,

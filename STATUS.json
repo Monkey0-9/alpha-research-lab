@@ -1,13 +1,13 @@
 {
   "platform": "QuantAlpha Institutional Research Operating System",
-  "integrity_level": "Level 5 \u2014 Verified Research-Grade Infrastructure",
+  "integrity_level": "Level-5 Candidate \u2014 Research Platform Hardened and Under Independent Reproduction",
   "provenance": {
     "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
-    "publication_commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
-    "measurement_timestamp": "2026-09-12T05:50:20.639854+00:00",
-    "publication_timestamp": "2026-09-12T05:50:20.639854+00:00",
+    "measurement_commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
+    "publication_commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
+    "measurement_timestamp": "2026-09-12T13:31:14.106659+00:00",
+    "publication_timestamp": "2026-09-12T13:31:14.106659+00:00",
     "git_dirty_at_measurement": false,
     "git_dirty_at_publication": false,
     "evidence_generation_state": {
@@ -16,9 +16,9 @@
     },
     "description": "Authoritative system status reflecting ground-truth execution against the measured baseline commit."
   },
-  "generated_at": "2026-09-12T05:50:20.639854+00:00",
+  "generated_at": "2026-09-12T13:31:14.106659+00:00",
   "git": {
-    "commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
+    "commit": "e74e2e6c70b4a74a0ca6f93c4fcf47af8f61fc4e",
     "branch": "main",
     "dirty": false
   },
