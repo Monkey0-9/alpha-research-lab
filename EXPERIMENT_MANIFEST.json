@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_type": "scientific_research_provenance",
+  "experiment_id": "EXP-001",
+  "title": "Regime-Aware Multi-Asset Alpha Generation Under Transaction Costs and Multiple-Testing Correction",
+  "preregistered_timestamp": "2026-09-12T14:15:00Z",
+  "status": "PREREGISTERED",
+  "research_question": "Does regime-aware multi-asset alpha generation improve out-of-sample risk-adjusted performance after transaction costs and multiple-testing correction?",
+  "dataset": {
+    "dataset_id": "DATASET-PIT-SP500-DAILY-V1",
+    "storage_path": "data/sp500_daily.parquet",
+    "providers": [
+      "Yahoo Finance (YFinanceClient)",
+      "Robinhood API (RobinhoodClient)"
+    ],
+    "coverage_start": "2010-01-01",
+    "coverage_end": "2025-12-31",
+    "frequency": "1d",
+    "survivorship_policy": "POINT_IN_TIME_MEMBERSHIP",
+    "security_master_service": "backend/core/security_master/master.py",
+    "universe_engine_service": "backend/core/universe/universe_engine.py"
+  },
+  "universe_definition": {
+    "asset_classes": [
+      "Equities",
+      "Rates",
+      "Volatility",
+      "Commodities",
+      "FX",
+      "Credit"
+    ],
+    "equities_universe": "S&P 500 Historical PIT Constituents (Top Liquidity Basket)",
+    "benchmark_indices": [
+      "SPY",
+      "QQQ",
+      "DIA",
+      "^VIX",
+      "^TNX"
+    ],
+    "cross_asset_proxies": [
+      "GLD",
+      "USO",
+      "UUP",
+      "HYG",
+      "LQD"
+    ]
+  },
+  "data_partitions": {
+    "train_discovery": {
+      "start": "2010-01-01",
+      "end": "2017-12-31",
+      "description": "In-sample genetic search & feature exploration space"
+    },
+    "selection_validation": {
+      "start": "2018-01-01",
+      "end": "2021-12-31",
+      "description": "Walk-forward and purged CV model selection window"
+    },
+    "out_of_sample": {
+      "start": "2022-01-01",
+      "end": "2025-12-31",
+      "description": "Strictly untouched out-of-sample holdout period"
+    }
+  },
+  "feature_version": "2.1.0",
+  "feature_categories": [
+    "Price",
+    "Momentum",
+    "Mean Reversion",
+    "Volatility",
+    "Volume",
+    "Liquidity",
+    "Microstructure"
+  ],
+  "alpha_search_space": {
+    "methodology": "Genetic Programming AST Composition & Gradient Boosting SHAP Ranking",
+    "max_expression_depth": 5,
+    "search_budget_n_trials": 10000,
+    "primitives": [
+      "ts_rank",
+      "ts_zscore",
+      "ts_decay_linear",
+      "ts_delta",
+      "ts_corr",
+      "ts_std",
+      "ts_skew",
+      "ts_kurtosis"
+    ]
+  },
+  "regime_models": {
+    "model_r0": "Unconditional Baseline (No Regime Conditioning)",
+    "model_r1": "3-State Gaussian Hidden Markov Model (Bull, Bear, Transition)",
+    "model_r2": "Realized Volatility & Macro Trend Filter"
+  },
+  "validation_protocol": {
+    "cross_validation": "Walk-Forward (12 Expanding Windows) and Purged K-Fold with 10-day Embargo",
+    "cpcv_folds": 16,
+    "falsification_attacks": [
+      "Lookahead Leakage Invariant",
+      "Dataset Byte Mutation Detection",
+      "AST Formula Mutation Detection",
+      "Adversarial Noise Injection",
+      "Singular Covariance Fail-Closed"
+    ]
+  },
+  "multiple_testing_control": {
+    "fdr_correction": "Benjamini-Hochberg False Discovery Rate (q = 0.05)",
+    "fwer_correction": "Bonferroni Family-Wise Error Rate",
+    "deflated_sharpe_ratio": "Bailey & Lopez de Prado DSR (Acceptance Threshold >= 95%)",
+    "pbo_threshold": "Probability of Backtest Overfitting (PBO < 0.15)"
+  },
+  "benchmark_matrix": [
+    {
+      "model_id": "MODEL-A",
+      "name": "Equal Weight Buy-and-Hold",
+      "description": "Unconstrained 1/N benchmark across liquid universe"
+    },
+    {
+      "model_id": "MODEL-B",
+      "name": "Non-Regime Alpha",
+      "description": "Traditional unconditioned momentum and mean-reversion alpha"
+    },
+    {
+      "model_id": "MODEL-C",
+      "name": "Regime-Conditioned Alpha",
+      "description": "Alpha expressions filtered by 3-state HMM regime state"
+    },
+    {
+      "model_id": "MODEL-D",
+      "name": "Full QuantAlpha Operating System",
+      "description": "Regime + Alpha Orthogonalization + Multiple-Testing Haircut + HRP/CVaR + Almgren-Chriss Execution Simulation"
+    }
+  ],
+  "transaction_cost_model": {
+    "bid_ask_spread_bps": 2.5,
+    "broker_commission_per_share": 0.005,
+    "market_impact_model": "Almgren-Chriss Optimal Liquidation Trajectory (Square Root Volatility / ADV)",
+    "execution_delay_bars": 1
+  },
+  "metrics_reported": [
+    "Annualized Return",
+    "Annualized Volatility",
+    "Sharpe Ratio",
+    "Sortino Ratio",
+    "Calmar Ratio",
+    "Maximum Drawdown",
+    "Turnover",
+    "Gross vs Net Spread Cost",
+    "Market Impact",
+    "Broker Commissions",
+    "Value at Risk (VaR 95% & 99%)",
+    "Conditional VaR (CVaR 95% & 99%)",
+    "Deflated Sharpe Ratio (DSR)",
+    "Probability of Backtest Overfitting (PBO)",
+    "False Discovery Rate (FDR)"
+  ],
+  "software_lineage": {
+    "software_commit": "e3756c589ebfd1c4fcefa14bfa4d8050ea8ee371",
+    "runtime_environment": {
+      "python": "3.11.9",
+      "node": "v20+",
+      "os": "Windows x86_64"
+    },
+    "verified_test_baseline": {
+      "backend_tests": 404,
+      "frontend_tests": 26,
+      "total_tests": 430
+    }
+  }
+}
