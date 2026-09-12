@@ -81,10 +81,10 @@ def run_clean_room_verification(strict: bool = True) -> Dict[str, Any]:
             "verified_frontend_tests": status_data["verification"]["frontend_tests"],
             "prerendered_routes": len(manifest_data.get("routes", [])),
         }
-        print("  ✓ Manifest integrity validated.")
+        print("  [PASS] Manifest integrity validated.")
     except (IntegrityViolationError, EvidenceTamperedError) as e:
         report["checks"]["manifest_integrity"] = {"status": "FAIL", "error": str(e)}
-        print(f"  ✗ Manifest integrity failed: {e}", file=sys.stderr)
+        print(f"  [FAIL] Manifest integrity failed: {e}", file=sys.stderr)
         return report
 
     # 2. SHA-256 evidence package checksums if audit_evidence exists
@@ -97,10 +97,10 @@ def run_clean_room_verification(strict: bool = True) -> Dict[str, Any]:
                 "status": "PASS",
                 "verified_artifacts": verified_files,
             }
-            print(f"  ✓ Verified {verified_files} audit evidence artifacts against SHA256SUMS.")
+            print(f"  [PASS] Verified {verified_files} audit evidence artifacts against SHA256SUMS.")
         except EvidenceTamperedError as e:
             report["checks"]["evidence_checksums"] = {"status": "FAIL", "error": str(e)}
-            print(f"  ✗ Evidence digest verification failed: {e}", file=sys.stderr)
+            print(f"  [FAIL] Evidence digest verification failed: {e}", file=sys.stderr)
             return report
     else:
         report["checks"]["evidence_checksums"] = {"status": "SKIPPED", "reason": "No audit_evidence dir"}
@@ -121,9 +121,9 @@ def run_clean_room_verification(strict: bool = True) -> Dict[str, Any]:
             "stdout_summary": pytest_proc.stdout.splitlines()[-2:] if pytest_proc.stdout else [],
         }
         if pytest_proc.returncode == 0:
-            print("  ✓ Pytest suite completed with 0 errors.")
+            print("  [PASS] Pytest suite completed with 0 errors.")
         else:
-            print(f"  ✗ Pytest failed: {pytest_proc.stderr}", file=sys.stderr)
+            print(f"  [FAIL] Pytest failed: {pytest_proc.stderr}", file=sys.stderr)
     except Exception as e:
         report["checks"]["backend_pytest"] = {"status": "ERROR", "error": str(e)}
 
@@ -143,9 +143,9 @@ def run_clean_room_verification(strict: bool = True) -> Dict[str, Any]:
             "exit_code": npm_proc.returncode,
         }
         if npm_proc.returncode == 0:
-            print("  ✓ Frontend test suite completed with 0 errors.")
+            print("  [PASS] Frontend test suite completed with 0 errors.")
         else:
-            print(f"  ✗ Frontend test runner failed: {npm_proc.stderr}", file=sys.stderr)
+            print(f"  [FAIL] Frontend test runner failed: {npm_proc.stderr}", file=sys.stderr)
     except Exception as e:
         report["checks"]["frontend_test"] = {"status": "ERROR", "error": str(e)}
 
@@ -180,12 +180,12 @@ def main():
 
     if result["passed"]:
         print("=================================================================")
-        print("RESULT: PASS — Independent clean environment verified baseline.")
+        print("RESULT: PASS -- Independent clean environment verified baseline.")
         print("=================================================================")
         return 0
     else:
         print("=================================================================")
-        print("RESULT: FAIL — Discrepancy detected in clean-room verification.")
+        print("RESULT: FAIL -- Discrepancy detected in clean-room verification.")
         print("=================================================================")
         return 1
 
