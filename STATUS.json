@@ -4,23 +4,23 @@
   "provenance": {
     "schema_version": "1.1.0",
     "manifest_type": "measurement_run_provenance",
-    "measurement_commit": "35102b860c363239a96e95096daa2d6286264fd7",
-    "publication_commit": "35102b860c363239a96e95096daa2d6286264fd7",
-    "measurement_timestamp": "2026-09-12T05:45:43.379060+00:00",
-    "publication_timestamp": "2026-09-12T05:45:43.379060+00:00",
-    "git_dirty_at_measurement": true,
-    "git_dirty_at_publication": true,
+    "measurement_commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
+    "publication_commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
+    "measurement_timestamp": "2026-09-12T05:50:20.639854+00:00",
+    "publication_timestamp": "2026-09-12T05:50:20.639854+00:00",
+    "git_dirty_at_measurement": false,
+    "git_dirty_at_publication": false,
     "evidence_generation_state": {
       "is_historical_snapshot": true,
       "description": "Captured during deterministic test execution baseline."
     },
     "description": "Authoritative system status reflecting ground-truth execution against the measured baseline commit."
   },
-  "generated_at": "2026-09-12T05:45:43.379060+00:00",
+  "generated_at": "2026-09-12T05:50:20.639854+00:00",
   "git": {
-    "commit": "35102b860c363239a96e95096daa2d6286264fd7",
+    "commit": "21746046ca6a0474bde668f9378836eb8f0a2e3c",
     "branch": "main",
-    "dirty": true
+    "dirty": false
   },
   "verification": {
     "total_tests": 430,
