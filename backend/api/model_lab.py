@@ -499,3 +499,31 @@ def train_model(req: TrainRequest):
         }
     except Exception as e:
         return {"status": "FAILED", "error": str(e)}
+
+
+class RegimeDetectRequest(BaseModel):
+    returns: List[float] = [0.001, -0.002, 0.003, 0.0015, -0.001, 0.002, -0.003, 0.004, 0.001, -0.002, 0.001, 0.002]
+    n_states: int = 3
+
+
+@router.post("/regime-detect")
+def detect_market_regimes(req: RegimeDetectRequest):
+    """Detect latent market regimes using Hidden Markov Model (HMM)."""
+    from backend.models.regime_models import MultiAssetRegimeDetector
+
+    detector = MultiAssetRegimeDetector(n_states=req.n_states)
+    regimes = detector.detect_regimes_hmm(req.returns)
+    return {
+        "status": "COMPLETED",
+        "total_periods": len(regimes),
+        "latest_regime": regimes[-1].current_regime.value if regimes else "UNKNOWN",
+        "history": [
+            {
+                "timestamp": r.timestamp_utc,
+                "regime": r.current_regime.value,
+                "probabilities": r.regime_probabilities,
+                "volatility_state": r.volatility_state,
+            }
+            for r in regimes
+        ]
+    }

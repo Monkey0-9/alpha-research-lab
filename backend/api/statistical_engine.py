@@ -613,3 +613,37 @@ def post_alpha_evidence_card(req: EvidenceCardRequest):
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"code": "EVIDENCE_CARD_GENERATION_FAILED", "message": str(e)},
         ) from e
+
+
+@router.get("/exp001")
+def get_preregistered_experiment_exp001():
+    """Retrieve pre-registered empirical research experiment EXP-001 results."""
+    from dataclasses import asdict
+    from backend.research.experiment_exp001 import PreregisteredExperimentEXP001
+
+    try:
+        exp = PreregisteredExperimentEXP001(seed=42)
+        res = exp.run_experiment()
+        return asdict(res)
+    except Exception as e:
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"code": "EXP001_EXECUTION_FAILED", "message": str(e)},
+        ) from e
+
+
+@router.get("/ablation")
+def get_system_ablation_matrix():
+    """Retrieve multi-tier systematic system ablation analysis matrix."""
+    from dataclasses import asdict
+    from backend.research.ablation_engine import SystemAblationEngine
+
+    try:
+        engine = SystemAblationEngine()
+        results = engine.run_ablation_matrix()
+        return [asdict(r) for r in results]
+    except Exception as e:
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"code": "ABLATION_EXECUTION_FAILED", "message": str(e)},
+        ) from e

@@ -671,3 +671,45 @@ def get_shrinkage_comparison():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Shrinkage calculation failed: {str(e)}"
         ) from e
+
+
+class ComparativeOptRequest(BaseModel):
+    assets: List[str] = ["AAPL", "MSFT", "GOOGL", "AMZN"]
+    risk_free_rate: float = 0.02
+    cost_per_turnover_bps: float = 10.0
+
+
+@router.post("/optimize-comparative")
+def run_comparative_optimization(req: ComparativeOptRequest):
+    """Run full comparative portfolio optimization across 5 standard and robust algorithms."""
+    from dataclasses import asdict
+    from backend.portfolio.comparative_optimizers import ComparativePortfolioOptimizer
+    from core.data_loader import load_sp500_data
+
+    try:
+        raw = load_sp500_data()
+        available = [t for t in req.assets if t in raw.index.get_level_values("ticker")]
+        if len(available) < 2:
+            available = list(raw.index.get_level_values("ticker").unique()[:4])
+
+        sub = raw[raw.index.get_level_values("ticker").isin(available)]
+        pivoted = sub["return_1d"].unstack("ticker").dropna()
+        rets_mat = pivoted.values
+        cov = np.cov(rets_mat, rowvar=False)
+        exp_ret = np.mean(rets_mat, axis=0)
+
+        optimizer = ComparativePortfolioOptimizer(
+            risk_free_rate=req.risk_free_rate,
+            cost_per_turnover_bps=req.cost_per_turnover_bps
+        )
+        benchmarks = optimizer.run_comparative_benchmark(available, exp_ret, cov)
+        return {
+            "status": "COMPLETED",
+            "assets": available,
+            "results": [asdict(b) for b in benchmarks]
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Comparative optimization failed: {str(e)}"
+        ) from e

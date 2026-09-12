@@ -253,3 +253,38 @@ def build_alpha(request: AlphaBuildRequest) -> BacktestResult:
         trades_count=res.trades_count,
         equity_curve=res.equity_curve,
     )
+
+
+class DisciplinedAlphaRequest(BaseModel):
+    expression: str = "ts_rank(close, 20) / ts_std(close, 20)"
+    hypothesis: str = "Normalized price trend discovery"
+    dataset_id: str = "DS_SP500_CORE"
+
+
+@router.get("/trials")
+def get_alpha_trials():
+    """Retrieve all recorded alpha search trials (including accepted, overfit, and rejected)."""
+    from backend.alpha.trial_registry import AlphaTrialRegistry
+    from dataclasses import asdict
+
+    registry = AlphaTrialRegistry()
+    return {
+        "summary": registry.get_summary_statistics(),
+        "trials": [asdict(t) for t in registry._trials]
+    }
+
+
+@router.post("/evaluate-disciplined")
+def evaluate_disciplined_alpha(req: DisciplinedAlphaRequest):
+    """Execute disciplined discovery cycle with PBO, DSR, and trial registry auditing."""
+    from backend.alpha.research_pipeline import DisciplinedAlphaPipeline
+
+    pipeline = DisciplinedAlphaPipeline()
+    df = _get_panel_data()
+    res = pipeline.evaluate_candidate_expression(
+        expression_str=req.expression,
+        hypothesis=req.hypothesis,
+        dataset_df=df,
+        dataset_id=req.dataset_id
+    )
+    return res
