@@ -1,0 +1,10 @@
+{
+  "gross_annualized_return": 0.0659,
+  "spread_cost": 0.0075,
+  "almgren_chriss_market_impact": 0.0085,
+  "slippage": 0.004,
+  "broker_commissions": 0.0015,
+  "execution_delay_cost": 0.0025,
+  "net_annualized_return": 0.0419,
+  "friction_ratio_pct": 36.4
+}

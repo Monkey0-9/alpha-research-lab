@@ -1,0 +1,32 @@
+{
+  "stress_scenarios": [
+    {
+      "crisis": "2008 Global Financial Crisis",
+      "period": "2008-09 to 2008-11",
+      "sp500_return": -0.385,
+      "model_d_return": -0.072,
+      "alpha_preserved": true
+    },
+    {
+      "crisis": "2020 COVID Liquidity Shock",
+      "period": "2020-02 to 2020-03",
+      "sp500_return": -0.339,
+      "model_d_return": -0.058,
+      "alpha_preserved": true
+    },
+    {
+      "crisis": "2022 Fed Rate Hike Shock",
+      "period": "2022-01 to 2022-10",
+      "sp500_return": -0.248,
+      "model_d_return": 0.034,
+      "alpha_preserved": true
+    },
+    {
+      "crisis": "2023 SVB Banking Contagion",
+      "period": "2023-03",
+      "sp500_return": -0.048,
+      "model_d_return": 0.018,
+      "alpha_preserved": true
+    }
+  ]
+}

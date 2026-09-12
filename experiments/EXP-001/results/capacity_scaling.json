@@ -1,0 +1,35 @@
+{
+  "capacity_curves": [
+    {
+      "aum_usd": 100000,
+      "label": "$100K",
+      "net_sharpe": 1.84,
+      "impact_bps": 1.2
+    },
+    {
+      "aum_usd": 1000000,
+      "label": "$1M",
+      "net_sharpe": 1.81,
+      "impact_bps": 2.8
+    },
+    {
+      "aum_usd": 10000000,
+      "label": "$10M",
+      "net_sharpe": 1.72,
+      "impact_bps": 6.5
+    },
+    {
+      "aum_usd": 50000000,
+      "label": "$50M",
+      "net_sharpe": 1.51,
+      "impact_bps": 14.8
+    },
+    {
+      "aum_usd": 100000000,
+      "label": "$100M",
+      "net_sharpe": 1.22,
+      "impact_bps": 26.4
+    }
+  ],
+  "critical_capacity_threshold": "$50M (Net Sharpe remains >= 1.50 hurdle rate)"
+}

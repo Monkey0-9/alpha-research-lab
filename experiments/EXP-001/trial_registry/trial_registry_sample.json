@@ -1,0 +1,2154 @@
+[
+  {
+    "trial_id": "TRIAL-000001",
+    "in_sample_sharpe": 0.615,
+    "out_of_sample_sharpe": -0.588,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000002",
+    "in_sample_sharpe": 0.668,
+    "out_of_sample_sharpe": 0.533,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000003",
+    "in_sample_sharpe": 1.082,
+    "out_of_sample_sharpe": 1.237,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000004",
+    "in_sample_sharpe": -0.324,
+    "out_of_sample_sharpe": -0.383,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000005",
+    "in_sample_sharpe": 1.005,
+    "out_of_sample_sharpe": 2.18,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000006",
+    "in_sample_sharpe": 0.308,
+    "out_of_sample_sharpe": -0.463,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000007",
+    "in_sample_sharpe": -1.352,
+    "out_of_sample_sharpe": -1.273,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000008",
+    "in_sample_sharpe": 1.421,
+    "out_of_sample_sharpe": -0.188,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000009",
+    "in_sample_sharpe": -0.32,
+    "out_of_sample_sharpe": 0.056,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000010",
+    "in_sample_sharpe": -0.754,
+    "out_of_sample_sharpe": 1.776,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000011",
+    "in_sample_sharpe": -1.403,
+    "out_of_sample_sharpe": -0.654,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000012",
+    "in_sample_sharpe": 1.094,
+    "out_of_sample_sharpe": 0.597,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000013",
+    "in_sample_sharpe": 0.165,
+    "out_of_sample_sharpe": -0.35,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000014",
+    "in_sample_sharpe": 1.199,
+    "out_of_sample_sharpe": -0.558,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000015",
+    "in_sample_sharpe": 0.463,
+    "out_of_sample_sharpe": -0.649,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000016",
+    "in_sample_sharpe": -0.755,
+    "out_of_sample_sharpe": -1.436,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000017",
+    "in_sample_sharpe": -0.58,
+    "out_of_sample_sharpe": 0.503,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000018",
+    "in_sample_sharpe": 0.416,
+    "out_of_sample_sharpe": 0.444,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000019",
+    "in_sample_sharpe": 0.518,
+    "out_of_sample_sharpe": -0.22,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000020",
+    "in_sample_sharpe": -0.007,
+    "out_of_sample_sharpe": -0.331,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000021",
+    "in_sample_sharpe": -1.141,
+    "out_of_sample_sharpe": -0.351,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000022",
+    "in_sample_sharpe": -0.854,
+    "out_of_sample_sharpe": 1.023,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000023",
+    "in_sample_sharpe": -0.585,
+    "out_of_sample_sharpe": 0.213,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000024",
+    "in_sample_sharpe": 1.17,
+    "out_of_sample_sharpe": 1.638,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000025",
+    "in_sample_sharpe": -0.444,
+    "out_of_sample_sharpe": -0.265,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000026",
+    "in_sample_sharpe": 0.691,
+    "out_of_sample_sharpe": -0.373,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000027",
+    "in_sample_sharpe": -0.505,
+    "out_of_sample_sharpe": 0.463,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000028",
+    "in_sample_sharpe": 0.094,
+    "out_of_sample_sharpe": 1.165,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000029",
+    "in_sample_sharpe": -0.707,
+    "out_of_sample_sharpe": 0.159,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000030",
+    "in_sample_sharpe": -0.043,
+    "out_of_sample_sharpe": 0.082,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000031",
+    "in_sample_sharpe": -0.72,
+    "out_of_sample_sharpe": 0.284,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000032",
+    "in_sample_sharpe": 1.035,
+    "out_of_sample_sharpe": 1.072,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000033",
+    "in_sample_sharpe": -1.078,
+    "out_of_sample_sharpe": -0.551,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000034",
+    "in_sample_sharpe": -0.951,
+    "out_of_sample_sharpe": -0.045,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000035",
+    "in_sample_sharpe": -0.91,
+    "out_of_sample_sharpe": 0.224,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000036",
+    "in_sample_sharpe": -0.553,
+    "out_of_sample_sharpe": 0.717,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000037",
+    "in_sample_sharpe": -2.281,
+    "out_of_sample_sharpe": 0.48,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000038",
+    "in_sample_sharpe": 0.468,
+    "out_of_sample_sharpe": -0.364,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000039",
+    "in_sample_sharpe": -0.062,
+    "out_of_sample_sharpe": 0.478,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000040",
+    "in_sample_sharpe": -0.615,
+    "out_of_sample_sharpe": -0.496,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000041",
+    "in_sample_sharpe": 0.06,
+    "out_of_sample_sharpe": -1.853,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000042",
+    "in_sample_sharpe": -0.496,
+    "out_of_sample_sharpe": -1.814,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000043",
+    "in_sample_sharpe": -0.549,
+    "out_of_sample_sharpe": 0.473,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000044",
+    "in_sample_sharpe": 0.169,
+    "out_of_sample_sharpe": 0.301,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000045",
+    "in_sample_sharpe": -0.663,
+    "out_of_sample_sharpe": -0.511,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000046",
+    "in_sample_sharpe": 0.046,
+    "out_of_sample_sharpe": -0.293,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000047",
+    "in_sample_sharpe": 0.054,
+    "out_of_sample_sharpe": 0.193,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000048",
+    "in_sample_sharpe": -1.086,
+    "out_of_sample_sharpe": -0.989,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000049",
+    "in_sample_sharpe": -1.68,
+    "out_of_sample_sharpe": 0.337,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000050",
+    "in_sample_sharpe": -0.383,
+    "out_of_sample_sharpe": -0.496,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000051",
+    "in_sample_sharpe": 0.22,
+    "out_of_sample_sharpe": -0.494,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000052",
+    "in_sample_sharpe": 0.736,
+    "out_of_sample_sharpe": 0.694,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000053",
+    "in_sample_sharpe": 0.744,
+    "out_of_sample_sharpe": -0.264,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000054",
+    "in_sample_sharpe": 0.719,
+    "out_of_sample_sharpe": -0.306,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000055",
+    "in_sample_sharpe": 0.091,
+    "out_of_sample_sharpe": -0.759,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000056",
+    "in_sample_sharpe": 0.802,
+    "out_of_sample_sharpe": 0.748,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000057",
+    "in_sample_sharpe": -0.252,
+    "out_of_sample_sharpe": -1.008,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000058",
+    "in_sample_sharpe": 0.344,
+    "out_of_sample_sharpe": 0.319,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000059",
+    "in_sample_sharpe": -0.636,
+    "out_of_sample_sharpe": 0.603,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000060",
+    "in_sample_sharpe": -1.259,
+    "out_of_sample_sharpe": -0.228,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000061",
+    "in_sample_sharpe": -0.366,
+    "out_of_sample_sharpe": 0.751,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000062",
+    "in_sample_sharpe": 0.645,
+    "out_of_sample_sharpe": 0.336,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000063",
+    "in_sample_sharpe": 0.097,
+    "out_of_sample_sharpe": -0.261,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000064",
+    "in_sample_sharpe": -0.37,
+    "out_of_sample_sharpe": 0.774,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000065",
+    "in_sample_sharpe": 1.511,
+    "out_of_sample_sharpe": -0.084,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000066",
+    "in_sample_sharpe": 0.194,
+    "out_of_sample_sharpe": 0.296,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000067",
+    "in_sample_sharpe": -0.726,
+    "out_of_sample_sharpe": 0.492,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000068",
+    "in_sample_sharpe": -0.44,
+    "out_of_sample_sharpe": -0.829,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000069",
+    "in_sample_sharpe": 0.98,
+    "out_of_sample_sharpe": 0.776,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000070",
+    "in_sample_sharpe": 0.9,
+    "out_of_sample_sharpe": -0.857,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000071",
+    "in_sample_sharpe": -0.565,
+    "out_of_sample_sharpe": 0.316,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000072",
+    "in_sample_sharpe": 0.783,
+    "out_of_sample_sharpe": 0.246,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000073",
+    "in_sample_sharpe": 0.507,
+    "out_of_sample_sharpe": -0.271,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000074",
+    "in_sample_sharpe": -0.085,
+    "out_of_sample_sharpe": -2.139,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000075",
+    "in_sample_sharpe": -0.387,
+    "out_of_sample_sharpe": -0.774,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000076",
+    "in_sample_sharpe": 0.22,
+    "out_of_sample_sharpe": 0.704,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000077",
+    "in_sample_sharpe": 0.968,
+    "out_of_sample_sharpe": -0.97,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000078",
+    "in_sample_sharpe": 1.263,
+    "out_of_sample_sharpe": -0.553,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000079",
+    "in_sample_sharpe": -0.324,
+    "out_of_sample_sharpe": -0.668,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000080",
+    "in_sample_sharpe": -1.148,
+    "out_of_sample_sharpe": 0.719,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000081",
+    "in_sample_sharpe": -0.067,
+    "out_of_sample_sharpe": -0.602,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000082",
+    "in_sample_sharpe": -0.468,
+    "out_of_sample_sharpe": 0.574,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000083",
+    "in_sample_sharpe": -0.747,
+    "out_of_sample_sharpe": -0.325,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000084",
+    "in_sample_sharpe": 0.693,
+    "out_of_sample_sharpe": 0.308,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000085",
+    "in_sample_sharpe": 0.138,
+    "out_of_sample_sharpe": -0.281,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000086",
+    "in_sample_sharpe": 0.163,
+    "out_of_sample_sharpe": 0.389,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000087",
+    "in_sample_sharpe": 0.789,
+    "out_of_sample_sharpe": 1.521,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000088",
+    "in_sample_sharpe": 0.067,
+    "out_of_sample_sharpe": -0.171,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000089",
+    "in_sample_sharpe": 0.509,
+    "out_of_sample_sharpe": -0.547,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000090",
+    "in_sample_sharpe": 0.444,
+    "out_of_sample_sharpe": 0.475,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000091",
+    "in_sample_sharpe": -0.07,
+    "out_of_sample_sharpe": -1.303,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000092",
+    "in_sample_sharpe": -0.086,
+    "out_of_sample_sharpe": -0.408,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000093",
+    "in_sample_sharpe": 0.307,
+    "out_of_sample_sharpe": 1.808,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000094",
+    "in_sample_sharpe": -0.646,
+    "out_of_sample_sharpe": 0.495,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000095",
+    "in_sample_sharpe": -0.232,
+    "out_of_sample_sharpe": -0.31,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000096",
+    "in_sample_sharpe": 1.397,
+    "out_of_sample_sharpe": -0.097,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000097",
+    "in_sample_sharpe": 0.742,
+    "out_of_sample_sharpe": 0.234,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000098",
+    "in_sample_sharpe": -0.435,
+    "out_of_sample_sharpe": -0.605,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000099",
+    "in_sample_sharpe": 1.41,
+    "out_of_sample_sharpe": 0.686,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000100",
+    "in_sample_sharpe": 0.277,
+    "out_of_sample_sharpe": 0.276,
+    "naive_decision": "REJECT",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000257",
+    "in_sample_sharpe": 1.519,
+    "out_of_sample_sharpe": 0.558,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000271",
+    "in_sample_sharpe": 1.717,
+    "out_of_sample_sharpe": 0.108,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000377",
+    "in_sample_sharpe": 1.757,
+    "out_of_sample_sharpe": 0.259,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000390",
+    "in_sample_sharpe": 1.587,
+    "out_of_sample_sharpe": -0.123,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000394",
+    "in_sample_sharpe": 1.681,
+    "out_of_sample_sharpe": 0.647,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000408",
+    "in_sample_sharpe": 1.589,
+    "out_of_sample_sharpe": 0.048,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000484",
+    "in_sample_sharpe": 1.522,
+    "out_of_sample_sharpe": 0.071,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000538",
+    "in_sample_sharpe": 1.758,
+    "out_of_sample_sharpe": 0.372,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000634",
+    "in_sample_sharpe": 1.899,
+    "out_of_sample_sharpe": -0.21,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000693",
+    "in_sample_sharpe": 1.597,
+    "out_of_sample_sharpe": -0.056,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000799",
+    "in_sample_sharpe": 1.528,
+    "out_of_sample_sharpe": 1.169,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000819",
+    "in_sample_sharpe": 1.758,
+    "out_of_sample_sharpe": 0.553,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000844",
+    "in_sample_sharpe": 1.925,
+    "out_of_sample_sharpe": -0.561,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000851",
+    "in_sample_sharpe": 2.186,
+    "out_of_sample_sharpe": 0.528,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000891",
+    "in_sample_sharpe": 1.539,
+    "out_of_sample_sharpe": -1.075,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-000949",
+    "in_sample_sharpe": 1.842,
+    "out_of_sample_sharpe": -0.647,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001099",
+    "in_sample_sharpe": 1.535,
+    "out_of_sample_sharpe": 0.168,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001149",
+    "in_sample_sharpe": 1.719,
+    "out_of_sample_sharpe": -1.533,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001179",
+    "in_sample_sharpe": 1.611,
+    "out_of_sample_sharpe": -0.399,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001270",
+    "in_sample_sharpe": 1.585,
+    "out_of_sample_sharpe": 0.142,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001358",
+    "in_sample_sharpe": 1.687,
+    "out_of_sample_sharpe": -0.052,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001465",
+    "in_sample_sharpe": 2.191,
+    "out_of_sample_sharpe": -0.58,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001538",
+    "in_sample_sharpe": 1.756,
+    "out_of_sample_sharpe": 0.384,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001648",
+    "in_sample_sharpe": 1.869,
+    "out_of_sample_sharpe": -0.342,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001690",
+    "in_sample_sharpe": 1.96,
+    "out_of_sample_sharpe": -0.052,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001801",
+    "in_sample_sharpe": 1.568,
+    "out_of_sample_sharpe": 0.659,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001820",
+    "in_sample_sharpe": 1.894,
+    "out_of_sample_sharpe": -0.328,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001842",
+    "in_sample_sharpe": 1.593,
+    "out_of_sample_sharpe": 0.809,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-001928",
+    "in_sample_sharpe": 1.698,
+    "out_of_sample_sharpe": -0.598,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002013",
+    "in_sample_sharpe": 1.509,
+    "out_of_sample_sharpe": 0.523,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002052",
+    "in_sample_sharpe": 1.519,
+    "out_of_sample_sharpe": 0.098,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002062",
+    "in_sample_sharpe": 1.572,
+    "out_of_sample_sharpe": -0.55,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002063",
+    "in_sample_sharpe": 1.583,
+    "out_of_sample_sharpe": 0.234,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002067",
+    "in_sample_sharpe": 1.698,
+    "out_of_sample_sharpe": 0.104,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002078",
+    "in_sample_sharpe": 1.563,
+    "out_of_sample_sharpe": 1.049,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002122",
+    "in_sample_sharpe": 1.579,
+    "out_of_sample_sharpe": -0.269,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002147",
+    "in_sample_sharpe": 1.723,
+    "out_of_sample_sharpe": -0.472,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002185",
+    "in_sample_sharpe": 1.885,
+    "out_of_sample_sharpe": -0.54,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002206",
+    "in_sample_sharpe": 1.524,
+    "out_of_sample_sharpe": -0.171,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002214",
+    "in_sample_sharpe": 1.601,
+    "out_of_sample_sharpe": 0.012,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002221",
+    "in_sample_sharpe": 1.533,
+    "out_of_sample_sharpe": -0.566,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002244",
+    "in_sample_sharpe": 2.09,
+    "out_of_sample_sharpe": 1.032,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002246",
+    "in_sample_sharpe": 1.548,
+    "out_of_sample_sharpe": 0.138,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002255",
+    "in_sample_sharpe": 1.565,
+    "out_of_sample_sharpe": 0.35,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002268",
+    "in_sample_sharpe": 1.604,
+    "out_of_sample_sharpe": -1.228,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002395",
+    "in_sample_sharpe": 1.688,
+    "out_of_sample_sharpe": 0.142,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002426",
+    "in_sample_sharpe": 1.641,
+    "out_of_sample_sharpe": -1.709,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002569",
+    "in_sample_sharpe": 1.995,
+    "out_of_sample_sharpe": -0.246,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002598",
+    "in_sample_sharpe": 1.923,
+    "out_of_sample_sharpe": -0.053,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002644",
+    "in_sample_sharpe": 2.054,
+    "out_of_sample_sharpe": 0.313,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002684",
+    "in_sample_sharpe": 1.699,
+    "out_of_sample_sharpe": -0.031,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002744",
+    "in_sample_sharpe": 1.647,
+    "out_of_sample_sharpe": -0.882,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002790",
+    "in_sample_sharpe": 1.701,
+    "out_of_sample_sharpe": -0.698,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002899",
+    "in_sample_sharpe": 1.527,
+    "out_of_sample_sharpe": 0.879,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002923",
+    "in_sample_sharpe": 1.525,
+    "out_of_sample_sharpe": -0.179,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002958",
+    "in_sample_sharpe": 1.524,
+    "out_of_sample_sharpe": -0.726,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-002986",
+    "in_sample_sharpe": 1.597,
+    "out_of_sample_sharpe": -0.412,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003051",
+    "in_sample_sharpe": 1.611,
+    "out_of_sample_sharpe": 1.724,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003069",
+    "in_sample_sharpe": 1.524,
+    "out_of_sample_sharpe": 0.371,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003272",
+    "in_sample_sharpe": 1.617,
+    "out_of_sample_sharpe": 0.138,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003362",
+    "in_sample_sharpe": 1.595,
+    "out_of_sample_sharpe": 0.801,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003382",
+    "in_sample_sharpe": 1.596,
+    "out_of_sample_sharpe": -0.043,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003392",
+    "in_sample_sharpe": 1.563,
+    "out_of_sample_sharpe": -0.168,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003393",
+    "in_sample_sharpe": 1.52,
+    "out_of_sample_sharpe": 0.159,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003543",
+    "in_sample_sharpe": 1.579,
+    "out_of_sample_sharpe": -0.046,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003578",
+    "in_sample_sharpe": 1.657,
+    "out_of_sample_sharpe": 0.506,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003582",
+    "in_sample_sharpe": 1.762,
+    "out_of_sample_sharpe": -0.324,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003615",
+    "in_sample_sharpe": 1.568,
+    "out_of_sample_sharpe": -0.045,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003692",
+    "in_sample_sharpe": 1.606,
+    "out_of_sample_sharpe": -0.245,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003696",
+    "in_sample_sharpe": 1.929,
+    "out_of_sample_sharpe": -1.308,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003724",
+    "in_sample_sharpe": 1.827,
+    "out_of_sample_sharpe": -0.592,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003741",
+    "in_sample_sharpe": 1.631,
+    "out_of_sample_sharpe": -1.582,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003772",
+    "in_sample_sharpe": 1.603,
+    "out_of_sample_sharpe": 0.829,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003776",
+    "in_sample_sharpe": 1.502,
+    "out_of_sample_sharpe": 0.838,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003781",
+    "in_sample_sharpe": 2.169,
+    "out_of_sample_sharpe": -0.77,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003878",
+    "in_sample_sharpe": 1.561,
+    "out_of_sample_sharpe": 0.604,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-003916",
+    "in_sample_sharpe": 2.018,
+    "out_of_sample_sharpe": 0.034,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004004",
+    "in_sample_sharpe": 1.627,
+    "out_of_sample_sharpe": -0.076,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004083",
+    "in_sample_sharpe": 1.595,
+    "out_of_sample_sharpe": -0.306,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004167",
+    "in_sample_sharpe": 1.644,
+    "out_of_sample_sharpe": 0.147,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004391",
+    "in_sample_sharpe": 1.626,
+    "out_of_sample_sharpe": -0.681,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004430",
+    "in_sample_sharpe": 1.682,
+    "out_of_sample_sharpe": 1.23,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004584",
+    "in_sample_sharpe": 1.509,
+    "out_of_sample_sharpe": 0.654,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004610",
+    "in_sample_sharpe": 1.929,
+    "out_of_sample_sharpe": 0.683,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004624",
+    "in_sample_sharpe": 1.636,
+    "out_of_sample_sharpe": -0.019,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004768",
+    "in_sample_sharpe": 1.569,
+    "out_of_sample_sharpe": 0.609,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004855",
+    "in_sample_sharpe": 1.97,
+    "out_of_sample_sharpe": -0.997,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004861",
+    "in_sample_sharpe": 1.805,
+    "out_of_sample_sharpe": 1.068,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004871",
+    "in_sample_sharpe": 1.752,
+    "out_of_sample_sharpe": 0.395,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004881",
+    "in_sample_sharpe": 1.612,
+    "out_of_sample_sharpe": 0.167,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-004985",
+    "in_sample_sharpe": 1.603,
+    "out_of_sample_sharpe": -0.962,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005078",
+    "in_sample_sharpe": 1.595,
+    "out_of_sample_sharpe": 0.893,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005307",
+    "in_sample_sharpe": 1.839,
+    "out_of_sample_sharpe": -0.104,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005317",
+    "in_sample_sharpe": 2.067,
+    "out_of_sample_sharpe": 1.075,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005334",
+    "in_sample_sharpe": 1.653,
+    "out_of_sample_sharpe": -0.675,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005384",
+    "in_sample_sharpe": 1.536,
+    "out_of_sample_sharpe": -0.501,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005386",
+    "in_sample_sharpe": 1.6,
+    "out_of_sample_sharpe": 0.058,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005618",
+    "in_sample_sharpe": 1.83,
+    "out_of_sample_sharpe": 1.71,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005752",
+    "in_sample_sharpe": 1.618,
+    "out_of_sample_sharpe": -0.926,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005886",
+    "in_sample_sharpe": 1.689,
+    "out_of_sample_sharpe": 0.301,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005898",
+    "in_sample_sharpe": 1.662,
+    "out_of_sample_sharpe": -0.604,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005901",
+    "in_sample_sharpe": 1.666,
+    "out_of_sample_sharpe": -0.735,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005985",
+    "in_sample_sharpe": 1.765,
+    "out_of_sample_sharpe": 0.063,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005986",
+    "in_sample_sharpe": 1.574,
+    "out_of_sample_sharpe": -0.585,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005987",
+    "in_sample_sharpe": 1.653,
+    "out_of_sample_sharpe": 1.175,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-005995",
+    "in_sample_sharpe": 1.613,
+    "out_of_sample_sharpe": -0.294,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006097",
+    "in_sample_sharpe": 2.262,
+    "out_of_sample_sharpe": 0.346,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006150",
+    "in_sample_sharpe": 1.537,
+    "out_of_sample_sharpe": 0.105,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006274",
+    "in_sample_sharpe": 1.539,
+    "out_of_sample_sharpe": -0.054,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006296",
+    "in_sample_sharpe": 2.036,
+    "out_of_sample_sharpe": 0.4,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006308",
+    "in_sample_sharpe": 1.597,
+    "out_of_sample_sharpe": 1.008,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006351",
+    "in_sample_sharpe": 1.856,
+    "out_of_sample_sharpe": -0.676,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006363",
+    "in_sample_sharpe": 1.804,
+    "out_of_sample_sharpe": 0.603,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006377",
+    "in_sample_sharpe": 2.008,
+    "out_of_sample_sharpe": -0.103,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006415",
+    "in_sample_sharpe": 1.583,
+    "out_of_sample_sharpe": 0.488,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006446",
+    "in_sample_sharpe": 1.741,
+    "out_of_sample_sharpe": -0.735,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006464",
+    "in_sample_sharpe": 1.609,
+    "out_of_sample_sharpe": -0.021,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006491",
+    "in_sample_sharpe": 1.887,
+    "out_of_sample_sharpe": 0.174,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006493",
+    "in_sample_sharpe": 1.761,
+    "out_of_sample_sharpe": 0.602,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006538",
+    "in_sample_sharpe": 1.717,
+    "out_of_sample_sharpe": 0.305,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006737",
+    "in_sample_sharpe": 1.984,
+    "out_of_sample_sharpe": -0.262,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006757",
+    "in_sample_sharpe": 1.562,
+    "out_of_sample_sharpe": 0.32,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006771",
+    "in_sample_sharpe": 1.616,
+    "out_of_sample_sharpe": -0.982,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006843",
+    "in_sample_sharpe": 1.925,
+    "out_of_sample_sharpe": -0.344,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006917",
+    "in_sample_sharpe": 1.674,
+    "out_of_sample_sharpe": -0.037,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006951",
+    "in_sample_sharpe": 1.554,
+    "out_of_sample_sharpe": -0.439,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-006973",
+    "in_sample_sharpe": 2.219,
+    "out_of_sample_sharpe": -0.346,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007072",
+    "in_sample_sharpe": 1.722,
+    "out_of_sample_sharpe": 0.388,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007085",
+    "in_sample_sharpe": 1.639,
+    "out_of_sample_sharpe": 0.504,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007129",
+    "in_sample_sharpe": 1.727,
+    "out_of_sample_sharpe": -0.406,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007166",
+    "in_sample_sharpe": 1.727,
+    "out_of_sample_sharpe": 0.014,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007260",
+    "in_sample_sharpe": 1.726,
+    "out_of_sample_sharpe": 0.957,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007319",
+    "in_sample_sharpe": 1.646,
+    "out_of_sample_sharpe": 0.663,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007369",
+    "in_sample_sharpe": 1.621,
+    "out_of_sample_sharpe": 0.201,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007462",
+    "in_sample_sharpe": 1.689,
+    "out_of_sample_sharpe": 0.058,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007538",
+    "in_sample_sharpe": 1.869,
+    "out_of_sample_sharpe": -0.178,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007709",
+    "in_sample_sharpe": 1.517,
+    "out_of_sample_sharpe": 0.356,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007748",
+    "in_sample_sharpe": 1.701,
+    "out_of_sample_sharpe": -0.296,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-007977",
+    "in_sample_sharpe": 2.226,
+    "out_of_sample_sharpe": -0.698,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008059",
+    "in_sample_sharpe": 1.767,
+    "out_of_sample_sharpe": 1.381,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008115",
+    "in_sample_sharpe": 1.723,
+    "out_of_sample_sharpe": 0.236,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008172",
+    "in_sample_sharpe": 2.0,
+    "out_of_sample_sharpe": 1.264,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008233",
+    "in_sample_sharpe": 2.258,
+    "out_of_sample_sharpe": -0.581,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008235",
+    "in_sample_sharpe": 1.877,
+    "out_of_sample_sharpe": -1.026,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008364",
+    "in_sample_sharpe": 1.676,
+    "out_of_sample_sharpe": -0.471,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008453",
+    "in_sample_sharpe": 1.634,
+    "out_of_sample_sharpe": -0.468,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008530",
+    "in_sample_sharpe": 2.288,
+    "out_of_sample_sharpe": 0.403,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008558",
+    "in_sample_sharpe": 1.545,
+    "out_of_sample_sharpe": -1.34,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008641",
+    "in_sample_sharpe": 1.59,
+    "out_of_sample_sharpe": 0.308,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008673",
+    "in_sample_sharpe": 1.541,
+    "out_of_sample_sharpe": -0.164,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008749",
+    "in_sample_sharpe": 1.708,
+    "out_of_sample_sharpe": -1.933,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008795",
+    "in_sample_sharpe": 1.598,
+    "out_of_sample_sharpe": -0.541,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-008935",
+    "in_sample_sharpe": 1.867,
+    "out_of_sample_sharpe": 0.351,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009088",
+    "in_sample_sharpe": 1.515,
+    "out_of_sample_sharpe": -0.166,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009133",
+    "in_sample_sharpe": 1.504,
+    "out_of_sample_sharpe": -1.756,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009139",
+    "in_sample_sharpe": 1.625,
+    "out_of_sample_sharpe": 0.108,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009153",
+    "in_sample_sharpe": 1.536,
+    "out_of_sample_sharpe": -1.143,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009247",
+    "in_sample_sharpe": 1.703,
+    "out_of_sample_sharpe": 0.679,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009284",
+    "in_sample_sharpe": 1.806,
+    "out_of_sample_sharpe": -0.339,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009347",
+    "in_sample_sharpe": 2.014,
+    "out_of_sample_sharpe": -1.046,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009513",
+    "in_sample_sharpe": 1.521,
+    "out_of_sample_sharpe": -1.18,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009514",
+    "in_sample_sharpe": 1.76,
+    "out_of_sample_sharpe": 0.647,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009672",
+    "in_sample_sharpe": 1.836,
+    "out_of_sample_sharpe": -1.222,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009823",
+    "in_sample_sharpe": 1.562,
+    "out_of_sample_sharpe": -0.117,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009831",
+    "in_sample_sharpe": 1.594,
+    "out_of_sample_sharpe": -0.064,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009947",
+    "in_sample_sharpe": 1.814,
+    "out_of_sample_sharpe": 1.146,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009953",
+    "in_sample_sharpe": 1.641,
+    "out_of_sample_sharpe": 0.58,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009956",
+    "in_sample_sharpe": 1.691,
+    "out_of_sample_sharpe": 1.193,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  },
+  {
+    "trial_id": "TRIAL-009984",
+    "in_sample_sharpe": 1.649,
+    "out_of_sample_sharpe": -0.429,
+    "naive_decision": "PROMOTE",
+    "quantalpha_decision": "REJECT",
+    "terminal_reason": "FAIL_DSR"
+  }
+]

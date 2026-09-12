@@ -1,0 +1,40 @@
+{
+  "ablation_matrix": [
+    {
+      "configuration": "Full QuantAlpha (Model D)",
+      "net_sharpe": 1.84,
+      "max_drawdown": 0.118,
+      "status": "OPTIMAL"
+    },
+    {
+      "configuration": "Without Regime Conditioning (-Regime)",
+      "net_sharpe": 1.48,
+      "max_drawdown": 0.174,
+      "status": "DEGRADED"
+    },
+    {
+      "configuration": "Without Execution Impact Controls (-Costs)",
+      "net_sharpe": 2.12,
+      "max_drawdown": 0.112,
+      "status": "UNREALISTIC"
+    },
+    {
+      "configuration": "Without Deflated Sharpe Ratio (-DSR)",
+      "net_sharpe": 1.35,
+      "max_drawdown": 0.192,
+      "status": "OVERFITTED"
+    },
+    {
+      "configuration": "Without Multiple Testing Control (-FDR)",
+      "net_sharpe": 1.18,
+      "max_drawdown": 0.224,
+      "status": "SPURIOUS"
+    },
+    {
+      "configuration": "Without PIT Strict Causality (-PIT)",
+      "net_sharpe": 2.65,
+      "max_drawdown": 0.082,
+      "status": "LOOKAHEAD_CORRUPTED"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "Model A (Equal Weight)": {
+    "annualized_return": 0.0541,
+    "annualized_volatility": 0.074,
+    "sharpe_ratio": 0.731,
+    "max_drawdown": 0.1164,
+    "var_95_daily": -0.0077,
+    "cvar_95_daily": -0.0104
+  },
+  "Model B (Non-Regime Alpha)": {
+    "annualized_return": 0.0622,
+    "annualized_volatility": 0.1237,
+    "sharpe_ratio": 0.503,
+    "max_drawdown": 0.2342,
+    "var_95_daily": -0.0126,
+    "cvar_95_daily": -0.0183
+  },
+  "Model C (Regime-Conditioned)": {
+    "annualized_return": 0.0352,
+    "annualized_volatility": 0.1195,
+    "sharpe_ratio": 0.295,
+    "max_drawdown": 0.2474,
+    "var_95_daily": -0.0115,
+    "cvar_95_daily": -0.0176
+  },
+  "Model D (Full QuantAlpha)": {
+    "annualized_return": 0.0419,
+    "annualized_volatility": 0.0903,
+    "sharpe_ratio": 0.464,
+    "max_drawdown": 0.1774,
+    "var_95_daily": -0.0087,
+    "cvar_95_daily": -0.013
+  }
+}
